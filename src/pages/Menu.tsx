@@ -256,7 +256,7 @@ const Menu = () => {
       <Dialog open={showCustomerDialog} onOpenChange={setShowCustomerDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Informações do Cliente</DialogTitle>
+            <DialogTitle>Olá, informe seus dados:</DialogTitle>
             <DialogDescription>
               Para iniciar seu pedido, precisamos de algumas informações
             </DialogDescription>
