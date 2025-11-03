@@ -9,7 +9,9 @@ import Checkout from "./pages/Checkout";
 import OrderStatus from "./pages/OrderStatus";
 import Kitchen from "./pages/Kitchen";
 import Cashier from "./pages/Cashier";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -24,8 +26,23 @@ const App = () => (
           <Route path="/menu" element={<Menu />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order/:orderId" element={<OrderStatus />} />
-          <Route path="/kitchen" element={<Kitchen />} />
-          <Route path="/cashier" element={<Cashier />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/kitchen"
+            element={
+              <ProtectedRoute requiredRole="kitchen">
+                <Kitchen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cashier"
+            element={
+              <ProtectedRoute requiredRole="cashier">
+                <Cashier />
+              </ProtectedRoute>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

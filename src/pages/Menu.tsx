@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/coco-loko-logo.png";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -100,12 +101,16 @@ const Menu = () => {
   };
 
   const handleCustomerInfoSubmit = () => {
-    if (!customerName.trim()) {
-      toast.error("Por favor, insira seu nome");
+    const nameValidation = z.string().trim().min(2).max(100).regex(/^[a-zA-ZÀ-ÿ\s]+$/).safeParse(customerName);
+    const whatsappValidation = z.string().trim().regex(/^\+?[1-9]\d{1,14}$/).safeParse(customerWhatsApp);
+    
+    if (!nameValidation.success) {
+      toast.error("Nome inválido. Use apenas letras (2-100 caracteres)");
       return;
     }
-    if (!customerWhatsApp.trim()) {
-      toast.error("Por favor, insira seu WhatsApp");
+    
+    if (!whatsappValidation.success) {
+      toast.error("WhatsApp inválido. Use o formato: +5511999999999");
       return;
     }
 

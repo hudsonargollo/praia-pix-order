@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 interface CartItem {
   id: string;
@@ -34,8 +35,16 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!customerName.trim() || !customerPhone.trim()) {
-      toast.error("Preencha todos os campos");
+    const nameValidation = z.string().trim().min(2).max(100).regex(/^[a-zA-ZÀ-ÿ\s]+$/).safeParse(customerName);
+    const whatsappValidation = z.string().trim().regex(/^\+?[1-9]\d{1,14}$/).safeParse(customerPhone);
+    
+    if (!nameValidation.success) {
+      toast.error("Nome inválido. Use apenas letras (2-100 caracteres)");
+      return;
+    }
+    
+    if (!whatsappValidation.success) {
+      toast.error("WhatsApp inválido. Use o formato: +5511999999999");
       return;
     }
 
