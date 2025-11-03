@@ -7,6 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/coco-loko-logo.png";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface MenuItem {
   id: string;
@@ -36,6 +45,10 @@ const Menu = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCustomerDialog, setShowCustomerDialog] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerWhatsApp, setCustomerWhatsApp] = useState("");
+  const [pendingItem, setPendingItem] = useState<MenuItem | null>(null);
 
   useEffect(() => {
     loadMenu();
@@ -67,6 +80,13 @@ const Menu = () => {
   };
 
   const addToCart = (item: MenuItem) => {
+    // If cart is empty and no customer info, show dialog first
+    if (cart.length === 0 && !customerName) {
+      setPendingItem(item);
+      setShowCustomerDialog(true);
+      return;
+    }
+
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id);
       if (existing) {
@@ -77,6 +97,26 @@ const Menu = () => {
       return [...prev, { ...item, quantity: 1 }];
     });
     toast.success(`${item.name} adicionado ao carrinho`);
+  };
+
+  const handleCustomerInfoSubmit = () => {
+    if (!customerName.trim()) {
+      toast.error("Por favor, insira seu nome");
+      return;
+    }
+    if (!customerWhatsApp.trim()) {
+      toast.error("Por favor, insira seu WhatsApp");
+      return;
+    }
+
+    setShowCustomerDialog(false);
+    
+    // Add the pending item to cart
+    if (pendingItem) {
+      setCart([{ ...pendingItem, quantity: 1 }]);
+      toast.success(`${pendingItem.name} adicionado ao carrinho`);
+      setPendingItem(null);
+    }
   };
 
   const removeFromCart = (itemId: string) => {
@@ -108,7 +148,13 @@ const Menu = () => {
       toast.error("Adicione itens ao carrinho");
       return;
     }
-    navigate(`/checkout?mesa=${tableNumber}`, { state: { cart } });
+    navigate(`/checkout?mesa=${tableNumber}`, { 
+      state: { 
+        cart,
+        customerName,
+        customerWhatsApp 
+      } 
+    });
   };
 
   if (loading) {
@@ -205,6 +251,41 @@ const Menu = () => {
           );
         })}
       </div>
+
+      {/* Customer Info Dialog */}
+      <Dialog open={showCustomerDialog} onOpenChange={setShowCustomerDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Informações do Cliente</DialogTitle>
+            <DialogDescription>
+              Para iniciar seu pedido, precisamos de algumas informações
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome</Label>
+              <Input
+                id="name"
+                placeholder="Seu nome"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="whatsapp">WhatsApp</Label>
+              <Input
+                id="whatsapp"
+                placeholder="(00) 00000-0000"
+                value={customerWhatsApp}
+                onChange={(e) => setCustomerWhatsApp(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button onClick={handleCustomerInfoSubmit} className="w-full">
+            Continuar
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       {/* Floating Cart Button */}
       {cart.length > 0 && (

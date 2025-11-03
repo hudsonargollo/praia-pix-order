@@ -23,8 +23,8 @@ const Checkout = () => {
   
   const cart: CartItem[] = location.state?.cart || [];
   
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerName, setCustomerName] = useState(location.state?.customerName || "");
+  const [customerPhone, setCustomerPhone] = useState(location.state?.customerWhatsApp || "");
   const [loading, setLoading] = useState(false);
 
   const getTotalPrice = () => {
