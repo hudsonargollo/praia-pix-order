@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
+import logo from "@/assets/coco-loko-logo.png";
 
 interface MenuItem {
   id: string;
@@ -122,8 +123,14 @@ const Menu = () => {
     <div className="min-h-screen bg-background pb-32">
       {/* Header */}
       <div className="bg-gradient-ocean text-white p-6 shadow-medium sticky top-0 z-10">
-        <h1 className="text-3xl font-bold">Açaí na Praia</h1>
-        <p className="text-white/90 mt-1">Mesa {tableNumber}</p>
+        <div className="flex items-center justify-between">
+          <img 
+            src={logo} 
+            alt="Coco Loko Açaiteria" 
+            className="h-16"
+          />
+          <p className="text-white font-semibold text-lg">Mesa {tableNumber}</p>
+        </div>
       </div>
 
       {/* Menu Categories */}

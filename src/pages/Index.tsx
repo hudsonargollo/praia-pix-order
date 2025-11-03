@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Waves, Users, ChefHat, DollarSign, QrCode } from "lucide-react";
+import { Users, ChefHat, DollarSign, QrCode } from "lucide-react";
+import logo from "@/assets/coco-loko-logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -11,10 +12,11 @@ const Index = () => {
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 py-16 text-center text-white">
-          <Waves className="h-20 w-20 mx-auto mb-6 animate-pulse" />
-          <h1 className="text-5xl font-bold mb-4">
-            Açaí na Praia
-          </h1>
+          <img 
+            src={logo} 
+            alt="Coco Loko Açaiteria" 
+            className="h-32 mx-auto mb-6"
+          />
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             Sistema completo de pedidos e pagamentos para o melhor açaí à beira-mar
           </p>
