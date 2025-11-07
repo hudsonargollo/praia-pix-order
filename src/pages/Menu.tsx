@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
-import logo from "@/assets/coco-loko-logo.png";
 import { useCart } from "@/lib/cartContext";
 
 interface MenuItem {
@@ -103,27 +102,32 @@ const Menu = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-yellow-400 flex items-center justify-center">
-        <p className="text-purple-900 font-semibold">Carregando cardápio...</p>
+      <div className="min-h-screen relative flex items-center justify-center">
+        <div 
+          className="fixed inset-0 bg-cover bg-top bg-no-repeat"
+          style={{
+            backgroundImage: `url('/bck-menu.webp')`,
+          }}
+        />
+        <p className="relative z-10 text-purple-900 font-semibold bg-white px-6 py-3 rounded-full shadow-lg">
+          Carregando cardápio...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-yellow-400 pb-24">
-      {/* Header */}
-      <div className="bg-white p-4 shadow-md">
-        <div className="max-w-2xl mx-auto flex items-center justify-center">
-          <img 
-            src={logo} 
-            alt="Coco Loko Açaiteria" 
-            className="h-16"
-          />
-        </div>
-      </div>
+    <div className="min-h-screen relative pb-24">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-top bg-no-repeat"
+        style={{
+          backgroundImage: `url('/bck-menu.webp')`,
+        }}
+      />
 
       {/* Menu Content */}
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-32 pb-6 space-y-6">
         {categories.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-purple-900 font-semibold">Nenhuma categoria encontrada</p>
