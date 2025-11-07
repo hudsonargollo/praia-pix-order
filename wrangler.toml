@@ -1,0 +1,26 @@
+name = "coco-loko-acaiteria"
+compatibility_date = "2024-11-06"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+[env.production]
+name = "coco-loko-acaiteria"
+
+# Environment variables for production
+# Note: Sensitive values (SUPABASE_SERVICE_ROLE_KEY, WHATSAPP_ENCRYPTION_KEY) 
+# should be set in Cloudflare Dashboard, not in this file
+[env.production.vars]
+# Frontend environment variables
+VITE_SUPABASE_URL = "https://sntxekdwdllwkszclpiq.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudHhla2R3ZGxsd2tzemNscGlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMDQ1ODksImV4cCI6MjA3Nzc4MDU4OX0.aPQeASkYkf7jl3Sl-1GFHH7B8VU-pOtn5sYJKMs9u8I"
+VITE_MERCADOPAGO_PUBLIC_KEY = "APP_USR-ef0ab051-6520-4ea1-a3e3-5e53825685fe"
+VITE_MERCADOPAGO_ACCESS_TOKEN = "APP_USR-4813437808298526-110522-fa108581dfa5cb10a87458875e5c8136-1769074499"
+
+# Server-side environment variables (for Cloudflare Functions)
+MERCADOPAGO_ACCESS_TOKEN = "APP_USR-4813437808298526-110522-fa108581dfa5cb10a87458875e5c8136-1769074499"
+WHATSAPP_SESSION_ID = "coco-loko-main"
+
+# IMPORTANT: Set these sensitive variables in Cloudflare Dashboard:
+# - SUPABASE_URL (same as VITE_SUPABASE_URL)
+# - SUPABASE_SERVICE_ROLE_KEY (from Supabase project settings)
+# - WHATSAPP_ENCRYPTION_KEY (generate with: openssl rand -hex 32)
