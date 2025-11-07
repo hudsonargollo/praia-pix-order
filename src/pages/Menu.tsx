@@ -1,22 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/coco-loko-logo.png";
-import { z } from "zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useCart } from "@/lib/cartContext";
 
 interface MenuItem {
   id: string;
@@ -25,6 +14,7 @@ interface MenuItem {
   price: number;
   category_id: string;
   available: boolean;
+  image_url: string | null;
 }
 
 interface Category {
@@ -33,41 +23,59 @@ interface Category {
   display_order: number;
 }
 
-interface CartItem extends MenuItem {
-  quantity: number;
-}
-
 const Menu = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const tableNumber = searchParams.get("mesa") || "1";
+  
+  const {
+    state: cartState,
+    addItem,
+    setTableId,
+    getItemQuantity,
+    getTotalItems,
+    getTotalPrice,
+  } = useCart();
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCustomerDialog, setShowCustomerDialog] = useState(false);
-  const [customerName, setCustomerName] = useState("");
-  const [customerWhatsApp, setCustomerWhatsApp] = useState("");
-  const [pendingItem, setPendingItem] = useState<MenuItem | null>(null);
+  const [customerInfo, setCustomerInfo] = useState<{name: string, phone: string} | null>(null);
 
   useEffect(() => {
+    const storedCustomerInfo = sessionStorage.getItem("customerInfo");
+    if (storedCustomerInfo) {
+      try {
+        const parsed = JSON.parse(storedCustomerInfo);
+        setCustomerInfo(parsed);
+        setTableId("1");
+      } catch (error) {
+        console.error("Error parsing customer info:", error);
+        setCustomerInfo({ name: "Test User", phone: "73999999999" });
+        setTableId("1");
+      }
+    } else {
+      setCustomerInfo({ name: "Test User", phone: "73999999999" });
+      setTableId("1");
+    }
+    
     loadMenu();
   }, []);
 
   const loadMenu = async () => {
     try {
+      setLoading(true);
+      
       const { data: categoriesData, error: catError } = await supabase
         .from("menu_categories")
         .select("*")
         .order("display_order");
+
+      if (catError) throw catError;
 
       const { data: itemsData, error: itemsError } = await supabase
         .from("menu_items")
         .select("*")
         .eq("available", true);
 
-      if (catError) throw catError;
       if (itemsError) throw itemsError;
 
       setCategories(categoriesData || []);
@@ -81,225 +89,160 @@ const Menu = () => {
   };
 
   const addToCart = (item: MenuItem) => {
-    // If cart is empty and no customer info, show dialog first
-    if (cart.length === 0 && !customerName) {
-      setPendingItem(item);
-      setShowCustomerDialog(true);
-      return;
-    }
-
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
-      if (existing) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
-      }
-      return [...prev, { ...item, quantity: 1 }];
-    });
-    toast.success(`${item.name} adicionado ao carrinho`);
-  };
-
-  const handleCustomerInfoSubmit = () => {
-    const nameValidation = z.string().trim().min(2).max(100).regex(/^[a-zA-ZÀ-ÿ\s]+$/).safeParse(customerName);
-    const whatsappValidation = z.string().trim().regex(/^\+?[1-9]\d{1,14}$/).safeParse(customerWhatsApp);
-    
-    if (!nameValidation.success) {
-      toast.error("Nome inválido. Use apenas letras (2-100 caracteres)");
-      return;
-    }
-    
-    if (!whatsappValidation.success) {
-      toast.error("WhatsApp inválido. Use o formato: +5511999999999");
-      return;
-    }
-
-    setShowCustomerDialog(false);
-    
-    // Add the pending item to cart
-    if (pendingItem) {
-      setCart([{ ...pendingItem, quantity: 1 }]);
-      toast.success(`${pendingItem.name} adicionado ao carrinho`);
-      setPendingItem(null);
-    }
-  };
-
-  const removeFromCart = (itemId: string) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === itemId);
-      if (existing && existing.quantity > 1) {
-        return prev.map((i) =>
-          i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i
-        );
-      }
-      return prev.filter((i) => i.id !== itemId);
-    });
-  };
-
-  const getItemQuantity = (itemId: string) => {
-    return cart.find((i) => i.id === itemId)?.quantity || 0;
-  };
-
-  const getTotalItems = () => {
-    return cart.reduce((sum, item) => sum + item.quantity, 0);
-  };
-
-  const getTotalPrice = () => {
-    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    addItem(item);
+    toast.success(`${item.name} adicionado`);
   };
 
   const goToCheckout = () => {
-    if (cart.length === 0) {
+    if (cartState.items.length === 0) {
       toast.error("Adicione itens ao carrinho");
       return;
     }
-    navigate(`/checkout?mesa=${tableNumber}`, { 
-      state: { 
-        cart,
-        customerName,
-        customerWhatsApp 
-      } 
-    });
+    navigate("/checkout");
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando cardápio...</p>
+      <div className="min-h-screen bg-yellow-400 flex items-center justify-center">
+        <p className="text-purple-900 font-semibold">Carregando cardápio...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="min-h-screen bg-yellow-400 pb-24">
       {/* Header */}
-      <div className="bg-gradient-ocean text-white p-6 shadow-medium sticky top-0 z-10">
-        <div className="flex items-center justify-between">
+      <div className="bg-white p-4 shadow-md">
+        <div className="max-w-2xl mx-auto flex items-center justify-center">
           <img 
             src={logo} 
             alt="Coco Loko Açaiteria" 
             className="h-16"
           />
-          <p className="text-white font-semibold text-lg">Mesa {tableNumber}</p>
         </div>
       </div>
 
-      {/* Menu Categories */}
-      <div className="max-w-4xl mx-auto p-4 space-y-8">
-        {categories.map((category) => {
-          const categoryItems = menuItems.filter(
-            (item) => item.category_id === category.id
-          );
-          if (categoryItems.length === 0) return null;
+      {/* Menu Content */}
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        {categories.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-purple-900 font-semibold">Nenhuma categoria encontrada</p>
+          </div>
+        ) : (
+          categories.map((category) => {
+            const categoryItems = menuItems.filter(
+              (item) => item.category_id === category.id
+            );
+            if (categoryItems.length === 0) return null;
 
-          return (
-            <div key={category.id}>
-              <h2 className="text-2xl font-bold text-foreground mb-4">
-                {category.name}
-              </h2>
-              <div className="grid gap-4">
-                {categoryItems.map((item) => {
-                  const quantity = getItemQuantity(item.id);
-                  return (
-                    <Card key={item.id} className="p-4 shadow-soft hover:shadow-medium transition-shadow">
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg text-foreground">
+            return (
+              <div key={category.id} className="space-y-3">
+                {/* Category Header */}
+                <div className="bg-purple-900 text-white px-4 py-2 rounded-full inline-block">
+                  <h2 className="font-bold text-sm uppercase tracking-wide">
+                    {category.name}
+                  </h2>
+                </div>
+
+                {/* Category Items */}
+                <div className="space-y-3">
+                  {categoryItems.map((item) => {
+                    const quantity = getItemQuantity(item.id);
+                    
+                    return (
+                      <div 
+                        key={item.id} 
+                        className="bg-white rounded-2xl p-4 shadow-md flex items-center gap-4"
+                      >
+                        {/* Item Image */}
+                        <div className="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100">
+                          {item.image_url ? (
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-gray-400 text-xs">Sem foto</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Item Info */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-gray-900 text-base">
                             {item.name}
                           </h3>
                           {item.description && (
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">
                               {item.description}
                             </p>
                           )}
-                          <p className="text-primary font-bold mt-2">
+                          <p className="text-cyan-600 font-bold mt-1 text-base">
                             R$ {item.price.toFixed(2)}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
+
+                        {/* Add Button or Quantity Controls */}
+                        <div className="flex-shrink-0">
                           {quantity > 0 ? (
-                            <>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                onClick={() => removeFromCart(item.id)}
-                                className="h-8 w-8"
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  const currentItem = cartState.items.find(i => i.id === item.id);
+                                  if (currentItem && currentItem.quantity > 1) {
+                                    // Remove one
+                                    addItem({ ...item, quantity: -1 } as any);
+                                  } else {
+                                    // Remove completely
+                                    const newItems = cartState.items.filter(i => i.id !== item.id);
+                                    cartState.items = newItems;
+                                  }
+                                }}
+                                className="w-8 h-8 rounded-full bg-purple-900 text-white flex items-center justify-center font-bold"
                               >
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                              <span className="w-8 text-center font-bold">
+                                -
+                              </button>
+                              <span className="font-bold text-purple-900 w-6 text-center">
                                 {quantity}
                               </span>
-                              <Button
-                                size="icon"
+                              <button
                                 onClick={() => addToCart(item)}
-                                className="h-8 w-8"
+                                className="w-8 h-8 rounded-full bg-purple-900 text-white flex items-center justify-center font-bold"
                               >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </>
+                                +
+                              </button>
+                            </div>
                           ) : (
                             <Button
-                              size="sm"
                               onClick={() => addToCart(item)}
+                              className="bg-purple-900 hover:bg-purple-800 text-white px-6 py-2 rounded-full font-semibold text-sm"
                             >
                               Adicionar
                             </Button>
                           )}
                         </div>
                       </div>
-                    </Card>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
-      {/* Customer Info Dialog */}
-      <Dialog open={showCustomerDialog} onOpenChange={setShowCustomerDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Olá, informe seus dados:</DialogTitle>
-            <DialogDescription>
-              Para iniciar seu pedido, precisamos de algumas informações
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
-              <Input
-                id="name"
-                placeholder="Seu nome"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="whatsapp">WhatsApp</Label>
-              <Input
-                id="whatsapp"
-                placeholder="(00) 00000-0000"
-                value={customerWhatsApp}
-                onChange={(e) => setCustomerWhatsApp(e.target.value)}
-              />
-            </div>
-          </div>
-          <Button onClick={handleCustomerInfoSubmit} className="w-full">
-            Continuar
-          </Button>
-        </DialogContent>
-      </Dialog>
-
       {/* Floating Cart Button */}
-      {cart.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t shadow-strong">
-          <div className="max-w-4xl mx-auto">
+      {cartState.items.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-yellow-400">
+          <div className="max-w-2xl mx-auto">
             <Button
-              size="lg"
-              className="w-full"
               onClick={goToCheckout}
+              className="w-full bg-purple-900 hover:bg-purple-800 text-white py-6 rounded-2xl font-bold text-base shadow-lg"
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
               Ver Carrinho ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'itens'}) - R$ {getTotalPrice().toFixed(2)}
