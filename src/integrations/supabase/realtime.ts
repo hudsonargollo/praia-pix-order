@@ -16,6 +16,11 @@ export interface Order {
   payment_expires_at: string | null;
   ready_at: string | null;
   kitchen_notified_at: string | null;
+  cancelled_at: string | null;
+  deleted_at: string | null;
+  qr_code_data: string | null;
+  pix_copy_paste: string | null;
+  completed_at: string | null;
 }
 
 export interface OrderItem {

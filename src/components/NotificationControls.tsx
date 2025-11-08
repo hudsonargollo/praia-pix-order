@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Bell, MessageSquare, AlertCircle, CheckCircle, Clock, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { notificationTriggers } from '@/integrations/whatsapp';
-import { whatsappClient } from '@/integrations/whatsapp/client';
+import { evolutionClient } from '@/integrations/whatsapp/evolution-client';
 import type { NotificationHistory } from '@/hooks/useNotificationHistory';
 
 interface NotificationControlsProps {
@@ -67,7 +67,13 @@ export function NotificationControls({
 
     setSendingCustom(true);
     try {
-      await whatsappClient.sendTextMessage(customerPhone, customMessage);
+      // Use Evolution API client to send custom message
+      await evolutionClient.sendTextMessage({
+        number: customerPhone,
+        text: customMessage.trim(),
+        delay: 0
+      });
+      
       toast.success('Mensagem personalizada enviada!');
       setCustomMessage('');
       setIsCustomDialogOpen(false);
@@ -164,20 +170,24 @@ export function NotificationControls({
 
       {/* Action Buttons */}
       <div className="flex gap-2 pt-2">
-        <Button
-          size="sm"
-          variant={orderStatus === 'ready' ? 'default' : 'outline'}
-          onClick={handleSendReadyNotification}
-          disabled={sendingReady}
-          className="flex-1"
-        >
-          <Bell className="mr-1 h-3 w-3" />
-          {sendingReady ? 'Enviando...' : 'Notificar Pronto'}
-        </Button>
+        {/* Only show "Notificar Pronto" button if order is NOT ready or completed */}
+        {orderStatus !== 'ready' && orderStatus !== 'completed' && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleSendReadyNotification}
+            disabled={sendingReady}
+            className="flex-1"
+          >
+            <Bell className="mr-1 h-3 w-3" />
+            {sendingReady ? 'Enviando...' : 'Notificar Pronto'}
+          </Button>
+        )}
 
+        {/* Custom message button - always available */}
         <Dialog open={isCustomDialogOpen} onOpenChange={setIsCustomDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" className={orderStatus === 'ready' || orderStatus === 'completed' ? 'flex-1' : ''}>
               <MessageSquare className="mr-1 h-3 w-3" />
               Mensagem
             </Button>

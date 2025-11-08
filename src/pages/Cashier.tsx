@@ -6,6 +6,8 @@ import { useNotificationHistory } from "@/hooks/useNotificationHistory";
 import { RealtimeNotifications, notificationUtils } from "@/components/RealtimeNotifications";
 import { ConnectionMonitor, useConnectionMonitor } from "@/components/ConnectionMonitor";
 import { NotificationControls } from "@/components/NotificationControls";
+import { OrderDetailsDialog } from "@/components/OrderDetailsDialog";
+import { OrderEditDialog } from "@/components/OrderEditDialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Wifi, WifiOff } from "lucide-react";
+import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Wifi, WifiOff, Eye, Edit, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import type { Order } from "@/integrations/supabase/realtime";
 
@@ -30,6 +32,10 @@ import type { Order } from "@/integrations/supabase/realtime";
 const Cashier = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   
   // Load notification history for all orders
   const orderIds = orders.map(o => o.id);
@@ -141,7 +147,7 @@ const Cashier = () => {
         .limit(50);
 
       if (error) throw error;
-      setOrders(data || []);
+      setOrders((data || []) as Order[]);
     } catch (error) {
       console.error("Error loading orders:", error);
       toast.error("Erro ao carregar pedidos");
@@ -240,7 +246,6 @@ const Cashier = () => {
         .from("orders")
         .update({
           status: "cancelled",
-          cancelled_at: new Date().toISOString(),
         })
         .eq("id", orderId);
 
@@ -258,7 +263,7 @@ const Cashier = () => {
       const { error } = await supabase
         .from("orders")
         .update({
-          deleted_at: new Date().toISOString(),
+          status: "cancelled",
         })
         .eq("id", orderId);
 
@@ -319,32 +324,53 @@ const Cashier = () => {
       />
       <ConnectionMonitor />
       {/* Header */}
-      <div className="bg-gradient-sunset text-white p-6 shadow-medium">
+      <div className="bg-gradient-sunset text-white p-4 sm:p-6 shadow-medium">
         <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold">Caixa</h1>
-            <p className="text-white/90 mt-1">Painel de Controle</p>
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold">Caixa & Cozinha</h1>
+            <p className="text-white/90 mt-1 text-sm sm:text-base">Painel Unificado de Controle</p>
+            <div className="flex gap-2 mt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = '/admin/products'}
+                className="text-white hover:bg-white/10 text-xs"
+              >
+                Gerenciar Produtos →
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = '/reports'}
+                className="text-white hover:bg-white/10 text-xs"
+              >
+                <BarChart3 className="mr-1 h-3 w-3" />
+                Relatórios →
+              </Button>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {connectionStatus === 'connected' ? (
               <div className="flex items-center gap-1 text-green-200">
                 <Wifi className="h-4 w-4" />
-                <span className="text-sm">Online</span>
+                <span className="text-xs sm:text-sm">Online</span>
               </div>
             ) : connectionStatus === 'connecting' ? (
               <div className="flex items-center gap-1 text-yellow-200">
                 <Wifi className="h-4 w-4 animate-pulse" />
-                <span className="text-sm">Conectando...</span>
+                <span className="text-xs sm:text-sm hidden sm:inline">Conectando...</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1 text-red-200">
-                <WifiOff className="h-4 w-4" />
-                <span className="text-sm">Offline</span>
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 text-red-200">
+                <div className="flex items-center gap-1">
+                  <WifiOff className="h-4 w-4" />
+                  <span className="text-xs sm:text-sm">Offline</span>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={reconnect}
-                  className="ml-2 text-white border-white/20 hover:bg-white/10"
+                  className="text-xs text-white border-white/20 hover:bg-white/10 min-h-[32px]"
                 >
                   Reconectar
                 </Button>
@@ -354,42 +380,42 @@ const Cashier = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-4">
+      <div className="max-w-7xl mx-auto p-3 sm:p-4">
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card className="p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <Card className="p-3 sm:p-4">
             <div className="flex items-center space-x-2">
-              <Timer className="h-5 w-5 text-orange-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Aguardando</p>
-                <p className="text-2xl font-bold">{pendingOrders.length}</p>
+              <Timer className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Aguardando</p>
+                <p className="text-xl sm:text-2xl font-bold">{pendingOrders.length}</p>
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-3 sm:p-4">
             <div className="flex items-center space-x-2">
-              <ChefHat className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Em Preparo</p>
-                <p className="text-2xl font-bold">{inProgressOrders.length}</p>
+              <ChefHat className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Em Preparo</p>
+                <p className="text-xl sm:text-2xl font-bold">{inProgressOrders.length}</p>
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-3 sm:p-4">
             <div className="flex items-center space-x-2">
-              <Package className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Prontos</p>
-                <p className="text-2xl font-bold">{readyOrders.length}</p>
+              <Package className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Prontos</p>
+                <p className="text-xl sm:text-2xl font-bold">{readyOrders.length}</p>
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-3 sm:p-4">
             <div className="flex items-center space-x-2">
-              <DollarSign className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total Hoje</p>
-                <p className="text-2xl font-bold">
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Total Hoje</p>
+                <p className="text-base sm:text-xl font-bold truncate">
                   R$ {orders.filter(o => o.payment_confirmed_at).reduce((sum, o) => sum + Number(o.total_amount), 0).toFixed(2)}
                 </p>
               </div>
@@ -398,24 +424,36 @@ const Cashier = () => {
         </div>
 
         <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
-            <TabsTrigger value="all">
-              Todos <Badge className="ml-2">{orders.length}</Badge>
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-6">
+            <TabsTrigger value="all" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Todos</span>
+              <span className="sm:hidden">Todos</span>
+              <Badge className="ml-1 sm:ml-2">{orders.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="pending">
-              Aguardando Pagamento <Badge className="ml-2">{pendingOrders.length}</Badge>
+            <TabsTrigger value="pending" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Aguardando Pagamento</span>
+              <span className="sm:hidden">Aguard.</span>
+              <Badge className="ml-1 sm:ml-2">{pendingOrders.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="progress">
-              Em Preparo <Badge className="ml-2">{inProgressOrders.length}</Badge>
+            <TabsTrigger value="progress" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Em Preparo</span>
+              <span className="sm:hidden">Preparo</span>
+              <Badge className="ml-1 sm:ml-2">{inProgressOrders.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="ready">
-              Pronto <Badge className="ml-2">{readyOrders.length}</Badge>
+            <TabsTrigger value="ready" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Pronto</span>
+              <span className="sm:hidden">Pronto</span>
+              <Badge className="ml-1 sm:ml-2">{readyOrders.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="completed">
-              Concluído <Badge className="ml-2">{completedOrders.length}</Badge>
+            <TabsTrigger value="completed" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Concluído</span>
+              <span className="sm:hidden">Concl.</span>
+              <Badge className="ml-1 sm:ml-2">{completedOrders.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="cancelled">
-              Cancelados <Badge className="ml-2">{cancelledOrders.length}</Badge>
+            <TabsTrigger value="cancelled" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Cancelados</span>
+              <span className="sm:hidden">Canc.</span>
+              <Badge className="ml-1 sm:ml-2">{cancelledOrders.length}</Badge>
             </TabsTrigger>
           </TabsList>
 
@@ -431,35 +469,37 @@ const Cashier = () => {
                 const orderNotificationHistory = notificationHistory.get(order.id);
                 
                 return (
-                  <Card key={order.id} className="p-4 shadow-soft">
-                    <div className="flex justify-between items-start mb-3">
+                  <Card key={order.id} className="p-4 sm:p-6 shadow-soft">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg">Pedido #{order.order_number}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customer_name} • {order.customer_phone}
+                        <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{order.order_number}</h3>
+                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
+                          {order.customer_name}
                         </p>
-                        <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
-                        <div className="mt-2 space-y-1">
-                          <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
+                          📱 {order.customer_phone}
+                        </p>
+                        <div className="mt-3 space-y-1">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             Criado: {formatTimestamp(order.created_at)}
                           </p>
                           {order.payment_confirmed_at && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Pago: {formatTimestamp(order.payment_confirmed_at)}
                             </p>
                           )}
                           {order.ready_at && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Pronto: {formatTimestamp(order.ready_at)}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <Badge variant={paymentStatus.variant} className="mb-2">
+                      <div className="flex sm:flex-col gap-2 sm:text-right">
+                        <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
                           <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
                         </Badge>
-                        <Badge className="mb-2 block" variant={
+                        <Badge className="whitespace-nowrap" variant={
                           order.status === 'completed' ? 'default' : 
                           order.status === 'ready' ? 'default' : 
                           order.status === 'in_preparation' || order.status === 'paid' ? 'secondary' : 
@@ -471,15 +511,43 @@ const Cashier = () => {
                           {order.status === 'ready' && 'Pronto'}
                           {order.status === 'completed' && 'Concluído'}
                         </Badge>
-                        <p className="font-bold text-primary">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
                       </div>
                     </div>
                     
-                    {/* Show notification controls for paid and ready orders */}
-                    {(order.status === 'paid' || order.status === 'in_preparation' || order.status === 'ready') && (
-                      <div className="border-t pt-3 mt-3">
+                    {/* View Details and Edit Buttons */}
+                    <div className="border-t pt-3 mt-3">
+                      <div className="flex gap-2 mb-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setIsDetailsDialogOpen(true);
+                          }}
+                          className="flex-1"
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver Detalhes
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingOrderId(order.id);
+                            setIsEditDialogOpen(true);
+                          }}
+                          className="flex-1"
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar Pedido
+                        </Button>
+                      </div>
+                      
+                      {/* Show notification controls for paid and ready orders */}
+                      {(order.status === 'paid' || order.status === 'in_preparation' || order.status === 'ready') && (
                         <NotificationControls
                           orderId={order.id}
                           orderNumber={order.order_number}
@@ -489,8 +557,8 @@ const Cashier = () => {
                           notificationHistory={orderNotificationHistory}
                           onNotificationSent={refreshNotifications}
                         />
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </Card>
                 );
               })
@@ -508,40 +576,42 @@ const Cashier = () => {
                 const PaymentIcon = paymentStatus.icon;
                 
                 return (
-                  <Card key={order.id} className="p-4 shadow-soft">
-                    <div className="flex justify-between items-start mb-3">
+                  <Card key={order.id} className="p-4 sm:p-6 shadow-soft">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg">Pedido #{order.order_number}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customer_phone} • {order.customer_name}
+                        <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{order.order_number}</h3>
+                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
+                          {order.customer_name}
                         </p>
-                        <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          📱 {order.customer_phone}
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           Criado: {formatTimestamp(order.created_at)}
                         </p>
                         {order.mercadopago_payment_id && (
-                          <p className="text-xs text-muted-foreground">
-                            ID Pagamento: {order.mercadopago_payment_id}
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            ID: {order.mercadopago_payment_id.substring(0, 20)}...
                           </p>
                         )}
                       </div>
-                      <div className="text-right">
-                        <Badge variant={paymentStatus.variant} className="mb-2">
+                      <div className="flex sm:flex-col gap-2 sm:text-right">
+                        <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
                           <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
                         </Badge>
-                        <p className="font-bold text-primary">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
                         {paymentStatus.timestamp && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-muted-foreground">
                             {paymentStatus.status === 'pending' ? 'Expira:' : 'Confirmado:'} {formatTimestamp(paymentStatus.timestamp)}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
-                        className="flex-1"
+                        className="flex-1 min-h-[44px] text-base"
                         onClick={() => confirmPayment(order.id)}
                         disabled={paymentStatus.status === 'confirmed'}
                       >
@@ -551,6 +621,7 @@ const Cashier = () => {
                       {paymentStatus.status === 'confirmed' && (
                         <Button
                           variant="outline"
+                          className="min-h-[44px] text-base"
                           onClick={() => updateOrderStatus(order.id, 'in_preparation')}
                         >
                           <ChefHat className="mr-2 h-4 w-4" />
@@ -576,38 +647,40 @@ const Cashier = () => {
                 const orderNotificationHistory = notificationHistory.get(order.id);
                 
                 return (
-                  <Card key={order.id} className="p-4 shadow-soft">
-                    <div className="flex justify-between items-start mb-3">
+                  <Card key={order.id} className="p-4 sm:p-6 shadow-soft">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg">Pedido #{order.order_number}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customer_name} • {order.customer_phone}
+                        <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{order.order_number}</h3>
+                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
+                          {order.customer_name}
                         </p>
-                        <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          📱 {order.customer_phone}
+                        </p>
                         <div className="mt-2 space-y-1">
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             Criado: {formatTimestamp(order.created_at)}
                           </p>
                           {order.payment_confirmed_at && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Pago: {formatTimestamp(order.payment_confirmed_at)}
                             </p>
                           )}
                           {order.kitchen_notified_at && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Cozinha notificada: {formatTimestamp(order.kitchen_notified_at)}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <Badge variant={paymentStatus.variant} className="mb-2">
+                      <div className="flex sm:flex-col gap-2 sm:text-right">
+                        <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
                           <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
                         </Badge>
-                        <Badge className="bg-primary mb-2 block">
+                        <Badge className="bg-primary whitespace-nowrap">
                           <Clock className="mr-1 h-3 w-3" /> {order.status === 'paid' ? 'Pago' : 'Em Preparo'}
                         </Badge>
-                        <p className="font-bold text-primary">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
                       </div>
@@ -626,10 +699,10 @@ const Cashier = () => {
                       />
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       {order.status === 'paid' && (
                         <Button
-                          className="flex-1"
+                          className="flex-1 min-h-[44px] text-base"
                           variant="outline"
                           onClick={() => updateOrderStatus(order.id, 'in_preparation')}
                         >
@@ -639,7 +712,7 @@ const Cashier = () => {
                       )}
                       {order.status === 'in_preparation' && (
                         <Button
-                          className="flex-1"
+                          className="flex-1 min-h-[44px] text-base"
                           onClick={() => updateOrderStatus(order.id, 'ready')}
                         >
                           <Package className="mr-2 h-4 w-4" />
@@ -665,38 +738,40 @@ const Cashier = () => {
                 const orderNotificationHistory = notificationHistory.get(order.id);
                 
                 return (
-                  <Card key={order.id} className="p-4 shadow-soft border-l-4 border-l-success">
-                    <div className="flex justify-between items-start mb-3">
+                  <Card key={order.id} className="p-4 sm:p-6 shadow-soft border-l-4 border-l-success">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg">Pedido #{order.order_number}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customer_name} • {order.customer_phone}
+                        <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{order.order_number}</h3>
+                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
+                          {order.customer_name}
                         </p>
-                        <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          📱 {order.customer_phone}
+                        </p>
                         <div className="mt-2 space-y-1">
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             Criado: {formatTimestamp(order.created_at)}
                           </p>
                           {order.payment_confirmed_at && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Pago: {formatTimestamp(order.payment_confirmed_at)}
                             </p>
                           )}
                           {order.ready_at && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Pronto: {formatTimestamp(order.ready_at)}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <Badge variant={paymentStatus.variant} className="mb-2">
+                      <div className="flex sm:flex-col gap-2 sm:text-right">
+                        <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
                           <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
                         </Badge>
-                        <Badge className="bg-success mb-2 block">
+                        <Badge className="bg-success whitespace-nowrap">
                           <CheckCircle className="mr-1 h-3 w-3" /> Pronto
                         </Badge>
-                        <p className="font-bold text-primary">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
                       </div>
@@ -715,10 +790,10 @@ const Cashier = () => {
                       />
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" className="flex-1">
+                          <Button variant="outline" className="flex-1 min-h-[44px] text-base">
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Concluir Pedido
                           </Button>
@@ -757,43 +832,45 @@ const Cashier = () => {
                 const PaymentIcon = paymentStatus.icon;
                 
                 return (
-                  <Card key={order.id} className="p-4 shadow-soft border-l-4 border-l-muted">
-                    <div className="flex justify-between items-start">
+                  <Card key={order.id} className="p-4 sm:p-6 shadow-soft border-l-4 border-l-muted">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg">Pedido #{order.order_number}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customer_phone} • {order.customer_name}
+                        <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{order.order_number}</h3>
+                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
+                          {order.customer_name}
                         </p>
-                        <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          📱 {order.customer_phone}
+                        </p>
                         <div className="mt-2 space-y-1">
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             Criado: {formatTimestamp(order.created_at)}
                           </p>
                           {order.payment_confirmed_at && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Pago: {formatTimestamp(order.payment_confirmed_at)}
                             </p>
                           )}
                           {order.ready_at && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Pronto: {formatTimestamp(order.ready_at)}
                             </p>
                           )}
                           {order.notified_at && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Cliente notificado: {formatTimestamp(order.notified_at)}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <Badge variant={paymentStatus.variant} className="mb-2">
+                      <div className="flex sm:flex-col gap-2 sm:text-right">
+                        <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
                           <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
                         </Badge>
-                        <Badge className="mb-2 block">
+                        <Badge className="whitespace-nowrap">
                           <CheckCircle className="mr-1 h-3 w-3" /> Concluído
                         </Badge>
-                        <p className="font-bold text-primary">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
                       </div>
@@ -849,6 +926,22 @@ const Cashier = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Order Details Dialog */}
+      <OrderDetailsDialog
+        order={selectedOrder}
+        open={isDetailsDialogOpen}
+        onOpenChange={setIsDetailsDialogOpen}
+        onOrderUpdated={loadOrders}
+      />
+
+      {/* Order Edit Dialog */}
+      <OrderEditDialog
+        orderId={editingOrderId}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onOrderUpdated={loadOrders}
+      />
     </div>
   );
 };

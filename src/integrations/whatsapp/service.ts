@@ -1,4 +1,4 @@
-import { whatsappClient } from './client';
+import { evolutionClient } from './evolution-client';
 import { WhatsAppTemplates } from './templates';
 import { OrderData } from './types';
 import { supabase } from '../supabase/client';
@@ -127,8 +127,8 @@ export class WhatsAppService {
   }
 
   async sendOrderConfirmation(orderData: OrderData): Promise<string | null> {
-    if (!whatsappClient.isConfigured()) {
-      console.warn('WhatsApp not configured, attempting fallback notification methods');
+    if (!evolutionClient.isConfigured()) {
+      console.warn('Evolution API not configured, attempting fallback notification methods');
       await this.handleFallbackNotification(orderData, 'confirmation');
       return null;
     }
@@ -136,7 +136,12 @@ export class WhatsAppService {
     return this.retryWithBackoff(async () => {
       try {
         const message = await WhatsAppTemplates.generateOrderConfirmation(orderData);
-        const messageId = await whatsappClient.sendTextMessage(orderData.customerPhone, message);
+        const response = await evolutionClient.sendTextMessage({
+          number: orderData.customerPhone,
+          text: message,
+          delay: 0
+        });
+        const messageId = response.key?.id || 'unknown';
         
         // Log the successful notification
         await this.logNotification(orderData.id, orderData.customerPhone, 'confirmation', message, 'sent', messageId);
@@ -159,8 +164,8 @@ export class WhatsAppService {
   }
 
   async sendReadyNotification(orderData: OrderData): Promise<string | null> {
-    if (!whatsappClient.isConfigured()) {
-      console.warn('WhatsApp not configured, attempting fallback notification methods');
+    if (!evolutionClient.isConfigured()) {
+      console.warn('Evolution API not configured, attempting fallback notification methods');
       await this.handleFallbackNotification(orderData, 'ready');
       return null;
     }
@@ -168,7 +173,12 @@ export class WhatsAppService {
     return this.retryWithBackoff(async () => {
       try {
         const message = await WhatsAppTemplates.generateReadyForPickup(orderData);
-        const messageId = await whatsappClient.sendTextMessage(orderData.customerPhone, message);
+        const response = await evolutionClient.sendTextMessage({
+          number: orderData.customerPhone,
+          text: message,
+          delay: 0
+        });
+        const messageId = response.key?.id || 'unknown';
         
         // Log the successful notification
         await this.logNotification(orderData.id, orderData.customerPhone, 'ready', message, 'sent', messageId);
@@ -191,8 +201,8 @@ export class WhatsAppService {
   }
 
   async sendStatusUpdate(orderData: OrderData, status: string): Promise<string | null> {
-    if (!whatsappClient.isConfigured()) {
-      console.warn('WhatsApp not configured, attempting fallback notification methods');
+    if (!evolutionClient.isConfigured()) {
+      console.warn('Evolution API not configured, attempting fallback notification methods');
       await this.handleFallbackNotification(orderData, 'status_update', status);
       return null;
     }
@@ -200,7 +210,12 @@ export class WhatsAppService {
     return this.retryWithBackoff(async () => {
       try {
         const message = await WhatsAppTemplates.generateStatusUpdate(orderData, status);
-        const messageId = await whatsappClient.sendTextMessage(orderData.customerPhone, message);
+        const response = await evolutionClient.sendTextMessage({
+          number: orderData.customerPhone,
+          text: message,
+          delay: 0
+        });
+        const messageId = response.key?.id || 'unknown';
         
         // Log the successful notification
         await this.logNotification(orderData.id, orderData.customerPhone, 'status_update', message, 'sent', messageId);
@@ -223,8 +238,8 @@ export class WhatsAppService {
   }
 
   async sendCustomMessage(orderData: OrderData, customText: string): Promise<string | null> {
-    if (!whatsappClient.isConfigured()) {
-      console.warn('WhatsApp not configured, attempting fallback notification methods');
+    if (!evolutionClient.isConfigured()) {
+      console.warn('Evolution API not configured, attempting fallback notification methods');
       await this.handleFallbackNotification(orderData, 'custom', customText);
       return null;
     }
@@ -232,7 +247,12 @@ export class WhatsAppService {
     return this.retryWithBackoff(async () => {
       try {
         const message = await WhatsAppTemplates.generateCustomMessage(orderData, customText);
-        const messageId = await whatsappClient.sendTextMessage(orderData.customerPhone, message);
+        const response = await evolutionClient.sendTextMessage({
+          number: orderData.customerPhone,
+          text: message,
+          delay: 0
+        });
+        const messageId = response.key?.id || 'unknown';
         
         // Log the successful notification
         await this.logNotification(orderData.id, orderData.customerPhone, 'custom', message, 'sent', messageId);

@@ -1,6 +1,6 @@
 import { QueuedNotification, NotificationRequest, NotificationResult, ProcessResult, QueueStats, OrderData } from './types';
 import { supabase } from '../supabase/client';
-import { whatsappClient } from './client';
+import { evolutionClient } from './evolution-client';
 import { WhatsAppTemplates } from './templates';
 import { validatePhoneNumber } from './phone-validator';
 import { encryptPhoneNumberSafe, decryptPhoneNumberSafe } from './phone-encryption';
@@ -197,11 +197,14 @@ export class NotificationQueueManager {
       // Decrypt phone number before sending
       const decryptedPhone = await decryptPhoneNumberSafe(notification.customer_phone);
 
-      // Send the message
-      const messageId = await whatsappClient.sendTextMessage(
-        decryptedPhone,
-        notification.message_content
-      );
+      // Send the message using Evolution API
+      const response = await evolutionClient.sendTextMessage({
+        number: decryptedPhone,
+        text: notification.message_content,
+        delay: 0
+      });
+      
+      const messageId = response.key?.id || 'unknown';
 
       // Mark as sent
       await supabase

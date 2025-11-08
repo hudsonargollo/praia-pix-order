@@ -100,20 +100,20 @@ const OrderStatus = () => {
       case "paid":
         return {
           label: "Pagamento Confirmado",
-          description: "Seu pedido foi confirmado e será enviado para a cozinha",
+          description: "Aguardando a cozinha iniciar o preparo do seu pedido",
           icon: <CheckCircle className="h-8 w-8" />,
           color: "bg-green-500",
-          estimatedTime: "15-20 minutos",
-          progress: 50
+          estimatedTime: null,
+          progress: 40
         };
       case "in_preparation":
         return {
-          label: "Em Preparo",
+          label: "Pedido Sendo Preparado",
           description: "Nossos chefs estão preparando seu pedido com carinho",
           icon: <ChefHat className="h-8 w-8" />,
           color: "bg-blue-500",
           estimatedTime: "10-15 minutos",
-          progress: 75
+          progress: 70
         };
       case "ready":
         return {

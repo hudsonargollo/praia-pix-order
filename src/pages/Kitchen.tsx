@@ -7,7 +7,18 @@ import { ConnectionMonitor, useConnectionMonitor } from "@/components/Connection
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, ChefHat, Package, Bell, Wifi, WifiOff } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { CheckCircle, Clock, ChefHat, Package, Bell, Wifi, WifiOff, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Order } from "@/integrations/supabase/realtime";
 
@@ -25,6 +36,7 @@ const Kitchen = () => {
   const [loading, setLoading] = useState(true);
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [processingOrders, setProcessingOrders] = useState<Set<string>>(new Set());
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Real-time order updates
@@ -84,11 +96,11 @@ const Kitchen = () => {
 
   const loadOrders = async () => {
     try {
-      // Load orders that are paid or in progress (paid, in_preparation, ready)
+      // Load orders that are paid or in progress (paid, in_preparation, ready, completed)
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select("*")
-        .in("status", ["paid", "in_preparation", "ready"])
+        .in("status", ["paid", "in_preparation", "ready", "completed"])
         .order("created_at", { ascending: true });
 
       if (ordersError) throw ordersError;
@@ -124,6 +136,7 @@ const Kitchen = () => {
   };
 
   const markAsInPreparation = async (orderId: string) => {
+    setProcessingOrders(prev => new Set([...prev, orderId]));
     try {
       // Get current order status
       const { data: currentOrder } = await supabase
@@ -150,10 +163,17 @@ const Kitchen = () => {
     } catch (error) {
       console.error("Error updating order:", error);
       toast.error("Erro ao atualizar pedido");
+    } finally {
+      setProcessingOrders(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        return newSet;
+      });
     }
   };
 
   const markAsReady = async (orderId: string) => {
+    setProcessingOrders(prev => new Set([...prev, orderId]));
     try {
       // Get current order status
       const { data: currentOrder } = await supabase
@@ -164,13 +184,10 @@ const Kitchen = () => {
 
       const oldStatus = currentOrder?.status;
 
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          status: "ready",
-          ready_at: new Date().toISOString(),
-        })
-        .eq("id", orderId);
+      // Use security definer function to bypass RLS
+      const { error } = await supabase.rpc('mark_order_ready', {
+        _order_id: orderId
+      });
 
       if (error) throw error;
 
@@ -181,17 +198,22 @@ const Kitchen = () => {
     } catch (error) {
       console.error("Error updating order:", error);
       toast.error("Erro ao atualizar pedido");
+    } finally {
+      setProcessingOrders(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        return newSet;
+      });
     }
   };
 
   const markAsCompleted = async (orderId: string) => {
+    setProcessingOrders(prev => new Set([...prev, orderId]));
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          status: "completed",
-        })
-        .eq("id", orderId);
+      // Use security definer function to bypass RLS
+      const { error } = await supabase.rpc('mark_order_completed', {
+        _order_id: orderId
+      });
 
       if (error) throw error;
 
@@ -199,6 +221,31 @@ const Kitchen = () => {
     } catch (error) {
       console.error("Error updating order:", error);
       toast.error("Erro ao finalizar pedido");
+      setProcessingOrders(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        return newSet;
+      });
+    }
+    // Don't remove from processing set - keep button disabled
+  };
+
+  const cancelOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          status: "cancelled",
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      toast.success("Pedido cancelado!");
+      loadOrders(); // Reload to remove from view
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast.error("Erro ao cancelar pedido");
     }
   };
 
@@ -212,7 +259,8 @@ const Kitchen = () => {
     );
   }
 
-  const inProgressOrders = orders.filter((o) => o.status === "paid" || o.status === "in_preparation");
+  const newOrders = orders.filter((o) => o.status === "paid");
+  const inProgressOrders = orders.filter((o) => o.status === "in_preparation");
   const readyOrders = orders.filter((o) => o.status === "ready");
 
   return (
@@ -260,12 +308,68 @@ const Kitchen = () => {
       </div>
 
       <div className="max-w-7xl mx-auto p-4">
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
+          {/* New Orders Column */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Bell className="h-5 w-5 text-blue-500" />
+              <h2 className="text-lg lg:text-xl font-bold">Novos Pedidos</h2>
+              <Badge variant="secondary">{newOrders.length}</Badge>
+            </div>
+            <div className="space-y-4">
+              {newOrders.length === 0 ? (
+                <Card className="p-6 text-center text-muted-foreground">
+                  Nenhum pedido novo
+                </Card>
+              ) : (
+                newOrders.map((order) => (
+                  <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-blue-500">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-bold text-base lg:text-lg">
+                          Pedido #{order.order_number}
+                        </h3>
+                        <p className="text-xs lg:text-sm text-muted-foreground">
+                          {order.customer_name}
+                        </p>
+                      </div>
+                      <Badge className="bg-blue-500">Pago</Badge>
+                    </div>
+                    <div className="space-y-2 mb-4">
+                      {orderItems[order.id]?.map((item) => (
+                        <div key={item.id} className="text-xs lg:text-sm">
+                          <span className="font-semibold">{item.quantity}x</span> {item.item_name}
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      className="w-full"
+                      onClick={() => markAsInPreparation(order.id)}
+                      disabled={processingOrders.has(order.id)}
+                    >
+                      {processingOrders.has(order.id) ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Iniciando...
+                        </>
+                      ) : (
+                        <>
+                          <ChefHat className="mr-2 h-4 w-4" />
+                          Iniciar Preparo
+                        </>
+                      )}
+                    </Button>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+
           {/* In Progress Column */}
           <div>
             <div className="flex items-center gap-2 mb-4">
               <Clock className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-bold">Em Preparo</h2>
+              <h2 className="text-lg lg:text-xl font-bold">Em Preparo</h2>
               <Badge variant="secondary">{inProgressOrders.length}</Badge>
             </div>
             <div className="space-y-4">
@@ -278,44 +382,39 @@ const Kitchen = () => {
                   <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-primary">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-bold text-lg">
+                        <h3 className="font-bold text-base lg:text-lg">
                           Pedido #{order.order_number}
                         </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customer_phone} • {order.customer_name}
+                        <p className="text-xs lg:text-sm text-muted-foreground">
+                          {order.customer_name}
                         </p>
                       </div>
-                      <Badge className={order.status === "paid" ? "bg-blue-500" : "bg-primary"}>
-                        {order.status === "paid" ? "Pago" : "Em Preparo"}
-                      </Badge>
+                      <Badge className="bg-primary">Em Preparo</Badge>
                     </div>
                     <div className="space-y-2 mb-4">
                       {orderItems[order.id]?.map((item) => (
-                        <div key={item.id} className="text-sm">
+                        <div key={item.id} className="text-xs lg:text-sm">
                           <span className="font-semibold">{item.quantity}x</span> {item.item_name}
                         </div>
                       ))}
                     </div>
-                    <div className="space-y-2">
-                      {order.status === "paid" && (
-                        <Button
-                          className="w-full"
-                          onClick={() => markAsInPreparation(order.id)}
-                        >
-                          <ChefHat className="mr-2 h-4 w-4" />
-                          Iniciar Preparo
-                        </Button>
-                      )}
-                      {order.status === "in_preparation" && (
-                        <Button
-                          className="w-full"
-                          onClick={() => markAsReady(order.id)}
-                        >
+                    <Button
+                      className="w-full"
+                      onClick={() => markAsReady(order.id)}
+                      disabled={processingOrders.has(order.id)}
+                    >
+                      {processingOrders.has(order.id) ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Marcando...
+                        </>
+                      ) : (
+                        <>
                           <CheckCircle className="mr-2 h-4 w-4" />
                           Marcar como Pronto
-                        </Button>
+                        </>
                       )}
-                    </div>
+                    </Button>
                   </Card>
                 ))
               )}
@@ -326,7 +425,7 @@ const Kitchen = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <CheckCircle className="h-5 w-5 text-success" />
-              <h2 className="text-xl font-bold">Pronto para Retirada</h2>
+              <h2 className="text-lg lg:text-xl font-bold">Pronto</h2>
               <Badge variant="secondary">{readyOrders.length}</Badge>
             </div>
             <div className="space-y-4">
@@ -339,30 +438,46 @@ const Kitchen = () => {
                   <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-success bg-success/5">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-bold text-lg">
+                        <h3 className="font-bold text-base lg:text-lg">
                           Pedido #{order.order_number}
                         </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customer_phone} • {order.customer_name}
+                        <p className="text-xs lg:text-sm text-muted-foreground">
+                          {order.customer_name}
                         </p>
                       </div>
                       <Badge className="bg-success">Pronto</Badge>
                     </div>
                     <div className="space-y-2 mb-4">
                       {orderItems[order.id]?.map((item) => (
-                        <div key={item.id} className="text-sm">
+                        <div key={item.id} className="text-xs lg:text-sm">
                           <span className="font-semibold">{item.quantity}x</span> {item.item_name}
                         </div>
                       ))}
                     </div>
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => markAsCompleted(order.id)}
-                    >
-                      <Package className="mr-2 h-4 w-4" />
-                      Finalizar Pedido
-                    </Button>
+                    {order.status === 'completed' || processingOrders.has(order.id) ? (
+                      <div className="w-full p-3 bg-green-100 border-2 border-green-500 rounded text-center font-bold text-green-700 text-sm">
+                        ✓ FINALIZADO
+                      </div>
+                    ) : (
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => markAsCompleted(order.id)}
+                        disabled={processingOrders.has(order.id)}
+                      >
+                        {processingOrders.has(order.id) ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Finalizando...
+                          </>
+                        ) : (
+                          <>
+                            <Package className="mr-2 h-4 w-4" />
+                            Finalizar
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </Card>
                 ))
               )}

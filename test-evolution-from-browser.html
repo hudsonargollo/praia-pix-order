@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Evolution API from Browser</title>
+</head>
+<body>
+    <h1>Test Evolution API</h1>
+    <button onclick="testAPI()">Test Connection</button>
+    <button onclick="testSendMessage()">Send Test Message</button>
+    <pre id="result"></pre>
+
+    <script>
+        const API_URL = 'http://wppapi.clubemkt.digital';
+        const API_KEY = 'DD451E404240-4C45-AF35-BFCA6A976927';
+        const INSTANCE = 'cocooo';
+
+        function log(message) {
+            document.getElementById('result').textContent += message + '\n';
+        }
+
+        async function testAPI() {
+            log('Testing Evolution API connection...');
+            try {
+                const response = await fetch(`${API_URL}/instance/connectionState/${INSTANCE}`, {
+                    headers: {
+                        'apikey': API_KEY
+                    }
+                });
+                const data = await response.json();
+                log('✅ Success: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                log('❌ Error: ' + error.message);
+                log('This might be a CORS issue - Evolution API needs to allow browser requests');
+            }
+        }
+
+        async function testSendMessage() {
+            const phone = prompt('Enter phone number (e.g., 5573999548537):');
+            if (!phone) return;
+
+            log(`Sending test message to ${phone}...`);
+            try {
+                const response = await fetch(`${API_URL}/message/sendText/${INSTANCE}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        number: phone,
+                        text: 'Teste do navegador - Evolution API',
+                        delay: 0
+                    })
+                });
+                const data = await response.json();
+                log('✅ Message sent: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                log('❌ Error: ' + error.message);
+                log('CORS Error - Evolution API is blocking browser requests!');
+                log('Solution: Configure CORS on Evolution API server');
+            }
+        }
+    </script>
+</body>
+</html>

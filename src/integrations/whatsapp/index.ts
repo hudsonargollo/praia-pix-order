@@ -1,14 +1,25 @@
-export { whatsappClient } from './client';
+/**
+ * WhatsApp Integration - Main Export File
+ * Exports all public APIs for WhatsApp notifications
+ */
+
+export { evolutionClient } from './evolution-client';
+export { notificationTriggers } from './notification-triggers';
+export { queueManager } from './queue-manager';
 export { whatsappService } from './service';
-export { whatsappRecoveryService } from './recovery';
 export { WhatsAppTemplates } from './templates';
-export { templateManager, MessageTemplateManager } from './template-manager';
-export { queueManager, NotificationQueueManager } from './queue-manager';
-export { notificationTriggers, NotificationTriggerService } from './notification-triggers';
-export { validatePhoneNumber, formatPhoneForDisplay, isBrazilianMobile, extractAreaCode, validatePhoneNumbers } from './phone-validator';
-export { checkWhatsAppExists, checkWhatsAppExistsBatch, mockCheckWhatsAppExists } from './account-checker';
-export { encryptPhoneNumber, decryptPhoneNumber, encryptPhoneNumberSafe, decryptPhoneNumberSafe, isEncryptionConfigured, generateEncryptionKey } from './phone-encryption';
-export { optOutManager, OptOutManager } from './opt-out-manager';
-export { complianceChecker, WhatsAppComplianceChecker } from './compliance';
-export * from './types';
-export * from './monitoring';
+export { validatePhoneNumber } from './phone-validator';
+export { optOutManager } from './opt-out-manager';
+export { complianceChecker } from './compliance';
+export { deliveryMonitor } from './delivery-monitor';
+export { errorLogger } from './error-logger';
+
+// Export types
+export type {
+  OrderData,
+  NotificationRequest,
+  QueuedNotification,
+  NotificationResult,
+  ProcessResult,
+  QueueStats,
+} from './types';

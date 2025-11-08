@@ -11,8 +11,8 @@ import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
 import OrderStatus from "./pages/OrderStatus";
 import OrderLookup from "./pages/OrderLookup";
-import Kitchen from "./pages/Kitchen";
 import Cashier from "./pages/Cashier";
+import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -22,6 +22,7 @@ import PaymentDebug from "./pages/PaymentDebug";
 import PaymentTest from "./pages/PaymentTest";
 import WhatsAppAdmin from "./pages/WhatsAppAdmin";
 import Monitoring from "./pages/Monitoring";
+import AdminProducts from "./pages/AdminProducts";
 
 const queryClient = new QueryClient();
 
@@ -49,7 +50,7 @@ const App = () => (
             path="/kitchen"
             element={
               <ProtectedRoute requiredRole="kitchen">
-                <Kitchen />
+                <Cashier />
               </ProtectedRoute>
             }
           />
@@ -58,6 +59,14 @@ const App = () => (
             element={
               <ProtectedRoute requiredRole="cashier">
                 <Cashier />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute requiredRole="cashier">
+                <Reports />
               </ProtectedRoute>
             }
           />
@@ -74,6 +83,14 @@ const App = () => (
             element={
               <ProtectedRoute requiredRole="cashier">
                 <Monitoring />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/products"
+            element={
+              <ProtectedRoute requiredRole="cashier">
+                <AdminProducts />
               </ProtectedRoute>
             }
           />

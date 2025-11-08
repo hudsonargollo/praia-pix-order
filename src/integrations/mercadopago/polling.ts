@@ -161,16 +161,14 @@ export class PaymentPollingService {
    */
   private async handlePaymentApproved(orderId: string, paymentId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          status: 'in_preparation',
-          payment_confirmed_at: new Date().toISOString()
-        })
-        .eq('id', orderId);
+      // Use the security definer function to bypass RLS
+      const { data, error } = await supabase.rpc('confirm_order_payment', {
+        _order_id: orderId,
+        _payment_id: paymentId
+      });
 
       if (error) {
-        console.error('Error updating order status to in_preparation:', error);
+        console.error('Error confirming order payment:', error);
         throw error;
       }
 
