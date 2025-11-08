@@ -136,6 +136,7 @@ const Cashier = () => {
       const { data, error } = await supabase
         .from("orders")
         .select("*")
+        .is("deleted_at", null) // Only load non-deleted orders
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -233,6 +234,45 @@ const Cashier = () => {
     }
   };
 
+  const cancelOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          status: "cancelled",
+          cancelled_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      toast.success("Pedido cancelado!");
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast.error("Erro ao cancelar pedido");
+    }
+  };
+
+  const softDeleteOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          deleted_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setOrders(orders.filter(o => o.id !== orderId));
+      toast.success("Pedido removido!");
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast.error("Erro ao remover pedido");
+    }
+  };
+
   const notifyCustomer = async (orderId: string) => {
     try {
       // Trigger WhatsApp ready notification
@@ -268,6 +308,7 @@ const Cashier = () => {
   const inProgressOrders = orders.filter((o) => o.status === "paid" || o.status === "in_preparation");
   const readyOrders = orders.filter((o) => o.status === "ready");
   const completedOrders = orders.filter((o) => o.status === "completed");
+  const cancelledOrders = orders.filter((o) => o.status === "cancelled" || o.status === "expired");
 
   return (
     <div className="min-h-screen bg-background">
@@ -357,12 +398,12 @@ const Cashier = () => {
         </div>
 
         <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="all">
               Todos <Badge className="ml-2">{orders.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="pending">
-              Aguardando <Badge className="ml-2">{pendingOrders.length}</Badge>
+              Aguardando Pagamento <Badge className="ml-2">{pendingOrders.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="progress">
               Em Preparo <Badge className="ml-2">{inProgressOrders.length}</Badge>
@@ -372,6 +413,9 @@ const Cashier = () => {
             </TabsTrigger>
             <TabsTrigger value="completed">
               Concluído <Badge className="ml-2">{completedOrders.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="cancelled">
+              Cancelados <Badge className="ml-2">{cancelledOrders.length}</Badge>
             </TabsTrigger>
           </TabsList>
 
@@ -750,6 +794,50 @@ const Cashier = () => {
                           <CheckCircle className="mr-1 h-3 w-3" /> Concluído
                         </Badge>
                         <p className="font-bold text-primary">
+                          R$ {Number(order.total_amount).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })
+            )}
+          </TabsContent>
+
+          <TabsContent value="cancelled" className="space-y-4">
+            {cancelledOrders.length === 0 ? (
+              <Card className="p-6 text-center text-muted-foreground">
+                Nenhum pedido cancelado
+              </Card>
+            ) : (
+              cancelledOrders.map((order) => {
+                const paymentStatus = getPaymentStatus(order);
+                const PaymentIcon = paymentStatus.icon;
+                
+                return (
+                  <Card key={order.id} className="p-4 shadow-soft border-l-4 border-l-destructive opacity-60">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg">Pedido #{order.order_number}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {order.customer_name} • {order.customer_phone}
+                        </p>
+                        <div className="mt-2 space-y-1">
+                          <p className="text-xs text-muted-foreground">
+                            Criado: {formatTimestamp(order.created_at)}
+                          </p>
+                          {order.cancelled_at && (
+                            <p className="text-xs text-muted-foreground">
+                              Cancelado: {formatTimestamp(order.cancelled_at)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="destructive" className="mb-2">
+                          <AlertCircle className="mr-1 h-3 w-3" /> {order.status === 'expired' ? 'Expirado' : 'Cancelado'}
+                        </Badge>
+                        <p className="font-bold text-muted-foreground">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
                       </div>
