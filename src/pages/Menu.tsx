@@ -29,6 +29,7 @@ const Menu = () => {
   const {
     state: cartState,
     addItem,
+    removeItem,
     getItemQuantity,
     getTotalItems,
     getTotalPrice,
@@ -191,17 +192,7 @@ const Menu = () => {
                           {quantity > 0 ? (
                             <div className="flex items-center gap-2">
                               <button
-                                onClick={() => {
-                                  const currentItem = cartState.items.find(i => i.id === item.id);
-                                  if (currentItem && currentItem.quantity > 1) {
-                                    // Remove one
-                                    addItem({ ...item, quantity: -1 } as any);
-                                  } else {
-                                    // Remove completely
-                                    const newItems = cartState.items.filter(i => i.id !== item.id);
-                                    cartState.items = newItems;
-                                  }
-                                }}
+                                onClick={() => removeItem(item.id)}
                                 className="w-8 h-8 rounded-full bg-purple-900 text-white flex items-center justify-center font-bold"
                               >
                                 -
