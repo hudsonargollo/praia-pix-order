@@ -328,8 +328,8 @@ const Cashier = () => {
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold">Caixa & Cozinha</h1>
-              <p className="text-white/90 mt-1 text-sm sm:text-base">Painel Unificado de Controle</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">Gerente</h1>
+              <p className="text-white/90 mt-1 text-sm sm:text-base">Painel de Gerenciamento</p>
             </div>
             <div className="flex items-center gap-2">
               {connectionStatus === 'connected' ? (
@@ -434,8 +434,18 @@ const Cashier = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="progress" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 mb-6 h-auto">
+        <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-6 h-auto">
+            <TabsTrigger value="pending" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
+              <div className="flex items-center gap-1">
+                <Timer className="h-4 w-4" />
+                <span className="hidden sm:inline">Aguardando Pagamento</span>
+                <span className="sm:hidden">Aguard.</span>
+              </div>
+              <Badge variant={pendingOrders.length > 0 ? "destructive" : "secondary"} className="text-xs">
+                {pendingOrders.length}
+              </Badge>
+            </TabsTrigger>
             <TabsTrigger value="progress" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
               <div className="flex items-center gap-1">
                 <ChefHat className="h-4 w-4" />
@@ -449,20 +459,11 @@ const Cashier = () => {
             <TabsTrigger value="ready" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
               <div className="flex items-center gap-1">
                 <Package className="h-4 w-4" />
-                <span>Pronto</span>
+                <span className="hidden sm:inline">Pronto para Retirada</span>
+                <span className="sm:hidden">Pronto</span>
               </div>
               <Badge variant={readyOrders.length > 0 ? "default" : "secondary"} className="text-xs">
                 {readyOrders.length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
-              <div className="flex items-center gap-1">
-                <Timer className="h-4 w-4" />
-                <span className="hidden sm:inline">Aguardando</span>
-                <span className="sm:hidden">Aguard.</span>
-              </div>
-              <Badge variant={pendingOrders.length > 0 ? "destructive" : "secondary"} className="text-xs">
-                {pendingOrders.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="completed" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
@@ -473,12 +474,6 @@ const Cashier = () => {
               </div>
               <Badge variant="secondary" className="text-xs">{completedOrders.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="all" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
-              <div className="flex items-center gap-1">
-                <span>Todos</span>
-              </div>
-              <Badge variant="outline" className="text-xs">{orders.length}</Badge>
-            </TabsTrigger>
             <TabsTrigger value="cancelled" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
               <div className="flex items-center gap-1">
                 <AlertCircle className="h-4 w-4" />
@@ -488,114 +483,6 @@ const Cashier = () => {
               <Badge variant="secondary" className="text-xs">{cancelledOrders.length}</Badge>
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="all" className="space-y-4">
-            {orders.length === 0 ? (
-              <Card className="p-6 text-center text-muted-foreground">
-                Nenhum pedido encontrado
-              </Card>
-            ) : (
-              orders.map((order) => {
-                const paymentStatus = getPaymentStatus(order);
-                const PaymentIcon = paymentStatus.icon;
-                const orderNotificationHistory = notificationHistory.get(order.id);
-                
-                return (
-                  <Card key={order.id} className="p-4 sm:p-6 shadow-soft">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{order.order_number}</h3>
-                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
-                          {order.customer_name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          📱 {order.customer_phone}
-                        </p>
-                        <div className="mt-3 space-y-1">
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            Criado: {formatTimestamp(order.created_at)}
-                          </p>
-                          {order.payment_confirmed_at && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Pago: {formatTimestamp(order.payment_confirmed_at)}
-                            </p>
-                          )}
-                          {order.ready_at && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Pronto: {formatTimestamp(order.ready_at)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex sm:flex-col gap-2 sm:text-right">
-                        <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
-                          <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
-                        </Badge>
-                        <Badge className="whitespace-nowrap" variant={
-                          order.status === 'completed' ? 'default' : 
-                          order.status === 'ready' ? 'default' : 
-                          order.status === 'in_preparation' || order.status === 'paid' ? 'secondary' : 
-                          'outline'
-                        }>
-                          {order.status === 'pending_payment' && 'Aguardando Pagamento'}
-                          {order.status === 'paid' && 'Pago'}
-                          {order.status === 'in_preparation' && 'Em Preparo'}
-                          {order.status === 'ready' && 'Pronto'}
-                          {order.status === 'completed' && 'Concluído'}
-                        </Badge>
-                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
-                          R$ {Number(order.total_amount).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* View Details and Edit Buttons */}
-                    <div className="border-t pt-3 mt-3">
-                      <div className="flex gap-2 mb-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setIsDetailsDialogOpen(true);
-                          }}
-                          className="flex-1"
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Ver Detalhes
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingOrderId(order.id);
-                            setIsEditDialogOpen(true);
-                          }}
-                          className="flex-1"
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar Pedido
-                        </Button>
-                      </div>
-                      
-                      {/* Show notification controls for paid and ready orders */}
-                      {(order.status === 'paid' || order.status === 'in_preparation' || order.status === 'ready') && (
-                        <NotificationControls
-                          orderId={order.id}
-                          orderNumber={order.order_number}
-                          customerPhone={order.customer_phone}
-                          customerName={order.customer_name}
-                          orderStatus={order.status}
-                          notificationHistory={orderNotificationHistory}
-                          onNotificationSent={refreshNotifications}
-                        />
-                      )}
-                    </div>
-                  </Card>
-                );
-              })
-            )}
-          </TabsContent>
 
           <TabsContent value="pending" className="space-y-4">
             {pendingOrders.length === 0 ? (

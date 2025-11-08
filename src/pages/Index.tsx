@@ -49,7 +49,7 @@ const Index = () => {
               className="h-auto py-8 flex flex-col bg-yellow-500 text-purple-900 hover:bg-yellow-400 shadow-lg hover:shadow-xl transition-all rounded-2xl"
             >
               <DollarSign className="h-10 w-10 mb-3" />
-              <span className="font-bold text-base">Painel Caixa</span>
+              <span className="font-bold text-base">Gerente</span>
             </Button>
           </div>
         </div>
@@ -84,9 +84,9 @@ const Index = () => {
               <div className="bg-yellow-500 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <DollarSign className="h-10 w-10 text-purple-900" />
               </div>
-              <h3 className="font-bold text-xl mb-3 text-purple-900">Caixa</h3>
+              <h3 className="font-bold text-xl mb-3 text-purple-900">Gerente</h3>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Monitora todos os pedidos e notifica clientes quando estão prontos para retirada
+                Gerencia todos os pedidos, edita itens e acompanha relatórios de vendas
               </p>
             </Card>
           </div>
