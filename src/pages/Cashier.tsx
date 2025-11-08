@@ -325,57 +325,68 @@ const Cashier = () => {
       <ConnectionMonitor />
       {/* Header */}
       <div className="bg-gradient-sunset text-white p-4 sm:p-6 shadow-medium">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold">Caixa & Cozinha</h1>
-            <p className="text-white/90 mt-1 text-sm sm:text-base">Painel Unificado de Controle</p>
-            <div className="flex gap-2 mt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.location.href = '/admin/products'}
-                className="text-white hover:bg-white/10 text-xs"
-              >
-                Gerenciar Produtos →
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.location.href = '/reports'}
-                className="text-white hover:bg-white/10 text-xs"
-              >
-                <BarChart3 className="mr-1 h-3 w-3" />
-                Relatórios →
-              </Button>
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold">Caixa & Cozinha</h1>
+              <p className="text-white/90 mt-1 text-sm sm:text-base">Painel Unificado de Controle</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {connectionStatus === 'connected' ? (
+                <div className="flex items-center gap-1 text-green-200">
+                  <Wifi className="h-4 w-4" />
+                  <span className="text-xs sm:text-sm">Online</span>
+                </div>
+              ) : connectionStatus === 'connecting' ? (
+                <div className="flex items-center gap-1 text-yellow-200">
+                  <Wifi className="h-4 w-4 animate-pulse" />
+                  <span className="text-xs sm:text-sm hidden sm:inline">Conectando...</span>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 text-red-200">
+                  <div className="flex items-center gap-1">
+                    <WifiOff className="h-4 w-4" />
+                    <span className="text-xs sm:text-sm">Offline</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={reconnect}
+                    className="text-xs text-white border-white/20 hover:bg-white/10 min-h-[32px]"
+                  >
+                    Reconectar
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {connectionStatus === 'connected' ? (
-              <div className="flex items-center gap-1 text-green-200">
-                <Wifi className="h-4 w-4" />
-                <span className="text-xs sm:text-sm">Online</span>
-              </div>
-            ) : connectionStatus === 'connecting' ? (
-              <div className="flex items-center gap-1 text-yellow-200">
-                <Wifi className="h-4 w-4 animate-pulse" />
-                <span className="text-xs sm:text-sm hidden sm:inline">Conectando...</span>
-              </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 text-red-200">
-                <div className="flex items-center gap-1">
-                  <WifiOff className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm">Offline</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={reconnect}
-                  className="text-xs text-white border-white/20 hover:bg-white/10 min-h-[32px]"
-                >
-                  Reconectar
-                </Button>
-              </div>
-            )}
+          
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => window.location.href = '/reports'}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+              size="sm"
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Relatórios
+            </Button>
+            <Button
+              onClick={() => window.location.href = '/admin/products'}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+              size="sm"
+            >
+              <Package className="mr-2 h-4 w-4" />
+              Gerenciar Produtos
+            </Button>
+            <Button
+              onClick={() => window.location.href = '/whatsapp-admin'}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+              size="sm"
+            >
+              <Bell className="mr-2 h-4 w-4" />
+              WhatsApp
+            </Button>
           </div>
         </div>
       </div>
@@ -383,7 +394,7 @@ const Cashier = () => {
       <div className="max-w-7xl mx-auto p-3 sm:p-4">
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <Card className="p-3 sm:p-4">
+          <Card className="p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => (document.querySelector('[value="pending"]') as HTMLElement)?.click()}>
             <div className="flex items-center space-x-2">
               <Timer className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 flex-shrink-0" />
               <div className="min-w-0">
@@ -392,7 +403,7 @@ const Cashier = () => {
               </div>
             </div>
           </Card>
-          <Card className="p-3 sm:p-4">
+          <Card className="p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => (document.querySelector('[value="progress"]') as HTMLElement)?.click()}>
             <div className="flex items-center space-x-2">
               <ChefHat className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
               <div className="min-w-0">
@@ -401,7 +412,7 @@ const Cashier = () => {
               </div>
             </div>
           </Card>
-          <Card className="p-3 sm:p-4">
+          <Card className="p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => (document.querySelector('[value="ready"]') as HTMLElement)?.click()}>
             <div className="flex items-center space-x-2">
               <Package className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
               <div className="min-w-0">
@@ -416,44 +427,65 @@ const Cashier = () => {
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">Total Hoje</p>
                 <p className="text-base sm:text-xl font-bold truncate">
-                  R$ {orders.filter(o => o.payment_confirmed_at).reduce((sum, o) => sum + Number(o.total_amount), 0).toFixed(2)}
+                  R$ {orders.filter(o => o.payment_confirmed_at && new Date(o.created_at).toDateString() === new Date().toDateString()).reduce((sum, o) => sum + Number(o.total_amount), 0).toFixed(2)}
                 </p>
               </div>
             </div>
           </Card>
         </div>
 
-        <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-6">
-            <TabsTrigger value="all" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">Todos</span>
-              <span className="sm:hidden">Todos</span>
-              <Badge className="ml-1 sm:ml-2">{orders.length}</Badge>
+        <Tabs defaultValue="progress" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 mb-6 h-auto">
+            <TabsTrigger value="progress" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
+              <div className="flex items-center gap-1">
+                <ChefHat className="h-4 w-4" />
+                <span className="hidden sm:inline">Em Preparo</span>
+                <span className="sm:hidden">Preparo</span>
+              </div>
+              <Badge variant={inProgressOrders.length > 0 ? "default" : "secondary"} className="text-xs">
+                {inProgressOrders.length}
+              </Badge>
             </TabsTrigger>
-            <TabsTrigger value="pending" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">Aguardando Pagamento</span>
-              <span className="sm:hidden">Aguard.</span>
-              <Badge className="ml-1 sm:ml-2">{pendingOrders.length}</Badge>
+            <TabsTrigger value="ready" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
+              <div className="flex items-center gap-1">
+                <Package className="h-4 w-4" />
+                <span>Pronto</span>
+              </div>
+              <Badge variant={readyOrders.length > 0 ? "default" : "secondary"} className="text-xs">
+                {readyOrders.length}
+              </Badge>
             </TabsTrigger>
-            <TabsTrigger value="progress" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">Em Preparo</span>
-              <span className="sm:hidden">Preparo</span>
-              <Badge className="ml-1 sm:ml-2">{inProgressOrders.length}</Badge>
+            <TabsTrigger value="pending" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
+              <div className="flex items-center gap-1">
+                <Timer className="h-4 w-4" />
+                <span className="hidden sm:inline">Aguardando</span>
+                <span className="sm:hidden">Aguard.</span>
+              </div>
+              <Badge variant={pendingOrders.length > 0 ? "destructive" : "secondary"} className="text-xs">
+                {pendingOrders.length}
+              </Badge>
             </TabsTrigger>
-            <TabsTrigger value="ready" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">Pronto</span>
-              <span className="sm:hidden">Pronto</span>
-              <Badge className="ml-1 sm:ml-2">{readyOrders.length}</Badge>
+            <TabsTrigger value="completed" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
+              <div className="flex items-center gap-1">
+                <CheckCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Concluído</span>
+                <span className="sm:hidden">Concl.</span>
+              </div>
+              <Badge variant="secondary" className="text-xs">{completedOrders.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="completed" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">Concluído</span>
-              <span className="sm:hidden">Concl.</span>
-              <Badge className="ml-1 sm:ml-2">{completedOrders.length}</Badge>
+            <TabsTrigger value="all" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
+              <div className="flex items-center gap-1">
+                <span>Todos</span>
+              </div>
+              <Badge variant="outline" className="text-xs">{orders.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="cancelled" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">Cancelados</span>
-              <span className="sm:hidden">Canc.</span>
-              <Badge className="ml-1 sm:ml-2">{cancelledOrders.length}</Badge>
+            <TabsTrigger value="cancelled" className="text-xs sm:text-sm py-3 flex-col sm:flex-row gap-1">
+              <div className="flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Cancelados</span>
+                <span className="sm:hidden">Canc.</span>
+              </div>
+              <Badge variant="secondary" className="text-xs">{cancelledOrders.length}</Badge>
             </TabsTrigger>
           </TabsList>
 
