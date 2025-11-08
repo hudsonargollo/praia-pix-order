@@ -13,6 +13,7 @@ import OrderStatus from "./pages/OrderStatus";
 import OrderLookup from "./pages/OrderLookup";
 import Cashier from "./pages/Cashier";
 import Reports from "./pages/Reports";
+import Waiter from "./pages/Waiter";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/order/:orderId" element={<OrderStatus />} />
           <Route path="/order-lookup" element={<OrderLookup />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/waiter" element={<Waiter />} />
           <Route
             path="/kitchen"
             element={

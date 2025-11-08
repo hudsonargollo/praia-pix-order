@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Users, ChefHat, DollarSign, QrCode, Search } from "lucide-react";
+import { Users, ChefHat, DollarSign, QrCode, Search, UserCheck } from "lucide-react";
 import logo from "@/assets/coco-loko-logo.png";
 
 const Index = () => {
@@ -37,11 +37,11 @@ const Index = () => {
             </Button>
             <Button
               size="lg"
-              onClick={() => navigate("/kitchen")}
+              onClick={() => navigate("/waiter")}
               className="h-auto py-8 flex flex-col bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl transition-all rounded-2xl"
             >
-              <ChefHat className="h-10 w-10 mb-3" />
-              <span className="font-bold text-base">Painel Cozinha</span>
+              <UserCheck className="h-10 w-10 mb-3" />
+              <span className="font-bold text-base">Garçom</span>
             </Button>
             <Button
               size="lg"
@@ -72,11 +72,11 @@ const Index = () => {
 
             <Card className="p-8 text-center shadow-lg hover:shadow-xl transition-all border-2 border-green-100 rounded-2xl">
               <div className="bg-green-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ChefHat className="h-10 w-10 text-white" />
+                <UserCheck className="h-10 w-10 text-white" />
               </div>
-              <h3 className="font-bold text-xl mb-3 text-purple-900">Cozinha</h3>
+              <h3 className="font-bold text-xl mb-3 text-purple-900">Garçom</h3>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Visualiza pedidos pagos em tempo real e marca como pronto quando finalizado
+                Gerencia mesas, atende clientes e acompanha pedidos em tempo real
               </p>
             </Card>
 
