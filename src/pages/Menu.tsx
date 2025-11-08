@@ -85,7 +85,7 @@ const Menu = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center bg-gradient-acai md:bg-gradient-acai">
+      <div className="min-h-screen relative flex items-center justify-center bg-gradient-acai md:bg-[#FDD835]">
         {/* Background Image - Mobile Only */}
         <div 
           className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat"
@@ -101,7 +101,7 @@ const Menu = () => {
   }
 
   return (
-    <div className="min-h-screen relative pb-24 bg-gradient-acai md:bg-gradient-acai">
+    <div className="min-h-screen relative pb-24 bg-gradient-acai md:bg-[#FDD835]">
       {/* Background Image - Mobile Only */}
       <div 
         className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat"
@@ -111,7 +111,7 @@ const Menu = () => {
       />
 
       {/* Logo Header - Desktop Only */}
-      <div className="hidden md:block relative z-10 bg-gradient-acai py-6">
+      <div className="hidden md:block relative z-10 bg-[#FDD835] py-6">
         <div className="max-w-2xl mx-auto px-4">
           <img 
             src={logo} 
