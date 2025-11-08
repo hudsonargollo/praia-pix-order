@@ -164,18 +164,18 @@ export class PaymentPollingService {
       const { error } = await supabase
         .from('orders')
         .update({
-          status: 'paid',
+          status: 'in_preparation',
           payment_confirmed_at: new Date().toISOString()
         })
         .eq('id', orderId);
 
       if (error) {
-        console.error('Error updating order status to paid:', error);
+        console.error('Error updating order status to in_preparation:', error);
         throw error;
       }
 
-      console.log('Payment approved via polling:', { orderId, paymentId });
-      toast.success('Pagamento aprovado!');
+      console.log('Payment approved via polling, sent to kitchen:', { orderId, paymentId });
+      toast.success('Pagamento aprovado! Pedido enviado para a cozinha.');
 
       // Trigger WhatsApp payment confirmation notification
       await notificationTriggers.onPaymentConfirmed(orderId);
