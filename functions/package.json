@@ -1,0 +1,11 @@
+{
+  "name": "coco-loko-functions",
+  "version": "1.0.0",
+  "description": "Cloudflare Functions for Coco Loko Açaiteria",
+  "type": "module",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.21",
+    "@supabase/supabase-js": "^2.80.0",
+    "@hapi/boom": "^10.0.1"
+  }
+}

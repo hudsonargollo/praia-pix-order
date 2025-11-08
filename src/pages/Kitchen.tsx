@@ -1,20 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { notificationTriggers } from "@/integrations/whatsapp";
+import { useKitchenOrders } from "@/hooks/useRealtimeOrders";
+import { RealtimeNotifications, notificationUtils } from "@/components/RealtimeNotifications";
+import { ConnectionMonitor, useConnectionMonitor } from "@/components/ConnectionMonitor";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock, ChefHat, Package, Bell, Wifi, WifiOff } from "lucide-react";
 import { toast } from "sonner";
+import type { Order } from "@/integrations/supabase/realtime";
 
-interface Order {
-  id: string;
-  order_number: number;
-  customer_name: string;
-  table_number: string;
-  status: string;
-  total_amount: number;
-  created_at: string;
-}
+// Order interface is now imported from realtime service
 
 interface OrderItem {
   id: string;
@@ -26,38 +23,72 @@ const Kitchen = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [loading, setLoading] = useState(true);
+  const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Real-time order updates
+  const handleNewPaidOrder = useCallback((order: Order) => {
+    console.log('New paid order received:', order);
+    setNewOrderIds(prev => new Set([...prev, order.id]));
+    
+    // Show notification
+    notificationUtils.paymentConfirmed(order.order_number, order.customer_phone);
+    
+    // Reload orders to get the latest data with items
+    loadOrders();
+  }, []);
+
+  const handleOrderStatusChange = useCallback((order: Order) => {
+    console.log('Order status changed:', order);
+    
+    // Update the order in the current list
+    setOrders(prevOrders => 
+      prevOrders.map(o => o.id === order.id ? order : o)
+    );
+    
+    // Show appropriate notification based on status
+    switch (order.status) {
+      case 'in_preparation':
+        notificationUtils.orderInPreparation(order.order_number, order.customer_phone);
+        break;
+      case 'ready':
+        notificationUtils.orderReady(order.order_number, order.customer_phone);
+        break;
+      case 'completed':
+        notificationUtils.orderCompleted(order.order_number, order.customer_phone);
+        break;
+    }
+    
+    // Remove from new orders set if status changed from paid
+    if (order.status !== 'paid') {
+      setNewOrderIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(order.id);
+        return newSet;
+      });
+    }
+  }, []);
+
+  const { connectionStatus, reconnect } = useConnectionMonitor();
+  
+  useKitchenOrders({
+    onNewPaidOrder: handleNewPaidOrder,
+    onOrderStatusChange: handleOrderStatusChange,
+    enabled: true
+  });
 
   useEffect(() => {
     loadOrders();
-
-    // Subscribe to order changes
-    const channel = supabase
-      .channel('kitchen-orders')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders',
-        },
-        () => {
-          loadOrders();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const loadOrders = async () => {
     try {
-      // Load orders that are paid
+      // Load orders that are paid or in progress (paid, in_preparation, ready)
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select("*")
-        .in("status", ["payment_confirmed", "ready"])
+        .in("status", ["paid", "in_preparation", "ready"])
         .order("created_at", { ascending: true });
 
       if (ordersError) throw ordersError;
@@ -92,8 +123,47 @@ const Kitchen = () => {
     }
   };
 
+  const markAsInPreparation = async (orderId: string) => {
+    try {
+      // Get current order status
+      const { data: currentOrder } = await supabase
+        .from("orders")
+        .select("status")
+        .eq("id", orderId)
+        .single();
+
+      const oldStatus = currentOrder?.status;
+
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          status: "in_preparation",
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Trigger WhatsApp preparing notification
+      await notificationTriggers.onOrderStatusChange(orderId, "in_preparation", oldStatus);
+
+      toast.success("Pedido marcado como em preparo!");
+    } catch (error) {
+      console.error("Error updating order:", error);
+      toast.error("Erro ao atualizar pedido");
+    }
+  };
+
   const markAsReady = async (orderId: string) => {
     try {
+      // Get current order status
+      const { data: currentOrder } = await supabase
+        .from("orders")
+        .select("status")
+        .eq("id", orderId)
+        .single();
+
+      const oldStatus = currentOrder?.status;
+
       const { error } = await supabase
         .from("orders")
         .update({
@@ -104,12 +174,35 @@ const Kitchen = () => {
 
       if (error) throw error;
 
+      // Trigger WhatsApp ready notification
+      await notificationTriggers.onOrderStatusChange(orderId, "ready", oldStatus);
+
       toast.success("Pedido marcado como pronto!");
     } catch (error) {
       console.error("Error updating order:", error);
       toast.error("Erro ao atualizar pedido");
     }
   };
+
+  const markAsCompleted = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          status: "completed",
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      toast.success("Pedido finalizado!");
+    } catch (error) {
+      console.error("Error updating order:", error);
+      toast.error("Erro ao finalizar pedido");
+    }
+  };
+
+
 
   if (loading) {
     return (
@@ -119,15 +212,51 @@ const Kitchen = () => {
     );
   }
 
-  const inProgressOrders = orders.filter((o) => o.status === "payment_confirmed");
+  const inProgressOrders = orders.filter((o) => o.status === "paid" || o.status === "in_preparation");
   const readyOrders = orders.filter((o) => o.status === "ready");
 
   return (
     <div className="min-h-screen bg-background">
+      <RealtimeNotifications 
+        enabled={true}
+        soundEnabled={soundEnabled}
+        showToasts={true}
+      />
+      <ConnectionMonitor />
       {/* Header */}
       <div className="bg-gradient-acai text-white p-6 shadow-medium">
-        <h1 className="text-3xl font-bold">Cozinha</h1>
-        <p className="text-white/90 mt-1">Sistema de Gerenciamento de Pedidos</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold">Cozinha</h1>
+            <p className="text-white/90 mt-1">Sistema de Gerenciamento de Pedidos</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {connectionStatus === 'connected' ? (
+              <div className="flex items-center gap-1 text-green-200">
+                <Wifi className="h-4 w-4" />
+                <span className="text-sm">Online</span>
+              </div>
+            ) : connectionStatus === 'connecting' ? (
+              <div className="flex items-center gap-1 text-yellow-200">
+                <Wifi className="h-4 w-4 animate-pulse" />
+                <span className="text-sm">Conectando...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-red-200">
+                <WifiOff className="h-4 w-4" />
+                <span className="text-sm">Offline</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={reconnect}
+                  className="ml-2 text-white border-white/20 hover:bg-white/10"
+                >
+                  Reconectar
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-4">
@@ -153,10 +282,12 @@ const Kitchen = () => {
                           Pedido #{order.order_number}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          Mesa {order.table_number} • {order.customer_name}
+                          {order.customer_phone} • {order.customer_name}
                         </p>
                       </div>
-                      <Badge className="bg-primary">Em Preparo</Badge>
+                      <Badge className={order.status === "paid" ? "bg-blue-500" : "bg-primary"}>
+                        {order.status === "paid" ? "Pago" : "Em Preparo"}
+                      </Badge>
                     </div>
                     <div className="space-y-2 mb-4">
                       {orderItems[order.id]?.map((item) => (
@@ -165,13 +296,26 @@ const Kitchen = () => {
                         </div>
                       ))}
                     </div>
-                    <Button
-                      className="w-full"
-                      onClick={() => markAsReady(order.id)}
-                    >
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Marcar como Pronto
-                    </Button>
+                    <div className="space-y-2">
+                      {order.status === "paid" && (
+                        <Button
+                          className="w-full"
+                          onClick={() => markAsInPreparation(order.id)}
+                        >
+                          <ChefHat className="mr-2 h-4 w-4" />
+                          Iniciar Preparo
+                        </Button>
+                      )}
+                      {order.status === "in_preparation" && (
+                        <Button
+                          className="w-full"
+                          onClick={() => markAsReady(order.id)}
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Marcar como Pronto
+                        </Button>
+                      )}
+                    </div>
                   </Card>
                 ))
               )}
@@ -199,18 +343,26 @@ const Kitchen = () => {
                           Pedido #{order.order_number}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          Mesa {order.table_number} • {order.customer_name}
+                          {order.customer_phone} • {order.customer_name}
                         </p>
                       </div>
                       <Badge className="bg-success">Pronto</Badge>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 mb-4">
                       {orderItems[order.id]?.map((item) => (
                         <div key={item.id} className="text-sm">
                           <span className="font-semibold">{item.quantity}x</span> {item.item_name}
                         </div>
                       ))}
                     </div>
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                      onClick={() => markAsCompleted(order.id)}
+                    >
+                      <Package className="mr-2 h-4 w-4" />
+                      Finalizar Pedido
+                    </Button>
                   </Card>
                 ))
               )}

@@ -1,0 +1,14 @@
+export { whatsappClient } from './client';
+export { whatsappService } from './service';
+export { whatsappRecoveryService } from './recovery';
+export { WhatsAppTemplates } from './templates';
+export { templateManager, MessageTemplateManager } from './template-manager';
+export { queueManager, NotificationQueueManager } from './queue-manager';
+export { notificationTriggers, NotificationTriggerService } from './notification-triggers';
+export { validatePhoneNumber, formatPhoneForDisplay, isBrazilianMobile, extractAreaCode, validatePhoneNumbers } from './phone-validator';
+export { checkWhatsAppExists, checkWhatsAppExistsBatch, mockCheckWhatsAppExists } from './account-checker';
+export { encryptPhoneNumber, decryptPhoneNumber, encryptPhoneNumberSafe, decryptPhoneNumberSafe, isEncryptionConfigured, generateEncryptionKey } from './phone-encryption';
+export { optOutManager, OptOutManager } from './opt-out-manager';
+export { complianceChecker, WhatsAppComplianceChecker } from './compliance';
+export * from './types';
+export * from './monitoring';

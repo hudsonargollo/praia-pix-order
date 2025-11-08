@@ -1,0 +1,187 @@
+/**
+ * Centralized WhatsApp Notification Triggers
+ * Handles automatic notification sending based on order status changes
+ */
+
+import { supabase } from '../supabase/client';
+import { queueManager } from './queue-manager';
+import { NotificationRequest, OrderData } from './types';
+
+export class NotificationTriggerService {
+  /**
+   * Trigger notification when payment is confirmed
+   */
+  async onPaymentConfirmed(orderId: string): Promise<void> {
+    try {
+      console.log('Payment confirmed trigger:', { orderId });
+      
+      // Get order data
+      const orderData = await this.getOrderData(orderId);
+      if (!orderData) {
+        console.error('Order not found for payment confirmation notification:', orderId);
+        return;
+      }
+
+      // Queue payment confirmation notification
+      const notification: NotificationRequest = {
+        orderId: orderData.id,
+        customerPhone: orderData.customerPhone,
+        customerName: orderData.customerName,
+        notificationType: 'payment_confirmed',
+        orderDetails: orderData,
+      };
+
+      await queueManager.enqueue(notification);
+      console.log('Payment confirmation notification queued:', { orderId });
+    } catch (error) {
+      console.error('Error triggering payment confirmation notification:', error);
+      // Don't throw - notification failures shouldn't break the payment flow
+    }
+  }
+
+  /**
+   * Trigger notification when order moves to preparing status
+   */
+  async onOrderPreparing(orderId: string): Promise<void> {
+    try {
+      console.log('Order preparing trigger:', { orderId });
+      
+      // Get order data
+      const orderData = await this.getOrderData(orderId);
+      if (!orderData) {
+        console.error('Order not found for preparing notification:', orderId);
+        return;
+      }
+
+      // Queue preparing notification
+      const notification: NotificationRequest = {
+        orderId: orderData.id,
+        customerPhone: orderData.customerPhone,
+        customerName: orderData.customerName,
+        notificationType: 'preparing',
+        orderDetails: orderData,
+      };
+
+      await queueManager.enqueue(notification);
+      console.log('Preparing notification queued:', { orderId });
+    } catch (error) {
+      console.error('Error triggering preparing notification:', error);
+      // Don't throw - notification failures shouldn't break the order flow
+    }
+  }
+
+  /**
+   * Trigger notification when order is ready for pickup
+   */
+  async onOrderReady(orderId: string): Promise<void> {
+    try {
+      console.log('Order ready trigger:', { orderId });
+      
+      // Get order data
+      const orderData = await this.getOrderData(orderId);
+      if (!orderData) {
+        console.error('Order not found for ready notification:', orderId);
+        return;
+      }
+
+      // Queue ready notification
+      const notification: NotificationRequest = {
+        orderId: orderData.id,
+        customerPhone: orderData.customerPhone,
+        customerName: orderData.customerName,
+        notificationType: 'ready',
+        orderDetails: orderData,
+      };
+
+      await queueManager.enqueue(notification);
+      console.log('Ready notification queued:', { orderId });
+    } catch (error) {
+      console.error('Error triggering ready notification:', error);
+      // Don't throw - notification failures shouldn't break the order flow
+    }
+  }
+
+  /**
+   * Trigger notification based on order status change
+   */
+  async onOrderStatusChange(orderId: string, newStatus: string, oldStatus?: string): Promise<void> {
+    try {
+      console.log('Order status change trigger:', { orderId, oldStatus, newStatus });
+
+      // Trigger appropriate notification based on status
+      switch (newStatus) {
+        case 'paid':
+          // Only send if transitioning from pending_payment
+          if (oldStatus === 'pending_payment' || !oldStatus) {
+            await this.onPaymentConfirmed(orderId);
+          }
+          break;
+
+        case 'in_preparation':
+          // Send preparing notification
+          await this.onOrderPreparing(orderId);
+          break;
+
+        case 'ready':
+          // Send ready notification
+          await this.onOrderReady(orderId);
+          break;
+
+        default:
+          console.log('No notification trigger for status:', newStatus);
+      }
+    } catch (error) {
+      console.error('Error handling order status change notification:', error);
+      // Don't throw - notification failures shouldn't break the order flow
+    }
+  }
+
+  /**
+   * Get order data with items for notifications
+   */
+  private async getOrderData(orderId: string): Promise<OrderData | null> {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            id,
+            menu_item_id,
+            item_name,
+            quantity,
+            unit_price
+          )
+        `)
+        .eq('id', orderId)
+        .single();
+
+      if (error || !data) {
+        console.error('Error fetching order data:', error);
+        return null;
+      }
+
+      return {
+        id: data.id,
+        orderNumber: data.order_number,
+        customerName: data.customer_name,
+        customerPhone: data.customer_phone,
+        tableNumber: data.table_number,
+        totalAmount: data.total_amount,
+        items: data.order_items.map((item: any) => ({
+          itemName: item.item_name,
+          quantity: item.quantity,
+          unitPrice: item.unit_price,
+        })),
+        status: data.status,
+        createdAt: data.created_at,
+      };
+    } catch (error) {
+      console.error('Error getting order data:', error);
+      return null;
+    }
+  }
+}
+
+// Export singleton instance
+export const notificationTriggers = new NotificationTriggerService();

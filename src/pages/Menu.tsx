@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
+import logo from "@/assets/coco-loko-logo.png";
 
 interface MenuItem {
   id: string;
@@ -28,7 +29,6 @@ const Menu = () => {
   const {
     state: cartState,
     addItem,
-    setTableId,
     getItemQuantity,
     getTotalItems,
     getTotalPrice,
@@ -37,25 +37,8 @@ const Menu = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [customerInfo, setCustomerInfo] = useState<{name: string, phone: string} | null>(null);
 
   useEffect(() => {
-    const storedCustomerInfo = sessionStorage.getItem("customerInfo");
-    if (storedCustomerInfo) {
-      try {
-        const parsed = JSON.parse(storedCustomerInfo);
-        setCustomerInfo(parsed);
-        setTableId("1");
-      } catch (error) {
-        console.error("Error parsing customer info:", error);
-        setCustomerInfo({ name: "Test User", phone: "73999999999" });
-        setTableId("1");
-      }
-    } else {
-      setCustomerInfo({ name: "Test User", phone: "73999999999" });
-      setTableId("1");
-    }
-    
     loadMenu();
   }, []);
 
@@ -102,9 +85,10 @@ const Menu = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center">
+      <div className="min-h-screen relative flex items-center justify-center bg-gradient-acai md:bg-gradient-acai">
+        {/* Background Image - Mobile Only */}
         <div 
-          className="fixed inset-0 bg-cover bg-top bg-no-repeat"
+          className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat"
           style={{
             backgroundImage: `url('/bck-menu.webp')`,
           }}
@@ -117,17 +101,28 @@ const Menu = () => {
   }
 
   return (
-    <div className="min-h-screen relative pb-24">
-      {/* Background Image */}
+    <div className="min-h-screen relative pb-24 bg-gradient-acai md:bg-gradient-acai">
+      {/* Background Image - Mobile Only */}
       <div 
-        className="fixed inset-0 bg-cover bg-top bg-no-repeat"
+        className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat"
         style={{
           backgroundImage: `url('/bck-menu.webp')`,
         }}
       />
 
+      {/* Logo Header - Desktop Only */}
+      <div className="hidden md:block relative z-10 bg-gradient-acai py-6">
+        <div className="max-w-2xl mx-auto px-4">
+          <img 
+            src={logo} 
+            alt="Coco Loko Açaiteria" 
+            className="h-24 mx-auto"
+          />
+        </div>
+      </div>
+
       {/* Menu Content */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-32 pb-6 space-y-6">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-32 md:pt-6 pb-6 space-y-6">
         {categories.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-purple-900 font-semibold">Nenhuma categoria encontrada</p>
@@ -242,7 +237,7 @@ const Menu = () => {
 
       {/* Floating Cart Button */}
       {cartState.items.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-yellow-400">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-yellow-400 z-50">
           <div className="max-w-2xl mx-auto">
             <Button
               onClick={goToCheckout}

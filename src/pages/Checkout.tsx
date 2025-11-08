@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,57 +7,80 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
+import { useCart } from "@/lib/cartContext";
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const tableNumber = searchParams.get("mesa") || "1";
   
-  const cart: CartItem[] = location.state?.cart || [];
-  
-  const [customerName, setCustomerName] = useState(location.state?.customerName || "");
-  const [customerPhone, setCustomerPhone] = useState(location.state?.customerWhatsApp || "");
+  const { state: cartState, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState<{name: string, phone: string}>({
+    name: "",
+    phone: ""
+  });
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+
+  useEffect(() => {
+    // Redirect if cart is empty
+    if (cartState.items.length === 0) {
+      navigate("/menu");
+      return;
+    }
+
+    // Load customer info from sessionStorage
+    const storedCustomerInfo = sessionStorage.getItem("customerInfo");
+    if (storedCustomerInfo) {
+      try {
+        const parsed = JSON.parse(storedCustomerInfo);
+        setCustomerInfo(parsed);
+      } catch (error) {
+        console.error("Error parsing customer info:", error);
+        setIsEditingInfo(true);
+      }
+    } else {
+      setIsEditingInfo(true);
+    }
+  }, [navigate, cartState.items.length]);
 
   const getTotalPrice = () => {
-    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const nameValidation = z.string().trim().min(2).max(100).regex(/^[a-zA-ZÀ-ÿ\s]+$/).safeParse(customerName);
-    const whatsappValidation = z.string().trim().regex(/^\+?[1-9]\d{1,14}$/).safeParse(customerPhone);
-    
-    if (!nameValidation.success) {
-      toast.error("Nome inválido. Use apenas letras (2-100 caracteres)");
+  const handleCreateOrder = async () => {
+    if (cartState.items.length === 0) {
+      toast.error("Carrinho vazio");
       return;
     }
-    
-    if (!whatsappValidation.success) {
-      toast.error("WhatsApp inválido. Use o formato: +5511999999999");
+
+    if (!customerInfo.name || !customerInfo.phone) {
+      toast.error("Por favor, preencha seu nome e WhatsApp");
+      setIsEditingInfo(true);
       return;
     }
+
+    // Validate phone number (should be 11 digits)
+    const phoneDigits = customerInfo.phone.replace(/\D/g, '');
+    if (phoneDigits.length !== 11) {
+      toast.error("WhatsApp deve ter 11 dígitos (DDD + número)");
+      return;
+    }
+
+    // Format phone with +55 prefix for database
+    const formattedPhone = `+55${phoneDigits}`;
+
+    // Save customer info to sessionStorage
+    sessionStorage.setItem("customerInfo", JSON.stringify(customerInfo));
 
     setLoading(true);
 
     try {
-      // Create order
+      // Create order with "pending_payment" status
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
-          customer_name: customerName.trim(),
-          customer_phone: customerPhone.trim(),
-          table_number: tableNumber,
+          customer_name: customerInfo.name,
+          customer_phone: formattedPhone,
+          table_number: "-", // Placeholder - orders identified by phone
           status: "pending_payment",
           total_amount: getTotalPrice(),
         })
@@ -67,7 +90,7 @@ const Checkout = () => {
       if (orderError) throw orderError;
 
       // Create order items
-      const orderItems = cart.map((item) => ({
+      const orderItems = cartState.items.map((item) => ({
         order_id: order.id,
         menu_item_id: item.id,
         quantity: item.quantity,
@@ -81,22 +104,27 @@ const Checkout = () => {
 
       if (itemsError) throw itemsError;
 
-      toast.success("Pedido criado! Aguardando pagamento...");
-      navigate(`/order/${order.id}`);
+      // Clear cart after successful order creation
+      clearCart();
+
+      toast.success("Pedido criado! Redirecionando para pagamento...");
+      
+      // Navigate to payment page with order ID
+      navigate(`/payment/${order.id}`);
     } catch (error) {
       console.error("Error creating order:", error);
-      toast.error("Erro ao criar pedido");
+      toast.error("Erro ao criar pedido. Tente novamente.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (cart.length === 0) {
+  if (cartState.items.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="p-6 text-center max-w-md">
           <p className="text-muted-foreground mb-4">Carrinho vazio</p>
-          <Button onClick={() => navigate(`/menu?mesa=${tableNumber}`)}>
+          <Button onClick={() => navigate("/menu")}>
             Voltar ao Cardápio
           </Button>
         </Card>
@@ -107,80 +135,120 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-ocean text-white p-6 shadow-medium">
+      <div className="bg-purple-900 text-white p-6 shadow-medium">
         <Button
           variant="ghost"
           size="icon"
           className="mb-2 text-white hover:bg-white/20"
-          onClick={() => navigate(`/menu?mesa=${tableNumber}`)}
+          onClick={() => navigate("/menu")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-2xl font-bold">Finalizar Pedido</h1>
-        <p className="text-white/90 mt-1">Mesa {tableNumber}</p>
+        {customerInfo && customerInfo.name && (
+          <p className="text-white/90 mt-1">{customerInfo.name}</p>
+        )}
       </div>
 
       <div className="max-w-2xl mx-auto p-4 space-y-6">
         {/* Order Summary */}
-        <Card className="p-4 shadow-soft">
-          <h2 className="font-bold text-lg mb-4">Resumo do Pedido</h2>
+        <Card className="p-6 shadow-lg border-2 border-purple-100 rounded-2xl">
+          <h2 className="font-bold text-xl mb-4 text-purple-900">Resumo do Pedido</h2>
           <div className="space-y-3">
-            {cart.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span>
-                  {item.quantity}x {item.name}
+            {cartState.items.map((item) => (
+              <div key={item.id} className="flex justify-between text-sm py-2 border-b border-gray-100 last:border-0">
+                <span className="text-gray-700">
+                  <span className="font-bold text-purple-900">{item.quantity}x</span> {item.name}
                 </span>
-                <span className="font-semibold">
+                <span className="font-bold text-cyan-600">
                   R$ {(item.price * item.quantity).toFixed(2)}
                 </span>
               </div>
             ))}
-            <div className="border-t pt-3 flex justify-between font-bold text-lg">
-              <span>Total</span>
-              <span className="text-primary">R$ {getTotalPrice().toFixed(2)}</span>
+            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-4 mt-4 flex justify-between font-bold text-xl">
+              <span className="text-purple-900">Total</span>
+              <span className="text-purple-900">R$ {getTotalPrice().toFixed(2)}</span>
             </div>
           </div>
         </Card>
 
-        {/* Customer Info Form */}
-        <Card className="p-6 shadow-soft">
-          <h2 className="font-bold text-lg mb-4">Seus Dados</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nome</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Digite seu nome"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone">WhatsApp</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="(00) 00000-0000"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                required
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Enviaremos notificações sobre seu pedido
+        {/* Customer Info */}
+        <Card className="p-6 shadow-lg border-2 border-cyan-100 rounded-2xl">
+          <h2 className="font-bold text-xl mb-4 text-purple-900">Seus Dados</h2>
+          {isEditingInfo || !customerInfo.name || !customerInfo.phone ? (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nome Completo</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Seu nome"
+                  value={customerInfo.name}
+                  onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">WhatsApp (com DDD)</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="73999999999"
+                  value={customerInfo.phone}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    setCustomerInfo({ ...customerInfo, phone: value });
+                  }}
+                  maxLength={11}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Digite apenas números (DDD + número)
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Enviaremos notificações sobre seu pedido via WhatsApp.
               </p>
+              <Button
+                onClick={handleCreateOrder}
+                size="lg"
+                className="w-full bg-purple-900 hover:bg-purple-800 text-white font-bold py-6 rounded-xl shadow-lg"
+                disabled={loading || !customerInfo.name || !customerInfo.phone}
+              >
+                {loading ? "Processando..." : "Prosseguir para Pagamento"}
+              </Button>
             </div>
-
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? "Processando..." : "Prosseguir para Pagamento"}
-            </Button>
-          </form>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Nome</Label>
+                <p className="text-lg">{customerInfo.name}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">WhatsApp</Label>
+                <p className="text-lg">+55 {customerInfo.phone}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditingInfo(true)}
+                className="mt-2"
+              >
+                Editar Dados
+              </Button>
+              <p className="text-sm text-muted-foreground mt-4">
+                Enviaremos notificações sobre seu pedido via WhatsApp.
+              </p>
+              <Button
+                onClick={handleCreateOrder}
+                size="lg"
+                className="w-full mt-6 bg-purple-900 hover:bg-purple-800 text-white font-bold py-6 rounded-xl shadow-lg"
+                disabled={loading}
+              >
+                {loading ? "Processando..." : "Prosseguir para Pagamento"}
+              </Button>
+            </div>
+          )}
         </Card>
       </div>
     </div>

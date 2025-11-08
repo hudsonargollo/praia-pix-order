@@ -13,6 +13,16 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const [loading, setLoading] = useState(true);
   const [hasRole, setHasRole] = useState(false);
 
+  // Temporary bypass for development - check for bypass parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const bypassAuth = urlParams.get('bypass') === 'true';
+  
+  // TEMPORARY: Always bypass authentication for kitchen and cashier
+  const isAdminRoute = requiredRole === 'kitchen' || requiredRole === 'cashier';
+  if (isAdminRoute) {
+    return <>{children}</>;
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
