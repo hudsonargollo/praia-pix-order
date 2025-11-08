@@ -23,7 +23,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Wifi, WifiOff, Eye, Edit, BarChart3 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Wifi, WifiOff, Eye, Edit, BarChart3, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Order } from "@/integrations/supabase/realtime";
 
@@ -696,43 +703,95 @@ const Cashier = () => {
                       </div>
                     </div>
                     
-                    {/* Notification Controls */}
-                    <div className="border-t pt-3 mb-3">
-                      <NotificationControls
-                        orderId={order.id}
-                        orderNumber={order.order_number}
-                        customerPhone={order.customer_phone}
-                        customerName={order.customer_name}
-                        orderStatus={order.status}
-                        notificationHistory={orderNotificationHistory}
-                        onNotificationSent={refreshNotifications}
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" className="flex-1 min-h-[44px] text-base">
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Concluir Pedido
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Concluir Pedido</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja marcar o pedido #{order.order_number} como concluído? 
-                              Esta ação indica que o cliente retirou o pedido.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => completeOrder(order.id)}>
-                              Sim, Concluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                    {/* Action Buttons */}
+                    <div className="border-t pt-3 space-y-2">
+                      {/* Edit and Cancel Buttons */}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingOrderId(order.id);
+                            setIsEditDialogOpen(true);
+                          }}
+                          className="flex-1"
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="flex-1 text-destructive hover:bg-destructive hover:text-white">
+                              <X className="mr-2 h-4 w-4" />
+                              Cancelar
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancelar Pedido</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja cancelar o pedido #{order.order_number}?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Não</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => cancelOrder(order.id)} className="bg-destructive">
+                                Sim, Cancelar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+
+                      {/* Message and Complete Buttons */}
+                      <div className="flex gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button className="flex-1 min-h-[44px] text-base bg-blue-600 hover:bg-blue-700">
+                              <Bell className="mr-2 h-4 w-4" />
+                              Mensagem
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Notificações - Pedido #{order.order_number}</DialogTitle>
+                            </DialogHeader>
+                            <NotificationControls
+                              orderId={order.id}
+                              orderNumber={order.order_number}
+                              customerPhone={order.customer_phone}
+                              customerName={order.customer_name}
+                              orderStatus={order.status}
+                              notificationHistory={orderNotificationHistory}
+                              onNotificationSent={refreshNotifications}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button className="flex-1 min-h-[44px] text-base bg-green-600 hover:bg-green-700">
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Concluir Pedido
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Concluir Pedido</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja marcar o pedido #{order.order_number} como concluído? 
+                                Esta ação indica que o cliente retirou o pedido.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => completeOrder(order.id)} className="bg-green-600">
+                                Sim, Concluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   </Card>
                 );

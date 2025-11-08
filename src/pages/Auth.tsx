@@ -13,6 +13,30 @@ const authSchema = z.object({
   password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }).max(100),
 });
 
+const getRoleFromSession = (session: any) => {
+  return session?.user?.user_metadata?.role || "default";
+};
+
+const redirectToRolePage = (session: any) => {
+  const role = getRoleFromSession(session);
+  switch (role) {
+    case "kitchen":
+      navigate("/kitchen");
+      break;
+    case "cashier":
+      navigate("/cashier");
+      break;
+    case "waiter":
+      navigate("/waiter-dashboard"); // New dashboard for waiters
+      break;
+    case "admin":
+      navigate("/admin"); // Assuming an admin route exists
+      break;
+    default:
+      navigate("/"); // Default landing page
+  }
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
@@ -21,15 +45,15 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/kitchen");
+        redirectToRolePage(session);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/kitchen");
+        redirectToRolePage(session);
       }
     });
 
@@ -64,6 +88,10 @@ const Auth = () => {
         }
 
         toast.success("Login realizado com sucesso!");
+        const session = (await supabase.auth.getSession()).data.session;
+        if (session) {
+          redirectToRolePage(session);
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email: validation.data.email,

@@ -19,6 +19,8 @@ const Checkout = () => {
     phone: ""
   });
   const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [isWaiter, setIsWaiter] = useState(false);
+  const [waiterId, setWaiterId] = useState<string | null>(null);
 
   useEffect(() => {
     // Redirect if cart is empty
@@ -27,19 +29,37 @@ const Checkout = () => {
       return;
     }
 
-    // Load customer info from sessionStorage
-    const storedCustomerInfo = sessionStorage.getItem("customerInfo");
-    if (storedCustomerInfo) {
-      try {
-        const parsed = JSON.parse(storedCustomerInfo);
-        setCustomerInfo(parsed);
-      } catch (error) {
-        console.error("Error parsing customer info:", error);
-        setIsEditingInfo(true);
+    // Check for logged-in user (waiter)
+    const checkUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const role = user?.user_metadata?.role;
+      
+      if (role === "waiter") {
+        setIsWaiter(true);
+        setWaiterId(user.id);
+        // Waiter-assisted orders do not require customer info upfront
+        setIsEditingInfo(false);
+        setCustomerInfo({ name: "Cliente (Garçom)", phone: "00000000000" });
+      } else {
+        setIsWaiter(false);
+        setWaiterId(null);
+        // Load customer info from sessionStorage for regular customers
+        const storedCustomerInfo = sessionStorage.getItem("customerInfo");
+        if (storedCustomerInfo) {
+          try {
+            const parsed = JSON.parse(storedCustomerInfo);
+            setCustomerInfo(parsed);
+          } catch (error) {
+            console.error("Error parsing customer info:", error);
+            setIsEditingInfo(true);
+          }
+        } else {
+          setIsEditingInfo(true);
+        }
       }
-    } else {
-      setIsEditingInfo(true);
-    }
+    };
+
+    checkUserRole();
   }, [navigate, cartState.items.length]);
 
   const getTotalPrice = () => {
@@ -74,16 +94,22 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      // Create order with "pending_payment" status
+      // Determine initial status and waiter ID
+      const initialStatus = isWaiter ? "pending" : "pending_payment";
+      
+      const orderData = {
+        customer_name: customerInfo.name,
+        customer_phone: formattedPhone,
+        table_number: "-", // Placeholder - orders identified by phone
+        status: initialStatus,
+        total_amount: getTotalPrice(),
+        waiter_id: waiterId, // Assign waiter ID if present
+      };
+
+      // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
-        .insert({
-          customer_name: customerInfo.name,
-          customer_phone: formattedPhone,
-          table_number: "-", // Placeholder - orders identified by phone
-          status: "pending_payment",
-          total_amount: getTotalPrice(),
-        })
+        .insert(orderData)
         .select()
         .single();
 
@@ -107,10 +133,16 @@ const Checkout = () => {
       // Clear cart after successful order creation
       clearCart();
 
-      toast.success("Pedido criado! Redirecionando para pagamento...");
+      toast.success("Pedido criado com sucesso!");
       
-      // Navigate to payment page with order ID
-      navigate(`/payment/${order.id}`);
+      // Navigate based on user role
+      if (isWaiter) {
+        // Waiter-assisted order is created, redirect to the menu for the next order
+        navigate("/menu");
+      } else {
+        // Regular customer order, redirect to payment
+        navigate(`/payment/${order.id}`);
+      }
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Erro ao criar pedido. Tente novamente.");
@@ -174,8 +206,10 @@ const Checkout = () => {
 
         {/* Customer Info */}
         <Card className="p-6 shadow-lg border-2 border-cyan-100 rounded-2xl">
-          <h2 className="font-bold text-xl mb-4 text-purple-900">Seus Dados</h2>
-          {isEditingInfo || !customerInfo.name || !customerInfo.phone ? (
+	          <h2 className="font-bold text-xl mb-4 text-purple-900">
+	            {isWaiter ? "Dados do Cliente (Pedido Assistido)" : "Seus Dados"}
+	          </h2>
+	          {isEditingInfo || !customerInfo.name || !customerInfo.phone ? (
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name">Nome Completo</Label>
@@ -201,22 +235,20 @@ const Checkout = () => {
                   }}
                   maxLength={11}
                   className="mt-1"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Digite apenas números (DDD + número)
-                </p>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Enviaremos notificações sobre seu pedido via WhatsApp.
-              </p>
-              <Button
-                onClick={handleCreateOrder}
-                size="lg"
-                className="w-full bg-purple-900 hover:bg-purple-800 text-white font-bold py-6 rounded-xl shadow-lg"
-                disabled={loading || !customerInfo.name || !customerInfo.phone}
-              >
-                {loading ? "Processando..." : "Prosseguir para Pagamento"}
-              </Button>
+                /	              <p className="text-sm text-muted-foreground mt-1">
+	                  Digite apenas números (DDD + número)
+	                </p>
+	              </div>
+	              <p className="text-sm text-muted-foreground">
+	                {isWaiter ? "O pedido será criado com status 'Pendente' e atribuído ao seu ID." : "Enviaremos notificações sobre seu pedido via WhatsApp."}
+	              </p>             <Button
+	                onClick={handleCreateOrder}
+	                size="lg"
+	                className="w-full bg-purple-900 hover:bg-purple-800 text-white font-bold py-6 rounded-xl shadow-lg"
+	                disabled={loading || (!isWaiter && (!customerInfo.name || !customerInfo.phone))}
+	              >
+	                {loading ? "Processando..." : isWaiter ? "Finalizar Pedido (Garçom)" : "Prosseguir para Pagamento"}
+	              </Button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -239,14 +271,14 @@ const Checkout = () => {
               <p className="text-sm text-muted-foreground mt-4">
                 Enviaremos notificações sobre seu pedido via WhatsApp.
               </p>
-              <Button
-                onClick={handleCreateOrder}
-                size="lg"
-                className="w-full mt-6 bg-purple-900 hover:bg-purple-800 text-white font-bold py-6 rounded-xl shadow-lg"
-                disabled={loading}
-              >
-                {loading ? "Processando..." : "Prosseguir para Pagamento"}
-              </Button>
+	              <Button
+	                onClick={handleCreateOrder}
+	                size="lg"
+	                className="w-full mt-6 bg-purple-900 hover:bg-purple-800 text-white font-bold py-6 rounded-xl shadow-lg"
+	                disabled={loading}
+	              >
+	                {loading ? "Processando..." : isWaiter ? "Finalizar Pedido (Garçom)" : "Prosseguir para Pagamento"}
+	              </Button>
             </div>
           )}
         </Card>

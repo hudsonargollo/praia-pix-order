@@ -48,6 +48,16 @@ All colors MUST be HSL.
 
     /* Custom gradients */
     --gradient-ocean: linear-gradient(135deg, hsl(199 89% 48%), hsl(220 85% 55%));
+    --gradient-sunset: linear-gradient(135deg, hsl(25 95% 53%), hsl(45 100% 51%));
+    --gradient-acai: linear-gradient(135deg, hsl(280 60% 50%), hsl(290 70% 40%));
+    
+    /* Shadows */
+    --shadow-soft: 0 2px 8px hsla(220, 13%, 20%, 0.08);
+    --shadow-medium: 0 4px 16px hsla(220, 13%, 20%, 0.12);
+    --shadow-strong: 0 8px 32px hsla(220, 13%, 20%, 0.16);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
@@ -79,16 +89,6 @@ All colors MUST be HSL.
   
   .toaster [data-sonner-toast][data-type="info"] {
     @apply bg-blue-50 text-blue-800 border-blue-200;
-    --gradient-sunset: linear-gradient(135deg, hsl(25 95% 53%), hsl(45 100% 51%));
-    --gradient-acai: linear-gradient(135deg, hsl(280 60% 50%), hsl(290 70% 40%));
-    
-    /* Shadows */
-    --shadow-soft: 0 2px 8px hsla(220, 13%, 20%, 0.08);
-    --shadow-medium: 0 4px 16px hsla(220, 13%, 20%, 0.12);
-    --shadow-strong: 0 8px 32px hsla(220, 13%, 20%, 0.16);
-    
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
@@ -127,7 +127,7 @@ All colors MUST be HSL.
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border transition-[background-color,color,border-color,box-shadow,transform] duration-300 ease-in-out;
   }
 
   body {

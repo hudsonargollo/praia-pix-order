@@ -3,6 +3,18 @@ compatibility_date = "2024-11-06"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
 
+[site]
+bucket = "dist"
+entry-point = "functions"
+
+[functions]
+# The functions directory is already set to "functions" by default in Cloudflare Pages
+# We rely on the file-based routing of Cloudflare Pages Functions for the new routes:
+# /api/admin/create-waiter -> functions/api/admin/create-waiter.js
+# /api/admin/delete-waiter/[waiterId] -> functions/api/admin/delete-waiter.js
+# /api/admin/list-waiters -> functions/api/admin/list-waiters.js
+# No explicit configuration needed here, just ensuring the structure is correct.
+
 # Environment variables (available at build time and runtime)
 [vars]
 # Frontend environment variables

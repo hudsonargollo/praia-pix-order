@@ -14,6 +14,8 @@ import OrderLookup from "./pages/OrderLookup";
 import Cashier from "./pages/Cashier";
 import Reports from "./pages/Reports";
 import Waiter from "./pages/Waiter";
+import WaiterDashboard from "./pages/WaiterDashboard";
+import Admin from "./pages/Admin"; // Assuming a generic Admin page for now
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -24,6 +26,7 @@ import PaymentTest from "./pages/PaymentTest";
 import WhatsAppAdmin from "./pages/WhatsAppAdmin";
 import Monitoring from "./pages/Monitoring";
 import AdminProducts from "./pages/AdminProducts";
+import AdminWaiters from "./pages/AdminWaiters";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +52,22 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/waiter" element={<Waiter />} />
           <Route
+            path="/waiter-dashboard"
+            element={
+              <ProtectedRoute requiredRole="waiter">
+                <WaiterDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/kitchen"
             element={
               <ProtectedRoute requiredRole="kitchen">
@@ -67,7 +86,7 @@ const App = () => (
           <Route
             path="/reports"
             element={
-              <ProtectedRoute requiredRole="cashier">
+              <ProtectedRoute requiredRole="admin">
                 <Reports />
               </ProtectedRoute>
             }
@@ -75,7 +94,7 @@ const App = () => (
           <Route
             path="/whatsapp-admin"
             element={
-              <ProtectedRoute requiredRole="cashier">
+              <ProtectedRoute requiredRole="admin">
                 <WhatsAppAdmin />
               </ProtectedRoute>
             }
@@ -83,7 +102,7 @@ const App = () => (
           <Route
             path="/monitoring"
             element={
-              <ProtectedRoute requiredRole="cashier">
+              <ProtectedRoute requiredRole="admin">
                 <Monitoring />
               </ProtectedRoute>
             }
@@ -91,8 +110,16 @@ const App = () => (
           <Route
             path="/admin/products"
             element={
-              <ProtectedRoute requiredRole="cashier">
+              <ProtectedRoute requiredRole="admin">
                 <AdminProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/waiters"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminWaiters />
               </ProtectedRoute>
             }
           />
