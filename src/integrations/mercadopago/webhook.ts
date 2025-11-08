@@ -43,7 +43,7 @@ export class WebhookService {
 
       // Update status based on payment status
       if (paymentStatus.status === 'approved' && order.status === 'pending_payment') {
-        newStatus = 'paid';
+        newStatus = 'in_preparation'; // Send directly to kitchen when payment is approved
         paymentConfirmedAt = new Date().toISOString();
       } else if (paymentStatus.status === 'rejected' || paymentStatus.status === 'cancelled') {
         newStatus = 'cancelled';
@@ -65,7 +65,7 @@ export class WebhookService {
         }
 
         // Trigger WhatsApp notification if payment was approved
-        if (newStatus === 'paid') {
+        if (newStatus === 'in_preparation') {
           await notificationTriggers.onPaymentConfirmed(order.id);
         }
 

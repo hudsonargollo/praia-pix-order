@@ -151,10 +151,11 @@ const Cashier = () => {
 
   const confirmPayment = async (orderId: string) => {
     try {
+      // Update order status to paid and send to kitchen
       const { error } = await supabase
         .from("orders")
         .update({
-          status: "paid",
+          status: "in_preparation",
           payment_confirmed_at: new Date().toISOString(),
         })
         .eq("id", orderId);
@@ -164,7 +165,7 @@ const Cashier = () => {
       // Trigger WhatsApp payment confirmation notification
       await notificationTriggers.onPaymentConfirmed(orderId);
 
-      toast.success("Pagamento confirmado!");
+      toast.success("Pagamento confirmado! Pedido enviado para a cozinha.");
     } catch (error) {
       console.error("Error confirming payment:", error);
       toast.error("Erro ao confirmar pagamento");
