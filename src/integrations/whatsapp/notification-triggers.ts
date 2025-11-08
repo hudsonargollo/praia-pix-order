@@ -22,6 +22,20 @@ export class NotificationTriggerService {
         return;
       }
 
+      // Check if notification was already sent to prevent duplicates
+      const { data: existingNotifications } = await supabase
+        .from('whatsapp_notifications')
+        .select('id')
+        .eq('order_id', orderId)
+        .eq('notification_type', 'payment_confirmed')
+        .eq('status', 'sent')
+        .limit(1);
+
+      if (existingNotifications && existingNotifications.length > 0) {
+        console.log('Payment confirmation notification already sent, skipping:', { orderId });
+        return;
+      }
+
       // Queue payment confirmation notification
       const notification: NotificationRequest = {
         orderId: orderData.id,
@@ -53,6 +67,20 @@ export class NotificationTriggerService {
         return;
       }
 
+      // Check if notification was already sent to prevent duplicates
+      const { data: existingNotifications } = await supabase
+        .from('whatsapp_notifications')
+        .select('id')
+        .eq('order_id', orderId)
+        .eq('notification_type', 'preparing')
+        .eq('status', 'sent')
+        .limit(1);
+
+      if (existingNotifications && existingNotifications.length > 0) {
+        console.log('Preparing notification already sent, skipping:', { orderId });
+        return;
+      }
+
       // Queue preparing notification
       const notification: NotificationRequest = {
         orderId: orderData.id,
@@ -81,6 +109,20 @@ export class NotificationTriggerService {
       const orderData = await this.getOrderData(orderId);
       if (!orderData) {
         console.error('Order not found for ready notification:', orderId);
+        return;
+      }
+
+      // Check if notification was already sent to prevent duplicates
+      const { data: existingNotifications } = await supabase
+        .from('whatsapp_notifications')
+        .select('id')
+        .eq('order_id', orderId)
+        .eq('notification_type', 'ready')
+        .eq('status', 'sent')
+        .limit(1);
+
+      if (existingNotifications && existingNotifications.length > 0) {
+        console.log('Ready notification already sent, skipping:', { orderId });
         return;
       }
 

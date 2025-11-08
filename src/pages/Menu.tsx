@@ -2,7 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ShoppingCart, X } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import logo from "@/assets/coco-loko-logo.png";
@@ -38,6 +44,8 @@ const Menu = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     loadMenu();
@@ -68,6 +76,21 @@ const Menu = () => {
       toast.error("Erro ao carregar cardápio");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const scrollToCategory = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    const element = document.getElementById(`category-${categoryId}`);
+    if (element) {
+      const offset = 180; // Account for fixed header
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -122,8 +145,42 @@ const Menu = () => {
         </div>
       </div>
 
+      {/* Category Navigation - Fixed at top */}
+      {categories.length > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm shadow-md pt-4 pb-3">
+          <div className="max-w-2xl mx-auto px-4">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {categories.map((category) => {
+                const categoryItems = menuItems.filter(
+                  (item) => item.category_id === category.id
+                );
+                if (categoryItems.length === 0) return null;
+
+                const isSelected = selectedCategory === category.id;
+                
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => scrollToCategory(category.id)}
+                    className={`
+                      flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm transition-all
+                      ${isSelected 
+                        ? 'bg-purple-900 text-white shadow-md' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }
+                    `}
+                  >
+                    {category.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Menu Content */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-32 md:pt-6 pb-6 space-y-6">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-32 md:pt-24 pb-6 space-y-6">
         {categories.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-purple-900 font-semibold">Nenhuma categoria encontrada</p>
@@ -136,7 +193,7 @@ const Menu = () => {
             if (categoryItems.length === 0) return null;
 
             return (
-              <div key={category.id} className="space-y-3">
+              <div key={category.id} id={`category-${category.id}`} className="space-y-3 scroll-mt-32">
                 {/* Category Header */}
                 <div className="bg-purple-900 text-white px-4 py-2 rounded-full inline-block">
                   <h2 className="font-bold text-sm uppercase tracking-wide">
@@ -154,8 +211,11 @@ const Menu = () => {
                         key={item.id} 
                         className="bg-white rounded-2xl p-4 shadow-md flex items-center gap-4"
                       >
-                        {/* Item Image */}
-                        <div className="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100">
+                        {/* Item Image - Clickable */}
+                        <div 
+                          className="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setSelectedItem(item)}
+                        >
                           {item.image_url ? (
                             <img
                               src={item.image_url}
@@ -172,8 +232,11 @@ const Menu = () => {
                           )}
                         </div>
 
-                        {/* Item Info */}
-                        <div className="flex-1 min-w-0">
+                        {/* Item Info - Clickable */}
+                        <div 
+                          className="flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setSelectedItem(item)}
+                        >
                           <h3 className="font-bold text-gray-900 text-base">
                             {item.name}
                           </h3>
@@ -240,6 +303,85 @@ const Menu = () => {
           </div>
         </div>
       )}
+
+      {/* Product Detail Dialog */}
+      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+        <DialogContent className="max-w-md">
+          {selectedItem && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold text-gray-900">
+                  {selectedItem.name}
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                {/* Product Image */}
+                {selectedItem.image_url && (
+                  <div className="w-full h-64 rounded-xl overflow-hidden bg-gray-100">
+                    <img
+                      src={selectedItem.image_url}
+                      alt={selectedItem.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Description */}
+                {selectedItem.description && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Descrição</h4>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {selectedItem.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Price */}
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span className="text-2xl font-bold text-cyan-600">
+                    R$ {selectedItem.price.toFixed(2)}
+                  </span>
+                  
+                  {/* Add to Cart Button */}
+                  {getItemQuantity(selectedItem.id) > 0 ? (
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => removeItem(selectedItem.id)}
+                        className="w-10 h-10 rounded-full bg-purple-900 text-white flex items-center justify-center font-bold text-lg"
+                      >
+                        -
+                      </button>
+                      <span className="font-bold text-purple-900 text-lg w-8 text-center">
+                        {getItemQuantity(selectedItem.id)}
+                      </span>
+                      <button
+                        onClick={() => addToCart(selectedItem)}
+                        className="w-10 h-10 rounded-full bg-purple-900 text-white flex items-center justify-center font-bold text-lg"
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        addToCart(selectedItem);
+                        setSelectedItem(null);
+                      }}
+                      className="bg-purple-900 hover:bg-purple-800 text-white px-8 py-6 rounded-full font-semibold"
+                    >
+                      Adicionar ao Carrinho
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
