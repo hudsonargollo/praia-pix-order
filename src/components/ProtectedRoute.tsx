@@ -13,13 +13,12 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const [loading, setLoading] = useState(true);
   const [hasRole, setHasRole] = useState(false);
 
-  // Temporary bypass for development - check for bypass parameter
+  // Optional: Allow bypass with URL parameter for development
   const urlParams = new URLSearchParams(window.location.search);
-  const bypassAuth = urlParams.get('bypass') === 'true';
+  const bypassAuth = urlParams.get('bypass') === 'dev123';
   
-  // TEMPORARY: Always bypass authentication for kitchen and cashier
-  const isAdminRoute = requiredRole === 'kitchen' || requiredRole === 'cashier';
-  if (isAdminRoute) {
+  if (bypassAuth) {
+    console.log('⚠️ Authentication bypassed for development');
     return <>{children}</>;
   }
 
@@ -49,19 +48,28 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
 
   const checkRole = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", requiredRole!)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error checking role:", error);
+      // Get the current user to check their metadata
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error("Error getting user:", userError);
         setHasRole(false);
-      } else {
-        setHasRole(!!data);
+        setLoading(false);
+        return;
       }
+
+      if (!user) {
+        setHasRole(false);
+        setLoading(false);
+        return;
+      }
+
+      // Check role from user_metadata
+      const userRole = user.user_metadata?.role || user.app_metadata?.role;
+      console.log('User role:', userRole, 'Required role:', requiredRole);
+      
+      // Check if user has the required role
+      setHasRole(userRole === requiredRole);
     } catch (error) {
       console.error("Error checking role:", error);
       setHasRole(false);
