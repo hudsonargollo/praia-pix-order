@@ -68,8 +68,13 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
       const userRole = user.user_metadata?.role || user.app_metadata?.role;
       console.log('User role:', userRole, 'Required role:', requiredRole);
       
-      // Check if user has the required role
-      setHasRole(userRole === requiredRole);
+      // Admin has access to everything
+      if (userRole === 'admin') {
+        setHasRole(true);
+      } else {
+        // Check if user has the required role
+        setHasRole(userRole === requiredRole);
+      }
     } catch (error) {
       console.error("Error checking role:", error);
       setHasRole(false);
