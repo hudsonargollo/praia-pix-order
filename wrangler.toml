@@ -25,10 +25,7 @@ VITE_EVOLUTION_API_KEY = "DD451E404240-4C45-AF35-BFCA6A976927"
 VITE_EVOLUTION_INSTANCE_NAME = "cocooo"
 
 # Server-side environment variables (for Cloudflare Functions)
+SUPABASE_URL = "https://sntxekdwdllwkszclpiq.supabase.co"
+SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudHhla2R3ZGxsd2tzemNscGlxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjIwNDU4OSwiZXhwIjoyMDc3NzgwNTg5fQ.I5R498LlD6rohVRHh2nyWzKQIgzvfPRdC1nfNRLwBn0"
 MERCADOPAGO_ACCESS_TOKEN = "APP_USR-4813437808298526-110522-fa108581dfa5cb10a87458875e5c8136-1769074499"
 WHATSAPP_SESSION_ID = "coco-loko-main"
-
-# IMPORTANT: Set these sensitive variables in Cloudflare Dashboard:
-# - SUPABASE_URL (same as VITE_SUPABASE_URL)
-# - SUPABASE_SERVICE_ROLE_KEY (from Supabase project settings)
-# - WHATSAPP_ENCRYPTION_KEY (generate with: openssl rand -hex 32)
