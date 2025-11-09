@@ -21,10 +21,26 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const redirectToRolePage = (session: any) => {
-    // Don't try to read role from JWT - just redirect to admin and let ProtectedRoute handle it
-    console.log('Login successful, redirecting to admin panel');
-    navigate("/admin");
+  const redirectToRolePage = async (session: any) => {
+    // Get user role from metadata
+    const { data: { user } } = await supabase.auth.getUser();
+    const role = user?.user_metadata?.role || user?.app_metadata?.role;
+    
+    console.log('Login successful, user role:', role);
+    
+    // Redirect based on role
+    if (role === 'waiter') {
+      navigate("/waiter-dashboard");
+    } else if (role === 'kitchen') {
+      navigate("/kitchen");
+    } else if (role === 'cashier') {
+      navigate("/cashier");
+    } else if (role === 'admin') {
+      navigate("/admin");
+    } else {
+      // Default to admin for unknown roles
+      navigate("/admin");
+    }
   };
 
   useEffect(() => {
