@@ -27,7 +27,15 @@ const Auth = () => {
 
   const redirectToRolePage = (session: any) => {
     const role = getRoleFromSession(session);
-    console.log('Redirecting user with role:', role);
+    const email = session?.user?.email;
+    console.log('Redirecting user with role:', role, 'email:', email);
+    
+    // TEMPORARY: Force admin redirect for admin email
+    if (email === 'admin@cocoloko.com.br') {
+      console.log('⚠️ TEMPORARY: Forcing admin redirect for admin email');
+      navigate("/admin");
+      return;
+    }
     
     switch (role) {
       case "kitchen":
