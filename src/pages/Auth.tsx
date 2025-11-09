@@ -14,10 +14,6 @@ const authSchema = z.object({
   password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }).max(100),
 });
 
-const getRoleFromSession = (session: any) => {
-  return session?.user?.user_metadata?.role || session?.user?.app_metadata?.role || "default";
-};
-
 const Auth = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
@@ -26,25 +22,9 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
 
   const redirectToRolePage = (session: any) => {
-    const role = getRoleFromSession(session);
-    console.log('Redirecting user with role:', role);
-    
-    switch (role) {
-      case "kitchen":
-        navigate("/kitchen");
-        break;
-      case "cashier":
-        navigate("/cashier");
-        break;
-      case "waiter":
-        navigate("/waiter-dashboard");
-        break;
-      case "admin":
-        navigate("/admin"); // Admin goes to admin panel
-        break;
-      default:
-        navigate("/"); // Default landing page
-    }
+    // Don't try to read role from JWT - just redirect to admin and let ProtectedRoute handle it
+    console.log('Login successful, redirecting to admin panel');
+    navigate("/admin");
   };
 
   useEffect(() => {
