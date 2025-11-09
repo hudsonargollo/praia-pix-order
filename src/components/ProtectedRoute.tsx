@@ -5,7 +5,7 @@ import { Session } from "@supabase/supabase-js";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "admin" | "kitchen" | "cashier";
+  requiredRole?: "admin" | "kitchen" | "cashier" | "waiter";
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
@@ -19,6 +19,13 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   
   if (bypassAuth) {
     console.log('⚠️ Authentication bypassed for development');
+    return <>{children}</>;
+  }
+  
+  // Temporary: Allow admin@cocoloko.com.br to bypass role check
+  const tempAdminBypass = session?.user?.email === 'admin@cocoloko.com.br';
+  if (tempAdminBypass && !loading) {
+    console.log('⚠️ Temporary admin bypass active');
     return <>{children}</>;
   }
 
