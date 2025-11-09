@@ -37,30 +37,18 @@ const AdminWaiters = () => {
 
   const fetchWaiters = async () => {
     setLoading(true);
-    // Fetch users with role 'waiter' from the auth.users table via a Supabase function or view
-    // Since we cannot directly query auth.users from the client, we will query the public.profiles table 
-    // or assume a view/function exists to expose this data securely.
-    // For now, we'll simulate the data or assume a secure RLS/View setup.
-    // A more robust solution would be a Cloudflare Worker or a Supabase Function.
-
-    // **Temporary Mock/Assumption:** We assume a public view `waiter_profiles` exists for Admins.
-    // In a real scenario, the Admin would use the Supabase Admin API or a secure serverless function.
-    
-    // For this implementation, we will use the `supabase.rpc` or a dedicated table if available.
     try {
-      // Use the API endpoint to fetch waiters
-      const response = await fetch('/api/admin/list-waiters');
+      // Use Supabase Edge Function to fetch waiters
+      const { data, error } = await supabase.functions.invoke('list-waiters');
       
-      if (!response.ok) {
-        const data = await response.json();
-        console.error("Error fetching waiters:", data);
+      if (error) {
+        console.error("Error fetching waiters:", error);
         toast.error("Erro ao carregar lista de garçons");
         setWaiters([]);
         setLoading(false);
         return;
       }
       
-      const data = await response.json();
       setWaiters(data.waiters || []);
       
     } catch (error) {
@@ -88,24 +76,19 @@ const AdminWaiters = () => {
 
       console.log('Creating waiter:', { email, full_name });
 
-      const response = await fetch('/api/admin/create-waiter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, full_name, role: 'waiter' }),
+      // Use Supabase Edge Function to create waiter
+      const { data, error } = await supabase.functions.invoke('create-waiter', {
+        body: { email, password, full_name },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('API error:', data);
+      if (error) {
+        console.error('API error:', error);
         
         // Provide helpful error messages
-        if (response.status === 500 && data.error?.includes('environment')) {
-          throw new Error("Erro de configuração do servidor. Contate o administrador.");
-        } else if (data.error?.includes('already exists') || data.error?.includes('duplicate')) {
+        if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
           throw new Error("Este email já está cadastrado.");
         } else {
-          throw new Error(data.error || "Erro ao criar conta de garçom.");
+          throw new Error(error.message || "Erro ao criar conta de garçom.");
         }
       }
 
@@ -125,16 +108,14 @@ const AdminWaiters = () => {
   const handleDeleteWaiter = async (waiterId: string) => {
     if (!window.confirm("Tem certeza que deseja deletar este garçom? Esta ação é irreversível.")) return;
 
-    // This operation also requires the `service_role` key and MUST be done via a secure backend (Cloudflare Worker).
     try {
-      const response = await fetch(`/api/admin/delete-waiter/${waiterId}`, {
-        method: 'DELETE',
+      // Use Supabase Edge Function to delete waiter
+      const { data, error } = await supabase.functions.invoke('delete-waiter', {
+        body: { waiterId },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao deletar conta de garçom.");
+      if (error) {
+        throw new Error(error.message || "Erro ao deletar conta de garçom.");
       }
 
       toast.success("Garçom deletado com sucesso!");
