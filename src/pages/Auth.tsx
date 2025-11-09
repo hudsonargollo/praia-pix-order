@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { z } from "zod";
+import logo from "@/assets/coco-loko-logo.png";
 
 const authSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }).max(255),
@@ -14,27 +15,7 @@ const authSchema = z.object({
 });
 
 const getRoleFromSession = (session: any) => {
-  return session?.user?.user_metadata?.role || "default";
-};
-
-const redirectToRolePage = (session: any) => {
-  const role = getRoleFromSession(session);
-  switch (role) {
-    case "kitchen":
-      navigate("/kitchen");
-      break;
-    case "cashier":
-      navigate("/cashier");
-      break;
-    case "waiter":
-      navigate("/waiter-dashboard"); // New dashboard for waiters
-      break;
-    case "admin":
-      navigate("/admin"); // Assuming an admin route exists
-      break;
-    default:
-      navigate("/"); // Default landing page
-  }
+  return session?.user?.user_metadata?.role || session?.user?.app_metadata?.role || "default";
 };
 
 const Auth = () => {
@@ -44,8 +25,30 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const redirectToRolePage = (session: any) => {
+    const role = getRoleFromSession(session);
+    console.log('Redirecting user with role:', role);
+    
+    switch (role) {
+      case "kitchen":
+        navigate("/kitchen");
+        break;
+      case "cashier":
+        navigate("/cashier");
+        break;
+      case "waiter":
+        navigate("/waiter-dashboard");
+        break;
+      case "admin":
+        navigate("/cashier"); // Admin can access manager panel
+        break;
+      default:
+        navigate("/"); // Default landing page
+    }
+  };
+
   useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         redirectToRolePage(session);
       }
@@ -120,11 +123,18 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{isLogin ? "Login" : "Criar Conta"}</CardTitle>
-          <CardDescription>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-acai p-4">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="space-y-4">
+          <div className="flex justify-center">
+            <img 
+              src={logo} 
+              alt="Coco Loko Açaiteria" 
+              className="h-24 w-auto"
+            />
+          </div>
+          <CardTitle className="text-center text-2xl">{isLogin ? "Login" : "Criar Conta"}</CardTitle>
+          <CardDescription className="text-center">
             {isLogin
               ? "Entre com suas credenciais para acessar o sistema"
               : "Crie uma conta para acessar o sistema"}
