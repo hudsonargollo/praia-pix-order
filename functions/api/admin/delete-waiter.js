@@ -1,9 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
-
 // This Worker handles the secure deletion of waiter accounts using the Supabase Service Role Key.
-// The Supabase URL and Service Role Key must be set as environment variables in the Cloudflare Worker settings.
+// Uses direct REST API calls instead of Supabase JS client for Cloudflare Workers compatibility
 
 export async function onRequestDelete(context) {
+  // CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  // Handle CORS preflight
+  if (context.request.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = context.env;
     
@@ -16,19 +26,9 @@ export async function onRequestDelete(context) {
         error: "Supabase environment variables not set. Please configure SUPABASE_URL and SUPABASE_SERVICE_KEY in Cloudflare Pages settings." 
       }), {
         status: 500,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
 
     // Extract user ID from the URL path or query parameter
     const url = new URL(context.request.url);
@@ -46,37 +46,47 @@ export async function onRequestDelete(context) {
     if (!waiterId || waiterId === 'delete-waiter') {
       return new Response(JSON.stringify({ error: "Waiter ID is required." }), {
         status: 400,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // 1. Delete the user from Supabase Auth
-    const { error: userError } = await supabaseAdmin.auth.admin.deleteUser(waiterId);
+    // Delete user using Supabase Admin API directly
+    const deleteUserResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${waiterId}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-    if (userError) {
-      console.error("Supabase delete user error:", userError);
-      return new Response(JSON.stringify({ error: userError.message }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
+    if (!deleteUserResponse.ok) {
+      const errorData = await deleteUserResponse.json();
+      console.error("Supabase delete user error:", errorData);
+      return new Response(JSON.stringify({ 
+        error: errorData.msg || errorData.message || "Failed to delete user" 
+      }), {
+        status: deleteUserResponse.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // 2. Delete associated data (e.g., from public.profiles if not handled by RLS/triggers)
-    // This is often not necessary as Supabase RLS/triggers can handle cascade deletes.
-    
-    return new Response(JSON.stringify({ message: "Waiter account deleted successfully", userId: waiterId }), {
+    return new Response(JSON.stringify({ 
+      message: "Waiter account deleted successfully", 
+      userId: waiterId 
+    }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error("Worker error:", error);
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+    return new Response(JSON.stringify({ 
+      error: "Internal Server Error",
+      details: error.message 
+    }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 }

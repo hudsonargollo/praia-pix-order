@@ -1,84 +1,88 @@
-import { createClient } from '@supabase/supabase-js';
-
 // This Worker handles the secure creation of waiter accounts using the Supabase Service Role Key.
-// The Supabase URL and Service Role Key must be set as environment variables in the Cloudflare Worker settings.
+// Uses direct REST API calls instead of Supabase JS client for Cloudflare Workers compatibility
 
 export async function onRequestPost(context) {
+  // CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  // Handle CORS preflight
+  if (context.request.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = context.env;
     
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       return new Response(JSON.stringify({ error: "Supabase environment variables not set." }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
 
     const { email, password, full_name, role } = await context.request.json();
 
     if (!email || !password || !full_name || role !== 'waiter') {
       return new Response(JSON.stringify({ error: "Missing required fields or invalid role." }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // 1. Create the user in Supabase Auth
-    const { data: userResponse, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Auto-confirm email for staff accounts
-      user_metadata: {
-        full_name,
-        role: 'waiter',
+    // Create user using Supabase Admin API directly
+    const createUserResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json',
       },
-      app_metadata: {
-        role: 'waiter',
-      },
+      body: JSON.stringify({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name,
+          role: 'waiter',
+        },
+        app_metadata: {
+          role: 'waiter',
+        },
+      }),
     });
 
-    if (userError) {
-      console.error("Supabase create user error:", userError);
-      return new Response(JSON.stringify({ error: userError.message }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
+    const userData = await createUserResponse.json();
+
+    if (!createUserResponse.ok) {
+      console.error("Supabase create user error:", userData);
+      return new Response(JSON.stringify({ 
+        error: userData.msg || userData.message || "Failed to create user" 
+      }), {
+        status: createUserResponse.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // 2. Insert profile data (optional, but good practice if a public 'profiles' table exists)
-    // Assuming the project uses a public 'profiles' table that mirrors auth.users metadata
-    // This step is often handled by a trigger in Supabase, but doing it explicitly for completeness.
-    
-    // const { error: profileError } = await supabaseAdmin
-    //   .from('profiles')
-    //   .insert({
-    //     id: userResponse.user.id,
-    //     full_name: full_name,
-    //     role: 'waiter',
-    //   });
-
-    // if (profileError) {
-    //   console.error("Supabase profile insert error:", profileError);
-    //   // Decide whether to roll back user creation or just log the error
-    // }
-
-    return new Response(JSON.stringify({ message: "Waiter account created successfully", userId: userResponse.user.id }), {
+    return new Response(JSON.stringify({ 
+      message: "Waiter account created successfully", 
+      userId: userData.id 
+    }), {
       status: 201,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error("Worker error:", error);
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+    return new Response(JSON.stringify({ 
+      error: "Internal Server Error",
+      details: error.message 
+    }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 }
