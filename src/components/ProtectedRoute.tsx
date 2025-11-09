@@ -48,28 +48,31 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
 
   const checkRole = async (userId: string) => {
     try {
-      // Get the current user to check their metadata
+      // Force refresh the user data from the server
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError) {
-        console.error("Error getting user:", userError);
+        console.error("❌ Error getting user:", userError);
         setHasRole(false);
         setLoading(false);
         return;
       }
 
       if (!user) {
-        console.log('No user found');
+        console.log('❌ No user found');
         setHasRole(false);
         setLoading(false);
         return;
       }
 
+      console.log('👤 User email:', user.email);
+      console.log('📋 Full user object:', JSON.stringify(user, null, 2));
+      
       // Check role from user_metadata and app_metadata
       const userRole = user.user_metadata?.role || user.app_metadata?.role;
-      console.log('ProtectedRoute - User role:', userRole, 'Required role:', requiredRole);
-      console.log('User metadata:', user.user_metadata);
-      console.log('App metadata:', user.app_metadata);
+      console.log('🔑 User role:', userRole, 'Required role:', requiredRole);
+      console.log('📦 User metadata:', JSON.stringify(user.user_metadata, null, 2));
+      console.log('📦 App metadata:', JSON.stringify(user.app_metadata, null, 2));
       
       // Admin has access to everything
       if (userRole === 'admin') {
