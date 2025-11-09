@@ -71,6 +71,7 @@ serve(async (req) => {
     }
 
     // Create admin client with service role
+    // These env vars are automatically available in Supabase Edge Functions
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
