@@ -21,31 +21,29 @@ export async function onRequestGet(context) {
       },
     });
 
-    // List users with the 'waiter' role. Supabase Admin API does not support filtering by app_metadata.
-    // The most secure way is to query the `auth.users` table directly from the service role client.
-    // However, the Supabase client library does not expose a direct `from('auth.users')` method.
-    // The alternative is to use a custom SQL query via an RPC function or a dedicated view.
+    // List all users and filter by role
+    // Note: This is not the most efficient approach, but it works with the Admin API
+    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
 
-    // Since we are using the Admin API, we will fetch all users and filter them, which is inefficient
-    // but the only way with the current Supabase Admin SDK.
-    // A better approach is to use a dedicated Supabase Function (RPC) that queries the `auth.users` table.
-
-    // **Alternative: Using a dedicated Supabase RPC function `get_waiter_users`**
-    // We will assume the existence of a Supabase RPC function for security and efficiency.
-    
-    const { data: waiters, error: rpcError } = await supabaseAdmin.rpc('get_waiter_users');
-
-    if (rpcError) {
-      console.error("Supabase RPC error:", rpcError);
-      // Fallback to a less secure/efficient method if RPC fails (or assume the RPC is not deployed yet)
-      // For now, we will return the error and rely on the AdminWaiters.tsx mock if the RPC is not set up.
-      return new Response(JSON.stringify({ error: rpcError.message }), {
+    if (listError) {
+      console.error("Supabase list users error:", listError);
+      return new Response(JSON.stringify({ error: listError.message }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    return new Response(JSON.stringify(waiters), {
+    // Filter users with waiter role
+    const waiters = users
+      .filter(user => user.app_metadata?.role === 'waiter' || user.user_metadata?.role === 'waiter')
+      .map(user => ({
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || 'N/A',
+        created_at: user.created_at,
+      }));
+
+    return new Response(JSON.stringify({ waiters }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

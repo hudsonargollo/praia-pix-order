@@ -47,37 +47,29 @@ const AdminWaiters = () => {
     // In a real scenario, the Admin would use the Supabase Admin API or a secure serverless function.
     
     // For this implementation, we will use the `supabase.rpc` or a dedicated table if available.
-    // Since we don't have the full Supabase schema, we'll rely on a direct query to a hypothetical `profiles` table
-    // or, more securely, a custom RPC function.
-
-    // Let's assume we can query `auth.users` with RLS allowing admins to see users with role 'waiter'
-    // This is generally not possible from the client. We'll use a placeholder for now.
-    
-    // **Simulating a secure fetch for waiters (users with role 'waiter')**
-    const { data: usersData, error: usersError } = await supabase
-      .from('users') // Assuming a view or RLS allows this for 'admin' role
-      .select('id, email, created_at, raw_user_meta_data')
-      .eq('raw_app_meta_data->>role', 'waiter');
-
-    if (usersError) {
-      // Fallback to a less secure method or show error if the view/RLS is not set up
-      console.error("Error fetching waiters (simulated):", usersError);
-      // For the sake of development, we'll mock the data if the query fails
-      setWaiters([
-        { id: 'mock-1', email: 'garcom1@exemplo.com', full_name: 'Garçom Teste 1', created_at: new Date().toISOString() },
-        { id: 'mock-2', email: 'garcom2@exemplo.com', full_name: 'Garçom Teste 2', created_at: new Date().toISOString() },
-      ]);
-      toast.warning("Aviso: A busca por garçons está simulada. É necessário configurar RLS/View ou RPC para `auth.users`.");
-    } else {
-      const formattedWaiters: Waiter[] = (usersData || []).map((user: any) => ({
-        id: user.id,
-        email: user.email,
-        full_name: user.raw_user_meta_data?.full_name || 'N/A',
-        created_at: user.created_at,
-      }));
-      setWaiters(formattedWaiters);
+    try {
+      // Use the API endpoint to fetch waiters
+      const response = await fetch('/api/admin/list-waiters');
+      
+      if (!response.ok) {
+        const data = await response.json();
+        console.error("Error fetching waiters:", data);
+        toast.error("Erro ao carregar lista de garçons");
+        setWaiters([]);
+        setLoading(false);
+        return;
+      }
+      
+      const data = await response.json();
+      setWaiters(data.waiters || []);
+      
+    } catch (error) {
+      console.error("Error fetching waiters:", error);
+      toast.error("Erro ao carregar lista de garçons");
+      setWaiters([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleCreateWaiter = async (e: React.FormEvent) => {
@@ -88,14 +80,13 @@ const AdminWaiters = () => {
       const validation = waiterSchema.safeParse(currentWaiter);
       if (!validation.success) {
         toast.error(validation.error.errors[0].message);
+        setIsSubmitting(false);
         return;
       }
 
       const { email, password, full_name } = validation.data;
 
-      // Supabase Admin API equivalent for creating a user with a specific role
-      // This operation requires the `service_role` key and MUST be done via a secure backend (Cloudflare Worker).
-      // For now, we will simulate the call and assume a Cloudflare Worker at `/api/admin/create-waiter` handles this.
+      console.log('Creating waiter:', { email, full_name });
 
       const response = await fetch('/api/admin/create-waiter', {
         method: 'POST',
@@ -106,7 +97,16 @@ const AdminWaiters = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao criar conta de garçom.");
+        console.error('API error:', data);
+        
+        // Provide helpful error messages
+        if (response.status === 500 && data.error?.includes('environment')) {
+          throw new Error("Erro de configuração do servidor. Contate o administrador.");
+        } else if (data.error?.includes('already exists') || data.error?.includes('duplicate')) {
+          throw new Error("Este email já está cadastrado.");
+        } else {
+          throw new Error(data.error || "Erro ao criar conta de garçom.");
+        }
       }
 
       toast.success("Garçom criado com sucesso!");
@@ -115,6 +115,7 @@ const AdminWaiters = () => {
       fetchWaiters(); // Refresh list
 
     } catch (error: any) {
+      console.error('Create waiter error:', error);
       toast.error(error.message || "Erro desconhecido ao criar garçom.");
     } finally {
       setIsSubmitting(false);

@@ -141,20 +141,64 @@ export function OrderEditDialog({
     try {
       setSaving(true);
 
-      // Delete all existing items
-      const { error: deleteError } = await supabase
+      // Step 1: Get current items from database
+      const { data: currentItems, error: fetchError } = await supabase
         .from("order_items")
-        .delete()
+        .select("*")
         .eq("order_id", orderId);
 
-      if (deleteError) {
-        console.error("Delete error:", deleteError);
-        throw deleteError;
+      if (fetchError) {
+        console.error("Fetch error:", fetchError);
+        throw new Error("Erro ao carregar itens atuais");
       }
 
-      // Insert updated items (only if we have items)
-      if (items.length > 0) {
-        const itemsToInsert = items.map((item) => ({
+      // Step 2: Determine what changed
+      const currentItemIds = new Set(currentItems?.map(item => item.id) || []);
+      const newItemIds = new Set(items.filter(item => !item.id.startsWith('temp-')).map(item => item.id));
+      
+      // Items to delete (in current but not in new)
+      const itemsToDelete = currentItems?.filter(item => !newItemIds.has(item.id)) || [];
+      
+      // Items to update (existing items with changes)
+      const itemsToUpdate = items.filter(item => 
+        !item.id.startsWith('temp-') && currentItemIds.has(item.id)
+      );
+      
+      // Items to insert (new items with temp IDs)
+      const itemsToInsert = items.filter(item => item.id.startsWith('temp-'));
+
+      // Step 3: Delete removed items
+      if (itemsToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("order_items")
+          .delete()
+          .in('id', itemsToDelete.map(item => item.id));
+
+        if (deleteError) {
+          console.error("Delete error:", deleteError);
+          throw new Error("Erro ao remover itens");
+        }
+      }
+
+      // Step 4: Update existing items
+      for (const item of itemsToUpdate) {
+        const { error: updateError } = await supabase
+          .from("order_items")
+          .update({
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+          })
+          .eq('id', item.id);
+
+        if (updateError) {
+          console.error("Update error:", updateError);
+          throw new Error("Erro ao atualizar itens");
+        }
+      }
+
+      // Step 5: Insert new items
+      if (itemsToInsert.length > 0) {
+        const newItems = itemsToInsert.map((item) => ({
           order_id: orderId,
           menu_item_id: item.menu_item_id,
           item_name: item.item_name,
@@ -164,28 +208,28 @@ export function OrderEditDialog({
 
         const { error: insertError } = await supabase
           .from("order_items")
-          .insert(itemsToInsert);
+          .insert(newItems);
 
         if (insertError) {
           console.error("Insert error:", insertError);
-          throw insertError;
+          throw new Error("Erro ao adicionar novos itens");
         }
       }
 
-      // Update order total
+      // Step 6: Update order total
       const newTotal = items.reduce(
         (sum, item) => sum + item.quantity * item.unit_price,
         0
       );
 
-      const { error: updateError } = await supabase
+      const { error: updateOrderError } = await supabase
         .from("orders")
         .update({ total_amount: newTotal })
         .eq("id", orderId);
 
-      if (updateError) {
-        console.error("Update error:", updateError);
-        throw updateError;
+      if (updateOrderError) {
+        console.error("Update order error:", updateOrderError);
+        throw new Error("Erro ao atualizar total do pedido");
       }
 
       toast.success("Pedido atualizado com sucesso!");
@@ -193,7 +237,7 @@ export function OrderEditDialog({
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error saving order changes:", error);
-      toast.error(`Erro ao salvar alterações: ${error.message || 'Erro desconhecido'}`);
+      toast.error(error.message || 'Erro ao salvar alterações');
     } finally {
       setSaving(false);
     }
