@@ -98,7 +98,11 @@ export function OrderEditDialog({
   };
 
   const removeItem = (itemId: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== itemId));
+    setItems((prev) => {
+      const filtered = prev.filter((item) => item.id !== itemId);
+      console.log('Removing item:', itemId, 'Remaining items:', filtered.length);
+      return filtered;
+    });
   };
 
   const addItem = (menuItem: MenuItem) => {
@@ -209,6 +213,7 @@ export function OrderEditDialog({
                         <Button
                           size="icon"
                           variant="outline"
+                          type="button"
                           onClick={() => updateQuantity(item.id, -1)}
                           disabled={item.quantity <= 1}
                         >
@@ -220,6 +225,7 @@ export function OrderEditDialog({
                         <Button
                           size="icon"
                           variant="outline"
+                          type="button"
                           onClick={() => updateQuantity(item.id, 1)}
                         >
                           <Plus className="h-4 w-4" />
@@ -227,7 +233,12 @@ export function OrderEditDialog({
                         <Button
                           size="icon"
                           variant="destructive"
-                          onClick={() => removeItem(item.id)}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            removeItem(item.id);
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -254,6 +265,7 @@ export function OrderEditDialog({
                     key={menuItem.id}
                     variant="outline"
                     size="sm"
+                    type="button"
                     onClick={() => addItem(menuItem)}
                     className="justify-start h-auto py-2"
                   >
