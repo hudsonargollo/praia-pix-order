@@ -107,6 +107,13 @@ export function OrderEditDialog({
     setItems((prev) => {
       const filtered = prev.filter((item) => item.id !== itemId);
       console.log('Removing item:', itemId, 'Remaining items:', filtered.length);
+      
+      // Prevent removing the last item
+      if (filtered.length === 0) {
+        toast.error("Não é possível remover todos os itens. O pedido deve ter pelo menos um item.");
+        return prev;
+      }
+      
       return filtered;
     });
   };
@@ -125,6 +132,12 @@ export function OrderEditDialog({
   const saveChanges = async () => {
     if (!orderId) return;
 
+    // Validate that we have items
+    if (items.length === 0) {
+      toast.error("O pedido deve ter pelo menos um item.");
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -134,22 +147,30 @@ export function OrderEditDialog({
         .delete()
         .eq("order_id", orderId);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Delete error:", deleteError);
+        throw deleteError;
+      }
 
-      // Insert updated items
-      const itemsToInsert = items.map((item) => ({
-        order_id: orderId,
-        menu_item_id: item.menu_item_id,
-        item_name: item.item_name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-      }));
+      // Insert updated items (only if we have items)
+      if (items.length > 0) {
+        const itemsToInsert = items.map((item) => ({
+          order_id: orderId,
+          menu_item_id: item.menu_item_id,
+          item_name: item.item_name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        }));
 
-      const { error: insertError } = await supabase
-        .from("order_items")
-        .insert(itemsToInsert);
+        const { error: insertError } = await supabase
+          .from("order_items")
+          .insert(itemsToInsert);
 
-      if (insertError) throw insertError;
+        if (insertError) {
+          console.error("Insert error:", insertError);
+          throw insertError;
+        }
+      }
 
       // Update order total
       const newTotal = items.reduce(
@@ -162,14 +183,17 @@ export function OrderEditDialog({
         .update({ total_amount: newTotal })
         .eq("id", orderId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Update error:", updateError);
+        throw updateError;
+      }
 
       toast.success("Pedido atualizado com sucesso!");
       onOrderUpdated();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving order changes:", error);
-      toast.error("Erro ao salvar alterações");
+      toast.error(`Erro ao salvar alterações: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setSaving(false);
     }
@@ -245,6 +269,8 @@ export function OrderEditDialog({
                             e.stopPropagation();
                             removeItem(item.id);
                           }}
+                          disabled={items.length === 1}
+                          title={items.length === 1 ? "Não é possível remover o último item" : "Remover item"}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
