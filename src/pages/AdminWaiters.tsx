@@ -39,6 +39,7 @@ const AdminWaiters = () => {
     setLoading(true);
     try {
       // Use Supabase Edge Function to fetch waiters
+      console.log('🔵 Calling Supabase Edge Function: list-waiters');
       const { data, error } = await supabase.functions.invoke('list-waiters');
       
       if (error) {
@@ -74,7 +75,7 @@ const AdminWaiters = () => {
 
       const { email, password, full_name } = validation.data;
 
-      console.log('Creating waiter:', { email, full_name });
+      console.log('🔵 Creating waiter via Supabase Edge Function:', { email, full_name });
 
       // Use Supabase Edge Function to create waiter
       const { data, error } = await supabase.functions.invoke('create-waiter', {
