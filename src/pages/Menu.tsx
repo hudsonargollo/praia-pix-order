@@ -83,7 +83,7 @@ const Menu = () => {
     setSelectedCategory(categoryId);
     const element = document.getElementById(`category-${categoryId}`);
     if (element) {
-      const offset = 180; // Account for fixed header
+      const offset = 200; // Account for fixed header with logo
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - offset;
       
@@ -145,42 +145,56 @@ const Menu = () => {
         </div>
       </div>
 
-      {/* Category Navigation - Fixed at top */}
-      {categories.length > 0 && (
-        <div className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm shadow-md pt-4 pb-3">
-          <div className="max-w-2xl mx-auto px-4">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {categories.map((category) => {
-                const categoryItems = menuItems.filter(
-                  (item) => item.category_id === category.id
-                );
-                if (categoryItems.length === 0) return null;
-
-                const isSelected = selectedCategory === category.id;
-                
-                return (
-                  <button
-                    key={category.id}
-                    onClick={() => scrollToCategory(category.id)}
-                    className={`
-                      flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm transition-all
-                      ${isSelected 
-                        ? 'bg-purple-900 text-white shadow-md' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }
-                    `}
-                  >
-                    {category.name}
-                  </button>
-                );
-              })}
-            </div>
+      {/* Mobile Header with Logo and Category Navigation */}
+      <div className="fixed top-0 left-0 right-0 z-40 bg-white shadow-lg">
+        {/* Logo Section - Mobile Only */}
+        <div className="md:hidden bg-gradient-to-r from-purple-900 to-purple-700 py-3">
+          <div className="max-w-2xl mx-auto px-4 flex items-center justify-center">
+            <img 
+              src={logo} 
+              alt="Coco Loko" 
+              className="h-12"
+            />
           </div>
         </div>
-      )}
+        
+        {/* Category Navigation */}
+        {categories.length > 0 && (
+          <div className="bg-white/95 backdrop-blur-sm py-3">
+            <div className="max-w-2xl mx-auto px-4">
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                {categories.map((category) => {
+                  const categoryItems = menuItems.filter(
+                    (item) => item.category_id === category.id
+                  );
+                  if (categoryItems.length === 0) return null;
+
+                  const isSelected = selectedCategory === category.id;
+                  
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => scrollToCategory(category.id)}
+                      className={`
+                        flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm transition-all whitespace-nowrap
+                        ${isSelected 
+                          ? 'bg-purple-900 text-white shadow-md' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }
+                      `}
+                    >
+                      {category.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Menu Content */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-32 md:pt-24 pb-6 space-y-6">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-40 md:pt-24 pb-6 space-y-6">
         {categories.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-purple-900 font-semibold">Nenhuma categoria encontrada</p>
