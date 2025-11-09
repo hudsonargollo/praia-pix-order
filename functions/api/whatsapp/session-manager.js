@@ -12,26 +12,24 @@ const TAG_LENGTH = 16;
 
 /**
  * Initialize Supabase client
+ * Note: This needs to be called with env from context in Cloudflare Workers
  */
-function initSupabase() {
-  if (!supabaseClient) {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Missing Supabase configuration');
-    }
-    
-    supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+function initSupabase(env) {
+  const supabaseUrl = env?.SUPABASE_URL;
+  const supabaseServiceKey = env?.SUPABASE_SERVICE_KEY;
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase configuration');
   }
-  return supabaseClient;
+  
+  return createClient(supabaseUrl, supabaseServiceKey);
 }
 
 /**
  * Get encryption key from environment and import for Web Crypto API
  */
-async function getEncryptionKey() {
-  const keyHex = process.env.WHATSAPP_ENCRYPTION_KEY;
+async function getEncryptionKey(env) {
+  const keyHex = env?.WHATSAPP_ENCRYPTION_KEY;
   if (!keyHex) {
     throw new Error('WHATSAPP_ENCRYPTION_KEY environment variable is required');
   }
