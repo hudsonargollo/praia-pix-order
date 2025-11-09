@@ -21,6 +21,15 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     console.log('⚠️ Authentication bypassed for development');
     return <>{children}</>;
   }
+  
+  // TEMPORARY: Bypass for admin email until database is fixed
+  useEffect(() => {
+    if (session?.user?.email === 'admin@cocoloko.com.br') {
+      console.log('⚠️ TEMPORARY: Admin email bypass active');
+      setHasRole(true);
+      setLoading(false);
+    }
+  }, [session]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
