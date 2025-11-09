@@ -48,7 +48,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
 
   const checkRole = async (userId: string) => {
     try {
-      // Force refresh the user data from the server
+      // Get user from auth
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError) {
@@ -66,23 +66,40 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
       }
 
       console.log('👤 User email:', user.email);
-      console.log('📋 Full user object:', JSON.stringify(user, null, 2));
       
-      // Check role from user_metadata and app_metadata
-      const userRole = user.user_metadata?.role || user.app_metadata?.role;
-      console.log('🔑 User role:', userRole, 'Required role:', requiredRole);
-      console.log('📦 User metadata:', JSON.stringify(user.user_metadata, null, 2));
-      console.log('📦 App metadata:', JSON.stringify(user.app_metadata, null, 2));
+      // Query the database directly using RPC to get the user's role
+      const { data: userData, error: dbError } = await (supabase.rpc as any)('get_user_role', {
+        user_id: user.id
+      });
       
-      // Admin has access to everything
-      if (userRole === 'admin') {
-        console.log('Admin user detected - granting access');
-        setHasRole(true);
+      if (dbError || !userData) {
+        console.log('⚠️ Could not query user role from database, falling back to auth metadata');
+        console.log('DB Error:', dbError);
+        // Fallback to auth metadata
+        const userRole = user.user_metadata?.role || user.app_metadata?.role;
+        console.log('🔑 User role from auth:', userRole, 'Required role:', requiredRole);
+        
+        if (userRole === 'admin') {
+          console.log('✅ Admin user detected - granting access');
+          setHasRole(true);
+        } else {
+          const hasAccess = userRole === requiredRole;
+          console.log('Role check result:', hasAccess);
+          setHasRole(hasAccess);
+        }
       } else {
-        // Check if user has the required role
-        const hasAccess = userRole === requiredRole;
-        console.log('Role check result:', hasAccess);
-        setHasRole(hasAccess);
+        // Use database data
+        const userRole = userData as string;
+        console.log('🔑 User role from database:', userRole, 'Required role:', requiredRole);
+        
+        if (userRole === 'admin') {
+          console.log('✅ Admin user detected - granting access');
+          setHasRole(true);
+        } else {
+          const hasAccess = userRole === requiredRole;
+          console.log('Role check result:', hasAccess);
+          setHasRole(hasAccess);
+        }
       }
     } catch (error) {
       console.error("Error checking role:", error);
