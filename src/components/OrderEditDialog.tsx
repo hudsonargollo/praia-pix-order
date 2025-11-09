@@ -46,15 +46,16 @@ export function OrderEditDialog({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (open && orderId && !saving) {
-      // Only load items if not currently saving
+    if (open && orderId) {
       loadOrderItems();
       loadMenuItems();
-    } else if (!open && !saving) {
-      // Only reset state when dialog closes if not saving
-      setItems([]);
-      setMenuItems([]);
-      setLoading(false);
+    } else if (!open) {
+      // Reset state when dialog closes
+      setTimeout(() => {
+        setItems([]);
+        setMenuItems([]);
+        setLoading(false);
+      }, 200);
     }
   }, [open, orderId]);
 
@@ -104,17 +105,13 @@ export function OrderEditDialog({
   };
 
   const removeItem = (itemId: string) => {
-    setItems((prev) => {
-      const filtered = prev.filter((item) => item.id !== itemId);
-      
-      // Prevent removing the last item
-      if (filtered.length === 0) {
-        toast.error("Não é possível remover todos os itens. O pedido deve ter pelo menos um item.");
-        return prev;
-      }
-      
-      return filtered;
-    });
+    // Check if this is the last item before attempting to remove
+    if (items.length <= 1) {
+      toast.error("Não é possível remover todos os itens. O pedido deve ter pelo menos um item.");
+      return;
+    }
+    
+    setItems((prev) => prev.filter((item) => item.id !== itemId));
   };
 
   const addItem = (menuItem: MenuItem) => {
@@ -233,12 +230,12 @@ export function OrderEditDialog({
 
       toast.success("Pedido atualizado com sucesso!");
       
-      // Close dialog first, then update parent
-      onOpenChange(false);
+      // Update parent first
+      onOrderUpdated();
       
-      // Small delay to ensure dialog is closed before parent refreshes
+      // Then close dialog
       setTimeout(() => {
-        onOrderUpdated();
+        onOpenChange(false);
       }, 100);
     } catch (error: any) {
       console.error("Error saving order changes:", error);

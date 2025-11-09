@@ -8,9 +8,18 @@ export async function onRequestDelete(context) {
     const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = context.env;
     
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-      return new Response(JSON.stringify({ error: "Supabase environment variables not set." }), {
+      console.error('Missing environment variables:', { 
+        hasUrl: !!SUPABASE_URL, 
+        hasKey: !!SUPABASE_SERVICE_KEY 
+      });
+      return new Response(JSON.stringify({ 
+        error: "Supabase environment variables not set. Please configure SUPABASE_URL and SUPABASE_SERVICE_KEY in Cloudflare Pages settings." 
+      }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
       });
     }
 
@@ -21,16 +30,26 @@ export async function onRequestDelete(context) {
       },
     });
 
-    // Extract user ID from the URL path
+    // Extract user ID from the URL path or query parameter
     const url = new URL(context.request.url);
-    const pathSegments = url.pathname.split('/');
-    // Assuming the path is /api/admin/delete-waiter/[waiterId]
-    const waiterId = pathSegments[pathSegments.length - 1];
+    const pathSegments = url.pathname.split('/').filter(Boolean);
+    // Path is /api/admin/delete-waiter/[waiterId] or /api/admin/delete-waiter?id=[waiterId]
+    let waiterId = pathSegments[pathSegments.length - 1];
+    
+    // If the last segment is 'delete-waiter', check query params
+    if (waiterId === 'delete-waiter') {
+      waiterId = url.searchParams.get('id');
+    }
 
-    if (!waiterId) {
+    console.log('Delete waiter request:', { pathname: url.pathname, waiterId, pathSegments });
+
+    if (!waiterId || waiterId === 'delete-waiter') {
       return new Response(JSON.stringify({ error: "Waiter ID is required." }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
       });
     }
 
