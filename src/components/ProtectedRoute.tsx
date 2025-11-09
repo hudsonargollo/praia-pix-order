@@ -66,15 +66,19 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
       }
 
       console.log('👤 User email:', user.email);
+      console.log('👤 User ID:', user.id);
       
       // Query the database directly using RPC to get the user's role
+      console.log('🔍 Calling get_user_role RPC function...');
       const { data: userData, error: dbError } = await (supabase.rpc as any)('get_user_role', {
         user_id: user.id
       });
       
+      console.log('📊 RPC Response - Data:', userData, 'Error:', dbError);
+      
       if (dbError || !userData) {
         console.log('⚠️ Could not query user role from database, falling back to auth metadata');
-        console.log('DB Error:', dbError);
+        console.log('DB Error:', JSON.stringify(dbError));
         // Fallback to auth metadata
         const userRole = user.user_metadata?.role || user.app_metadata?.role;
         console.log('🔑 User role from auth:', userRole, 'Required role:', requiredRole);
