@@ -30,13 +30,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Wifi, WifiOff, Eye, Edit, BarChart3, X } from "lucide-react";
+import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Wifi, WifiOff, Eye, Edit, BarChart3, X, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import type { Order } from "@/integrations/supabase/realtime";
 
 // Order interface is now imported from realtime service
 
 const Cashier = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -47,6 +49,12 @@ const Cashier = () => {
   // Load notification history for all orders
   const orderIds = orders.map(o => o.id);
   const { history: notificationHistory, refresh: refreshNotifications } = useNotificationHistory(orderIds);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logout realizado com sucesso!");
+    navigate("/auth");
+  };
 
   const formatTimestamp = (timestamp: string | null) => {
     if (!timestamp) return null;
@@ -369,15 +377,16 @@ const Cashier = () => {
           </div>
           
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => window.location.href = '/reports'}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
-              size="sm"
-            >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Relatórios
-            </Button>
+          <div className="flex flex-wrap gap-2 justify-between">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => window.location.href = '/reports'}
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                size="sm"
+              >
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Relatórios
+              </Button>
             <Button
               onClick={() => window.location.href = '/admin/products'}
               className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
@@ -393,6 +402,16 @@ const Cashier = () => {
             >
               <Bell className="mr-2 h-4 w-4" />
               WhatsApp
+            </Button>
+            </div>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm"
+              size="sm"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
             </Button>
           </div>
         </div>
