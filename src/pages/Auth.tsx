@@ -40,7 +40,7 @@ const Auth = () => {
         navigate("/waiter-dashboard");
         break;
       case "admin":
-        navigate("/cashier"); // Admin can access manager panel
+        navigate("/admin"); // Admin goes to admin panel
         break;
       default:
         navigate("/"); // Default landing page

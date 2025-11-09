@@ -59,21 +59,27 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
       }
 
       if (!user) {
+        console.log('No user found');
         setHasRole(false);
         setLoading(false);
         return;
       }
 
-      // Check role from user_metadata
+      // Check role from user_metadata and app_metadata
       const userRole = user.user_metadata?.role || user.app_metadata?.role;
-      console.log('User role:', userRole, 'Required role:', requiredRole);
+      console.log('ProtectedRoute - User role:', userRole, 'Required role:', requiredRole);
+      console.log('User metadata:', user.user_metadata);
+      console.log('App metadata:', user.app_metadata);
       
       // Admin has access to everything
       if (userRole === 'admin') {
+        console.log('Admin user detected - granting access');
         setHasRole(true);
       } else {
         // Check if user has the required role
-        setHasRole(userRole === requiredRole);
+        const hasAccess = userRole === requiredRole;
+        console.log('Role check result:', hasAccess);
+        setHasRole(hasAccess);
       }
     } catch (error) {
       console.error("Error checking role:", error);
