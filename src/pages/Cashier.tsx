@@ -1002,7 +1002,12 @@ const Cashier = () => {
       <OrderEditDialog
         orderId={editingOrderId}
         open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) {
+            setEditingOrderId(null);
+          }
+        }}
         onOrderUpdated={loadOrders}
       />
     </div>

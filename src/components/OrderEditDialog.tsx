@@ -49,6 +49,12 @@ export function OrderEditDialog({
     if (open && orderId) {
       loadOrderItems();
       loadMenuItems();
+    } else if (!open) {
+      // Reset state when dialog closes
+      setItems([]);
+      setMenuItems([]);
+      setLoading(false);
+      setSaving(false);
     }
   }, [open, orderId]);
 
