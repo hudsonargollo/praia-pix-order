@@ -69,6 +69,10 @@ export function OrderEditDialog({
         .eq("order_id", orderId);
 
       if (error) throw error;
+      
+      console.log('Loaded order items:', data);
+      console.log('Item IDs:', data?.map(item => item.id));
+      
       setItems(data || []);
     } catch (error) {
       console.error("Error loading order items:", error);
@@ -104,16 +108,23 @@ export function OrderEditDialog({
   };
 
   const removeItem = (itemId: string) => {
+    console.log('removeItem called with ID:', itemId);
+    console.log('Current items before removal:', items);
+    
     setItems((prev) => {
+      console.log('Previous items in setState:', prev);
       const filtered = prev.filter((item) => item.id !== itemId);
-      console.log('Removing item:', itemId, 'Remaining items:', filtered.length);
+      console.log('Filtered items:', filtered);
+      console.log('Remaining items count:', filtered.length);
       
       // Prevent removing the last item
       if (filtered.length === 0) {
+        console.log('Preventing removal of last item');
         toast.error("Não é possível remover todos os itens. O pedido deve ter pelo menos um item.");
         return prev;
       }
       
+      console.log('Returning filtered items');
       return filtered;
     });
   };
