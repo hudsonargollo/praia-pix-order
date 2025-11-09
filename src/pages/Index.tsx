@@ -45,7 +45,7 @@ const Index = () => {
             </Button>
             <Button
               size="lg"
-              onClick={() => navigate("/cashier")}
+              onClick={() => navigate("/auth")}
               className="h-auto py-8 flex flex-col bg-yellow-500 text-purple-900 hover:bg-yellow-400 shadow-lg hover:shadow-xl transition-all rounded-2xl"
             >
               <DollarSign className="h-10 w-10 mb-3" />

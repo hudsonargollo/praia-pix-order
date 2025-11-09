@@ -14,8 +14,8 @@ const Waiter = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement waiter authentication
-    console.log("Waiter login:", { username, password });
+    // Redirect to auth page with waiter context
+    navigate("/auth");
   };
 
   return (
