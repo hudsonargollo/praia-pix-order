@@ -535,25 +535,68 @@ const Cashier = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Button
-                        className="flex-1 min-h-[44px] text-base"
-                        onClick={() => confirmPayment(order.id)}
-                        disabled={paymentStatus.status === 'confirmed'}
-                      >
-                        <DollarSign className="mr-2 h-4 w-4" />
-                        {paymentStatus.status === 'confirmed' ? 'Pagamento Confirmado' : 'Confirmar Pagamento PIX'}
-                      </Button>
-                      {paymentStatus.status === 'confirmed' && (
+                    
+                    {/* Action Buttons */}
+                    <div className="border-t pt-3 space-y-2">
+                      {/* Edit and Cancel Buttons */}
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
-                          className="min-h-[44px] text-base"
-                          onClick={() => updateOrderStatus(order.id, 'in_preparation')}
+                          size="sm"
+                          onClick={() => {
+                            setEditingOrderId(order.id);
+                            setIsEditDialogOpen(true);
+                          }}
+                          className="flex-1"
                         >
-                          <ChefHat className="mr-2 h-4 w-4" />
-                          Enviar p/ Cozinha
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
                         </Button>
-                      )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="flex-1 text-destructive hover:bg-destructive hover:text-white">
+                              <X className="mr-2 h-4 w-4" />
+                              Cancelar
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancelar Pedido</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja cancelar o pedido #{order.order_number}?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Não</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => cancelOrder(order.id)} className="bg-destructive">
+                                Sim, Cancelar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+
+                      {/* Payment Confirmation Button */}
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button
+                          className="flex-1 min-h-[44px] text-base"
+                          onClick={() => confirmPayment(order.id)}
+                          disabled={paymentStatus.status === 'confirmed'}
+                        >
+                          <DollarSign className="mr-2 h-4 w-4" />
+                          {paymentStatus.status === 'confirmed' ? 'Pagamento Confirmado' : 'Confirmar Pagamento PIX'}
+                        </Button>
+                        {paymentStatus.status === 'confirmed' && (
+                          <Button
+                            variant="outline"
+                            className="min-h-[44px] text-base"
+                            onClick={() => updateOrderStatus(order.id, 'in_preparation')}
+                          >
+                            <ChefHat className="mr-2 h-4 w-4" />
+                            Enviar p/ Cozinha
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </Card>
                 );
@@ -612,39 +655,81 @@ const Cashier = () => {
                       </div>
                     </div>
                     
-                    {/* Notification Controls */}
-                    <div className="border-t pt-3 mb-3">
-                      <NotificationControls
-                        orderId={order.id}
-                        orderNumber={order.order_number}
-                        customerPhone={order.customer_phone}
-                        customerName={order.customer_name}
-                        orderStatus={order.status}
-                        notificationHistory={orderNotificationHistory}
-                        onNotificationSent={refreshNotifications}
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      {order.status === 'paid' && (
+                    {/* Action Buttons */}
+                    <div className="border-t pt-3 space-y-2">
+                      {/* Edit and Cancel Buttons */}
+                      <div className="flex gap-2">
                         <Button
-                          className="flex-1 min-h-[44px] text-base"
                           variant="outline"
-                          onClick={() => updateOrderStatus(order.id, 'in_preparation')}
+                          size="sm"
+                          onClick={() => {
+                            setEditingOrderId(order.id);
+                            setIsEditDialogOpen(true);
+                          }}
+                          className="flex-1"
                         >
-                          <ChefHat className="mr-2 h-4 w-4" />
-                          Iniciar Preparo
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
                         </Button>
-                      )}
-                      {order.status === 'in_preparation' && (
-                        <Button
-                          className="flex-1 min-h-[44px] text-base"
-                          onClick={() => updateOrderStatus(order.id, 'ready')}
-                        >
-                          <Package className="mr-2 h-4 w-4" />
-                          Marcar como Pronto
-                        </Button>
-                      )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="flex-1 text-destructive hover:bg-destructive hover:text-white">
+                              <X className="mr-2 h-4 w-4" />
+                              Cancelar
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancelar Pedido</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja cancelar o pedido #{order.order_number}?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Não</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => cancelOrder(order.id)} className="bg-destructive">
+                                Sim, Cancelar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+
+                      {/* Notification Controls */}
+                      <div className="border-t pt-2">
+                        <NotificationControls
+                          orderId={order.id}
+                          orderNumber={order.order_number}
+                          customerPhone={order.customer_phone}
+                          customerName={order.customer_name}
+                          orderStatus={order.status}
+                          notificationHistory={orderNotificationHistory}
+                          onNotificationSent={refreshNotifications}
+                        />
+                      </div>
+
+                      {/* Status Update Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        {order.status === 'paid' && (
+                          <Button
+                            className="flex-1 min-h-[44px] text-base"
+                            variant="outline"
+                            onClick={() => updateOrderStatus(order.id, 'in_preparation')}
+                          >
+                            <ChefHat className="mr-2 h-4 w-4" />
+                            Iniciar Preparo
+                          </Button>
+                        )}
+                        {order.status === 'in_preparation' && (
+                          <Button
+                            className="flex-1 min-h-[44px] text-base"
+                            onClick={() => updateOrderStatus(order.id, 'ready')}
+                          >
+                            <Package className="mr-2 h-4 w-4" />
+                            Marcar como Pronto
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </Card>
                 );
