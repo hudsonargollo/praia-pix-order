@@ -18,8 +18,7 @@ INSERT INTO auth.users (
   confirmation_sent_at,
   raw_app_meta_data,
   raw_user_meta_data,
-  is_super_admin,
-  confirmed_at
+  is_super_admin
 ) VALUES (
   '00000000-0000-0000-0000-000000000000',
   gen_random_uuid(),
@@ -33,8 +32,7 @@ INSERT INTO auth.users (
   NOW(),
   '{"provider": "email", "providers": ["email"], "role": "admin"}'::jsonb,
   '{"role": "admin", "full_name": "Administrator"}'::jsonb,
-  false,
-  NOW()
+  false
 );
 
 -- Verify the admin account was created correctly

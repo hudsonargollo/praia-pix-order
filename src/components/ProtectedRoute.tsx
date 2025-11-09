@@ -22,14 +22,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     return <>{children}</>;
   }
   
-  // TEMPORARY: Bypass for admin email until database is fixed
-  useEffect(() => {
-    if (session?.user?.email === 'admin@cocoloko.com.br') {
-      console.log('⚠️ TEMPORARY: Admin email bypass active');
-      setHasRole(true);
-      setLoading(false);
-    }
-  }, [session]);
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -70,6 +63,14 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
       if (!user) {
         console.log('No user found');
         setHasRole(false);
+        setLoading(false);
+        return;
+      }
+
+      // TEMPORARY: Bypass for admin email
+      if (user.email === 'admin@cocoloko.com.br') {
+        console.log('⚠️ TEMPORARY: Admin email bypass active for', user.email);
+        setHasRole(true);
         setLoading(false);
         return;
       }
