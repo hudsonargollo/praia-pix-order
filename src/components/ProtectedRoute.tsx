@@ -12,7 +12,6 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasRole, setHasRole] = useState(false);
-  const [bypassActive, setBypassActive] = useState(false);
 
   // Optional: Allow bypass with URL parameter for development
   const urlParams = new URLSearchParams(window.location.search);
@@ -22,26 +21,10 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     console.log('⚠️ Authentication bypassed for development');
     return <>{children}</>;
   }
-  
-  // TEMPORARY: Check for admin email bypass
-  if (bypassActive) {
-    console.log('⚠️ TEMPORARY: Admin bypass is active');
-    return <>{children}</>;
-  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      
-      // Check for admin email bypass
-      if (session?.user?.email === 'admin@cocoloko.com.br') {
-        console.log('⚠️ TEMPORARY: Admin email detected, activating bypass');
-        setBypassActive(true);
-        setHasRole(true);
-        setLoading(false);
-        return;
-      }
-      
       if (session && requiredRole) {
         checkRole(session.user.id);
       } else {
@@ -52,16 +35,6 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
-        
-        // Check for admin email bypass
-        if (session?.user?.email === 'admin@cocoloko.com.br') {
-          console.log('⚠️ TEMPORARY: Admin email detected in auth change, activating bypass');
-          setBypassActive(true);
-          setHasRole(true);
-          setLoading(false);
-          return;
-        }
-        
         if (session && requiredRole) {
           checkRole(session.user.id);
         } else {
@@ -88,14 +61,6 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
       if (!user) {
         console.log('No user found');
         setHasRole(false);
-        setLoading(false);
-        return;
-      }
-
-      // TEMPORARY: Bypass for admin email
-      if (user.email === 'admin@cocoloko.com.br') {
-        console.log('⚠️ TEMPORARY: Admin email bypass active for', user.email);
-        setHasRole(true);
         setLoading(false);
         return;
       }
