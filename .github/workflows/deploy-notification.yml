@@ -1,0 +1,22 @@
+name: Deployment Notification
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Deployment Started
+        run: |
+          echo "🚀 Deployment triggered for commit: ${{ github.sha }}"
+          echo "📝 Commit message: ${{ github.event.head_commit.message }}"
+          echo "👤 Author: ${{ github.event.head_commit.author.name }}"
+          echo ""
+          echo "⏳ Cloudflare Pages will automatically deploy this commit."
+          echo "🔗 Check deployment status at: https://dash.cloudflare.com/"
