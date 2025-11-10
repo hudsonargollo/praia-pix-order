@@ -133,7 +133,7 @@ const Reports = () => {
             variant="outline"
             size="sm"
             onClick={() => (window.location.href = "/cashier")}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
           >
             ← Voltar ao Caixa
           </Button>
@@ -154,7 +154,7 @@ const Reports = () => {
             <div className="flex gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline">
+                  <Button variant="outline" className="bg-white hover:bg-gray-50 text-gray-900 border-gray-300">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     Selecionar Período
                   </Button>
@@ -172,7 +172,7 @@ const Reports = () => {
                   />
                 </PopoverContent>
               </Popover>
-              <Button onClick={exportToCSV} variant="outline">
+              <Button onClick={exportToCSV} variant="outline" className="bg-white hover:bg-gray-50 text-gray-900 border-gray-300">
                 <Download className="mr-2 h-4 w-4" />
                 Exportar CSV
               </Button>
