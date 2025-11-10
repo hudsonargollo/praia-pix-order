@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ShoppingCart, Plus, Minus, Star, Clock, LogOut } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Star, Clock, LogOut, Coffee, Droplets, IceCream, Sandwich, Pizza, Cake } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import logo from "@/assets/coco-loko-logo.png";
@@ -74,6 +74,18 @@ const Menu = () => {
         behavior: 'smooth'
       });
     }
+  }, []);
+
+  // Get category icon
+  const getCategoryIcon = useCallback((categoryName: string) => {
+    const name = categoryName.toLowerCase();
+    if (name.includes('açaí') || name.includes('acai')) return IceCream;
+    if (name.includes('bebida') || name.includes('drink')) return Droplets;
+    if (name.includes('café') || name.includes('coffee')) return Coffee;
+    if (name.includes('lanche') || name.includes('sanduíche')) return Sandwich;
+    if (name.includes('pizza')) return Pizza;
+    if (name.includes('sobremesa') || name.includes('doce')) return Cake;
+    return ShoppingCart;
   }, []);
 
   // Optimized add to cart with feedback
@@ -233,13 +245,14 @@ const Menu = () => {
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {categorizedItems.map((category) => {
                 const isSelected = selectedCategory === category.id;
+                const CategoryIcon = getCategoryIcon(category.name);
                 
                 return (
                   <button
                     key={category.id}
                     onClick={() => handleCategoryScroll(category.id)}
                     className={`
-                      group relative flex-shrink-0 px-8 py-4 rounded-3xl font-bold text-sm transition-all duration-300 whitespace-nowrap shadow-lg hover:shadow-2xl transform hover:scale-105
+                      group relative flex-shrink-0 px-6 py-3 rounded-3xl font-bold text-sm transition-all duration-300 whitespace-nowrap shadow-lg hover:shadow-2xl transform hover:scale-105
                       ${isSelected 
                         ? 'bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white shadow-purple-400/50 scale-105' 
                         : 'bg-gradient-to-r from-white to-gray-50 text-gray-700 hover:from-purple-50 hover:to-purple-100 hover:text-purple-700 border-2 border-gray-200 hover:border-purple-300'
@@ -247,7 +260,7 @@ const Menu = () => {
                     `}
                   >
                     <span className="relative z-10 flex items-center gap-2">
-                      <ShoppingCart className="w-4 h-4" />
+                      <CategoryIcon className="w-4 h-4" />
                       {category.name}
                     </span>
                     
@@ -262,7 +275,7 @@ const Menu = () => {
                     
                     {/* Enhanced item count badge */}
                     <div className={`
-                      absolute -top-3 -right-3 w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-300 shadow-lg
+                      absolute -top-2 -right-2 w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-300 shadow-lg
                       ${isSelected 
                         ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-900 animate-bounce' 
                         : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white group-hover:from-purple-700 group-hover:to-purple-800'
@@ -291,18 +304,21 @@ const Menu = () => {
             <div key={category.id} id={`category-${category.id}`} className="space-y-6 scroll-mt-52">
               {/* Enhanced Category Header */}
               <div className="text-center mb-6">
-                <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white px-10 py-6 rounded-3xl inline-block shadow-2xl border-2 border-purple-500 relative overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white px-6 md:px-10 py-4 md:py-6 rounded-3xl inline-block shadow-2xl border-2 border-purple-500 relative overflow-hidden transform hover:scale-105 transition-transform duration-300">
                   {/* Animated background pattern */}
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-400/30 to-purple-600/30 animate-pulse" />
                   <div className="absolute inset-0 opacity-20">
                     <div className="w-full h-full bg-white/10 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_2px,transparent_2px)] bg-[length:20px_20px]" />
                   </div>
                   
-                  <div className="relative z-10 flex items-center gap-4">
+                  <div className="relative z-10 flex items-center gap-3 md:gap-4">
                     <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
-                      <ShoppingCart className="w-4 h-4 text-purple-900" />
+                      {(() => {
+                        const CategoryIcon = getCategoryIcon(category.name);
+                        return <CategoryIcon className="w-4 h-4 text-purple-900" />;
+                      })()}
                     </div>
-                    <h2 className="font-bold text-2xl uppercase tracking-wide">
+                    <h2 className="font-bold text-lg md:text-2xl uppercase tracking-wide">
                       {category.name}
                     </h2>
                     <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
@@ -312,11 +328,9 @@ const Menu = () => {
                     </div>
                   </div>
                   
-                  {/* Enhanced decorative elements */}
-                  <div className="absolute -top-2 -left-2 w-4 h-4 bg-yellow-400 rounded-full opacity-90 animate-bounce" />
-                  <div className="absolute -bottom-2 -right-2 w-3 h-3 bg-pink-400 rounded-full opacity-80 animate-pulse" />
-                  <div className="absolute top-1/2 -left-1 w-2 h-2 bg-green-400 rounded-full opacity-70" />
-                  <div className="absolute top-1/2 -right-1 w-2 h-2 bg-blue-400 rounded-full opacity-70" />
+                  {/* Simplified decorative elements - removed blue semicircles */}
+                  <div className="absolute -top-2 -left-2 w-3 h-3 bg-yellow-400 rounded-full opacity-90 animate-bounce" />
+                  <div className="absolute -bottom-2 -right-2 w-3 h-3 bg-yellow-400 rounded-full opacity-80 animate-pulse" />
                 </div>
               </div>
 
@@ -329,11 +343,11 @@ const Menu = () => {
                   return (
                     <div 
                       key={item.id} 
-                      className="bg-white/95 backdrop-blur-sm rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-5 border-2 border-gray-100 hover:border-purple-300 group transform hover:scale-[1.02]"
+                      className="bg-white/95 backdrop-blur-sm rounded-3xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-3 md:gap-5 border-2 border-gray-100 hover:border-purple-300 group transform hover:scale-[1.02]"
                     >
                       {/* Enhanced Item Image */}
                       <div 
-                        className="w-24 h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer flex-shrink-0 transition-all duration-300 group-hover:scale-110 shadow-xl border-2 border-white"
+                        className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer flex-shrink-0 transition-all duration-300 group-hover:scale-110 shadow-xl border-2 border-white"
                         onClick={() => setSelectedItem(item)}
                       >
                         {item.image_url && !hasImageError ? (
@@ -356,30 +370,30 @@ const Menu = () => {
 
                       {/* Enhanced Item Info */}
                       <div 
-                        className="flex-1 cursor-pointer transition-all duration-200 group-hover:translate-x-1"
+                        className="flex-1 cursor-pointer transition-all duration-200 group-hover:translate-x-1 min-w-0"
                         onClick={() => setSelectedItem(item)}
                       >
-                        <div className="flex items-start gap-2 mb-2">
-                          <h3 className="font-bold text-gray-900 text-xl group-hover:text-purple-700 transition-colors flex-1">
+                        <div className="flex items-start gap-2 mb-1 md:mb-2">
+                          <h3 className="font-bold text-gray-900 text-base md:text-xl group-hover:text-purple-700 transition-colors flex-1 truncate">
                             {item.name}
                           </h3>
-                          <div className="flex items-center gap-1 text-yellow-500">
-                            <Star className="w-4 h-4 fill-current" />
-                            <span className="text-xs text-gray-500 font-medium">4.8</span>
+                          <div className="flex items-center gap-1 text-yellow-500 flex-shrink-0">
+                            <Star className="w-3 h-3 md:w-4 md:h-4 fill-current" />
+                            <span className="text-xs text-gray-500 font-medium hidden md:inline">4.8</span>
                           </div>
                         </div>
                         
                         {item.description && (
-                          <p className="text-sm text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+                          <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-1 md:line-clamp-2 leading-relaxed">
                             {item.description}
                           </p>
                         )}
                         
-                        <div className="flex items-center gap-3">
-                          <p className="text-emerald-600 font-bold text-xl">
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <p className="text-emerald-600 font-bold text-lg md:text-xl">
                             R$ {item.price.toFixed(2)}
                           </p>
-                          <div className="flex items-center gap-1 text-gray-500 text-xs">
+                          <div className="flex items-center gap-1 text-gray-500 text-xs hidden md:flex">
                             <Clock className="w-3 h-3" />
                             <span>5-10 min</span>
                           </div>
@@ -389,37 +403,37 @@ const Menu = () => {
                       {/* Enhanced Add Button */}
                       <div className="flex-shrink-0">
                         {quantity > 0 ? (
-                          <div className="flex items-center gap-4 bg-gradient-to-r from-purple-50 via-purple-100 to-purple-50 rounded-3xl p-4 border-2 border-purple-200 shadow-xl">
+                          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 bg-gradient-to-r from-purple-50 via-purple-100 to-purple-50 rounded-2xl md:rounded-3xl p-2 md:p-4 border-2 border-purple-200 shadow-xl">
                             <button
                               onClick={() => removeItem(item.id)}
-                              className="w-12 h-12 rounded-2xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
+                              className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
                               aria-label="Remover item"
                             >
-                              <Minus className="w-5 h-5" />
+                              <Minus className="w-4 h-4 md:w-5 md:h-5" />
                             </button>
-                            <div className="text-center px-2">
-                              <span className="font-bold text-purple-900 text-xl block">
+                            <div className="text-center px-1 md:px-2">
+                              <span className="font-bold text-purple-900 text-lg md:text-xl block">
                                 {quantity}
                               </span>
-                              <span className="text-xs text-purple-600 font-medium whitespace-nowrap">
+                              <span className="text-xs text-purple-600 font-medium whitespace-nowrap hidden md:inline">
                                 no carrinho
                               </span>
                             </div>
                             <button
                               onClick={() => handleAddToCart(item)}
-                              className="w-12 h-12 rounded-2xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
+                              className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
                               aria-label="Adicionar item"
                             >
-                              <Plus className="w-5 h-5" />
+                              <Plus className="w-4 h-4 md:w-5 md:h-5" />
                             </button>
                           </div>
                         ) : (
                           <Button
                             onClick={() => handleAddToCart(item)}
-                            className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white px-8 py-4 rounded-3xl font-bold text-sm shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110 border-2 border-purple-500 hover:border-purple-400"
+                            className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white px-4 md:px-8 py-3 md:py-4 rounded-2xl md:rounded-3xl font-bold text-xs md:text-sm shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110 border-2 border-purple-500 hover:border-purple-400"
                           >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Adicionar
+                            <Plus className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                            <span className="hidden md:inline">Adicionar</span>
                           </Button>
                         )}
                       </div>
