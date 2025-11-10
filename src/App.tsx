@@ -27,6 +27,7 @@ import WhatsAppAdmin from "./pages/WhatsAppAdmin";
 import Monitoring from "./pages/Monitoring";
 import AdminProducts from "./pages/AdminProducts";
 import AdminWaiters from "./pages/AdminWaiters";
+import AdminWaiterReportsPage from "./pages/AdminWaiterReportsPage";
 import SystemDiagnostic from "./pages/SystemDiagnostic";
 
 const queryClient = new QueryClient();
@@ -121,6 +122,14 @@ const App = () => (
             element={
               <ProtectedRoute requiredRole="admin">
                 <AdminWaiters />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/waiter-reports"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminWaiterReportsPage />
               </ProtectedRoute>
             }
           />

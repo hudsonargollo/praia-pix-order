@@ -22,44 +22,91 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
 
   const redirectToRolePage = async (session: any) => {
-    // Get user role from metadata
-    const { data: { user } } = await supabase.auth.getUser();
-    const role = user?.user_metadata?.role || user?.app_metadata?.role;
-    
-    console.log('🔵 NEW AUTH CODE LOADED! User role:', role);
-    console.log('🔵 User metadata:', user?.user_metadata);
-    console.log('🔵 App metadata:', user?.app_metadata);
-    
-    // Redirect based on role
-    if (role === 'waiter') {
-      console.log('🔵 Redirecting waiter to dashboard');
-      navigate("/waiter-dashboard");
-    } else if (role === 'kitchen') {
-      console.log('🔵 Redirecting to kitchen');
-      navigate("/kitchen");
-    } else if (role === 'cashier') {
-      console.log('🔵 Redirecting to cashier');
-      navigate("/cashier");
-    } else if (role === 'admin') {
-      console.log('🔵 Redirecting to admin');
-      navigate("/admin");
-    } else {
-      console.log('🔵 Unknown role, defaulting to admin');
-      // Default to admin for unknown roles
-      navigate("/admin");
+    try {
+      // Get user role from metadata
+      const { data: { user } } = await supabase.auth.getUser();
+      let role = user?.user_metadata?.role || user?.app_metadata?.role;
+      
+      console.log('🔵 LATEST AUTH CODE v2.1 LOADED! User role:', role);
+      console.log('🔵 User metadata:', user?.user_metadata);
+      console.log('🔵 App metadata:', user?.app_metadata);
+      console.log('🔵 User ID:', user?.id);
+      console.log('🔵 User email:', user?.email);
+      
+      // If no role in metadata, try RPC function
+      if (!role && user?.id) {
+        console.log('🔵 No role in metadata, trying RPC function...');
+        try {
+          const { data: rpcRole, error: rpcError } = await (supabase.rpc as any)('get_user_role', {
+            user_id: user.id
+          });
+          
+          if (!rpcError && rpcRole) {
+            role = rpcRole;
+            console.log('🔵 Got role from RPC:', role);
+          } else {
+            console.log('🔵 RPC error or no role:', rpcError);
+          }
+        } catch (rpcErr) {
+          console.log('🔵 RPC call failed:', rpcErr);
+        }
+      }
+      
+      // Redirect based on role
+      if (role === 'waiter') {
+        console.log('🔵 Redirecting waiter to dashboard');
+        navigate("/waiter-dashboard", { replace: true });
+      } else if (role === 'kitchen') {
+        console.log('🔵 Redirecting to kitchen');
+        navigate("/kitchen", { replace: true });
+      } else if (role === 'cashier') {
+        console.log('🔵 Redirecting to cashier');
+        navigate("/cashier", { replace: true });
+      } else if (role === 'admin') {
+        console.log('🔵 Redirecting to admin');
+        navigate("/admin", { replace: true });
+      } else {
+        console.log('🔵 Unknown role, defaulting to admin. Role was:', role);
+        // Default to admin for unknown roles
+        navigate("/admin", { replace: true });
+      }
+    } catch (error) {
+      console.error('🔴 Error in redirectToRolePage:', error);
+      // Fallback to admin on error
+      navigate("/admin", { replace: true });
     }
   };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        redirectToRolePage(session);
+        // Simple redirect based on email for now
+        const email = session.user.email;
+        console.log('🔵 Session found, email:', email);
+        
+        if (email === 'garcom1@cocoloko.com') {
+          console.log('🔵 Waiter email detected, redirecting to dashboard');
+          // Force redirect to current domain to avoid custom domain issues
+          window.location.href = `${window.location.origin}/waiter-dashboard`;
+        } else {
+          redirectToRolePage(session);
+        }
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        redirectToRolePage(session);
+        // Simple redirect based on email for now
+        const email = session.user.email;
+        console.log('🔵 Auth state change, email:', email);
+        
+        if (email === 'garcom1@cocoloko.com') {
+          console.log('🔵 Waiter email detected, redirecting to dashboard');
+          // Force redirect to current domain to avoid custom domain issues
+          window.location.href = `${window.location.origin}/waiter-dashboard`;
+        } else {
+          redirectToRolePage(session);
+        }
       }
     });
 
@@ -96,7 +143,14 @@ const Auth = () => {
         toast.success("Login realizado com sucesso!");
         const session = (await supabase.auth.getSession()).data.session;
         if (session) {
-          redirectToRolePage(session);
+          // Use email-based redirect for waiter
+          if (validation.data.email === 'garcom1@cocoloko.com') {
+            console.log('🔵 Waiter login successful, redirecting to dashboard');
+            // Force redirect to current domain to avoid custom domain issues
+            window.location.href = `${window.location.origin}/waiter-dashboard`;
+          } else {
+            redirectToRolePage(session);
+          }
         }
       } else {
         const { error } = await supabase.auth.signUp({

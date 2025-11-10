@@ -38,15 +38,36 @@ const AdminWaiters = () => {
   const fetchWaiters = async () => {
     setLoading(true);
     try {
-      // Use Supabase Edge Function to fetch waiters
+      // Try Supabase Edge Function first
       console.log('🔵 Calling Supabase Edge Function: list-waiters');
       const { data, error } = await supabase.functions.invoke('list-waiters');
       
       if (error) {
-        console.error("Error fetching waiters:", error);
-        toast.error("Erro ao carregar lista de garçons");
-        setWaiters([]);
-        setLoading(false);
+        console.error("Edge Function error:", error);
+        // Fallback to direct database query
+        console.log('🔵 Fallback: Querying auth.users directly');
+        
+        const { data: authUsers, error: authError } = await supabase
+          .from('auth.users')
+          .select('id, email, raw_user_meta_data, created_at')
+          .or('raw_user_meta_data->>role.eq.waiter,raw_app_meta_data->>role.eq.waiter');
+        
+        if (authError) {
+          console.error("Database query error:", authError);
+          toast.error("Erro ao carregar lista de garçons");
+          setWaiters([]);
+          return;
+        }
+        
+        // Transform the data to match expected format
+        const transformedWaiters = (authUsers || []).map(user => ({
+          id: user.id,
+          email: user.email,
+          full_name: user.raw_user_meta_data?.full_name || user.email,
+          created_at: user.created_at
+        }));
+        
+        setWaiters(transformedWaiters);
         return;
       }
       

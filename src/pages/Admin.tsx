@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { LayoutDashboard, Users, ShoppingBag, Settings, BarChart3, MessageSquare, LogOut, ChefHat } from "lucide-react";
+import { LayoutDashboard, Users, ShoppingBag, Settings, BarChart3, MessageSquare, LogOut, ChefHat, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/coco-loko-logo.png";
@@ -28,6 +28,7 @@ const Admin = () => {
   const adminMenuItems = [
     { title: "Painel Gerente", icon: ChefHat, path: "/cashier", description: "Gerenciar pedidos" },
     { title: "Relatórios", icon: BarChart3, path: "/reports", description: "Análises e métricas" },
+    { title: "Relatórios Garçons", icon: TrendingUp, path: "/admin/waiter-reports", description: "Performance por garçom" },
     { title: "Produtos", icon: ShoppingBag, path: "/admin/products", description: "Gerenciar cardápio" },
     { title: "Garçons", icon: Users, path: "/admin/waiters", description: "Gerenciar equipe" },
     { title: "WhatsApp", icon: MessageSquare, path: "/whatsapp-admin", description: "Configurar notificações" },
@@ -48,7 +49,7 @@ const Admin = () => {
               />
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold">Painel Administrativo</h1>
-                <p className="text-white/90 mt-1 text-sm sm:text-base">Gerenciamento Completo</p>
+                <p className="text-white/90 mt-1 text-sm sm:text-base">Sistema de Gestão</p>
               </div>
             </div>
             <Button
@@ -68,9 +69,9 @@ const Admin = () => {
       <div className="p-4 md:p-8">
         <Card className="max-w-6xl mx-auto shadow-xl">
           <CardHeader>
-            <CardTitle className="text-2xl">Selecione uma Opção</CardTitle>
+            <CardTitle className="text-2xl">Menu Principal</CardTitle>
             <p className="text-muted-foreground">
-              Acesse as diferentes áreas do sistema
+              Escolha a área que deseja gerenciar
             </p>
           </CardHeader>
           <CardContent>
@@ -79,12 +80,12 @@ const Admin = () => {
                 <Button
                   key={item.title}
                   variant="outline"
-                  className="flex flex-col h-40 p-6 justify-center items-center text-center hover:bg-primary/5 hover:border-primary transition-all"
+                  className="flex flex-col h-40 p-6 justify-center items-center text-center hover:bg-gradient-to-br hover:from-purple-600 hover:to-blue-600 hover:text-white hover:border-transparent transition-all duration-300 group"
                   onClick={() => handleNavigation(item.path)}
                 >
-                  <item.icon className="w-12 h-12 mb-3 text-primary" />
-                  <span className="font-semibold text-lg mb-1">{item.title}</span>
-                  <span className="text-xs text-muted-foreground">{item.description}</span>
+                  <item.icon className="w-12 h-12 mb-3 text-primary group-hover:text-white transition-colors" />
+                  <span className="font-semibold text-lg mb-1 group-hover:text-white transition-colors">{item.title}</span>
+                  <span className="text-xs text-muted-foreground group-hover:text-white/80 transition-colors">{item.description}</span>
                 </Button>
               ))}
             </div>

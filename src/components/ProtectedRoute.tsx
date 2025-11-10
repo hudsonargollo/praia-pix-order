@@ -22,6 +22,22 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     return <>{children}</>;
   }
 
+  // Temporary: Allow waiter email direct access to waiter routes
+  useEffect(() => {
+    const checkWaiterAccess = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email === 'garcom1@cocoloko.com' && requiredRole === 'waiter') {
+        console.log('✅ Waiter email detected, granting access');
+        setSession(session);
+        setHasRole(true);
+        setLoading(false);
+        return;
+      }
+    };
+    
+    checkWaiterAccess();
+  }, [requiredRole]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);

@@ -8,16 +8,19 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
+import CustomerInfoForm, { CustomerInfo } from "@/components/CustomerInfoForm";
+import OrderNotesInput from "@/components/OrderNotesInput";
 
 const Checkout = () => {
   const navigate = useNavigate();
   
   const { state: cartState, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
-  const [customerInfo, setCustomerInfo] = useState<{name: string, phone: string}>({
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: "",
     phone: ""
   });
+  const [orderNotes, setOrderNotes] = useState("");
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isWaiter, setIsWaiter] = useState(false);
   const [waiterId, setWaiterId] = useState<string | null>(null);
@@ -37,9 +40,9 @@ const Checkout = () => {
       if (role === "waiter") {
         setIsWaiter(true);
         setWaiterId(user.id);
-        // Waiter-assisted orders do not require customer info upfront
-        setIsEditingInfo(false);
-        setCustomerInfo({ name: "Cliente (Garçom)", phone: "00000000000" });
+        // Waiter-assisted orders require customer info collection
+        setIsEditingInfo(true);
+        setCustomerInfo({ name: "", phone: "" });
       } else {
         setIsWaiter(false);
         setWaiterId(null);
@@ -72,8 +75,8 @@ const Checkout = () => {
       return;
     }
 
-    if (!customerInfo.name || !customerInfo.phone) {
-      toast.error("Por favor, preencha seu nome e WhatsApp");
+    if (!customerInfo.name?.trim() || !customerInfo.phone?.trim()) {
+      toast.error("Por favor, preencha o nome e WhatsApp do cliente");
       setIsEditingInfo(true);
       return;
     }
@@ -82,6 +85,14 @@ const Checkout = () => {
     const phoneDigits = customerInfo.phone.replace(/\D/g, '');
     if (phoneDigits.length !== 11) {
       toast.error("WhatsApp deve ter 11 dígitos (DDD + número)");
+      setIsEditingInfo(true);
+      return;
+    }
+
+    // Validate name length
+    if (customerInfo.name.trim().length < 2) {
+      toast.error("Nome deve ter pelo menos 2 caracteres");
+      setIsEditingInfo(true);
       return;
     }
 
@@ -104,6 +115,8 @@ const Checkout = () => {
         status: initialStatus,
         total_amount: getTotalPrice(),
         waiter_id: waiterId, // Assign waiter ID if present
+        order_notes: orderNotes.trim() || null, // Add order notes
+        created_by_waiter: isWaiter, // Flag to indicate waiter-created order
       };
 
       // Create order
@@ -205,53 +218,16 @@ const Checkout = () => {
         </Card>
 
         {/* Customer Info */}
-        <Card className="p-6 shadow-lg border-2 border-cyan-100 rounded-2xl">
-	          <h2 className="font-bold text-xl mb-4 text-purple-900">
-	            {isWaiter ? "Dados do Cliente (Pedido Assistido)" : "Seus Dados"}
-	          </h2>
-	          {isEditingInfo || !customerInfo.name || !customerInfo.phone ? (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Nome Completo</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Seu nome"
-                  value={customerInfo.name}
-                  onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">WhatsApp (com DDD)</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="73999999999"
-                  value={customerInfo.phone}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '');
-                    setCustomerInfo({ ...customerInfo, phone: value });
-                  }}
-                  maxLength={11}
-                  className="mt-1"
-                />
-                              <p className="text-sm text-muted-foreground mt-1">
-	                  Digite apenas números (DDD + número)
-	                </p>
-	              </div>
-	              <p className="text-sm text-muted-foreground">
-	                {isWaiter ? "O pedido será criado com status 'Pendente' e atribuído ao seu ID." : "Enviaremos notificações sobre seu pedido via WhatsApp."}
-	              </p>             <Button
-	                onClick={handleCreateOrder}
-	                size="lg"
-	                className="w-full bg-purple-900 hover:bg-purple-800 text-white font-bold py-6 rounded-xl shadow-lg"
-	                disabled={loading || (!isWaiter && (!customerInfo.name || !customerInfo.phone))}
-	              >
-	                {loading ? "Processando..." : isWaiter ? "Finalizar Pedido (Garçom)" : "Prosseguir para Pagamento"}
-	              </Button>
-            </div>
-          ) : (
+        {isEditingInfo || !customerInfo.name || !customerInfo.phone ? (
+          <CustomerInfoForm
+            onCustomerInfoChange={setCustomerInfo}
+            initialData={customerInfo}
+          />
+        ) : (
+          <Card className="p-6 shadow-lg border-2 border-cyan-100 rounded-2xl">
+            <h2 className="font-bold text-xl mb-4 text-purple-900">
+              {isWaiter ? "Dados do Cliente (Pedido Assistido)" : "Seus Dados"}
+            </h2>
             <div className="space-y-3">
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Nome</Label>
@@ -272,17 +248,34 @@ const Checkout = () => {
               <p className="text-sm text-muted-foreground mt-4">
                 Enviaremos notificações sobre seu pedido via WhatsApp.
               </p>
-	              <Button
-	                onClick={handleCreateOrder}
-	                size="lg"
-	                className="w-full mt-6 bg-purple-900 hover:bg-purple-800 text-white font-bold py-6 rounded-xl shadow-lg"
-	                disabled={loading}
-	              >
-	                {loading ? "Processando..." : isWaiter ? "Finalizar Pedido (Garçom)" : "Prosseguir para Pagamento"}
-	              </Button>
             </div>
-          )}
-        </Card>
+          </Card>
+        )}
+
+        {/* Order Notes - Only for waiter orders */}
+        {isWaiter && (
+          <OrderNotesInput
+            notes={orderNotes}
+            onNotesChange={setOrderNotes}
+          />
+        )}
+
+        {/* Order Action Button */}
+        {(!isEditingInfo && customerInfo.name && customerInfo.phone) && (
+          <Card className="p-6 shadow-lg border-2 border-green-100 rounded-2xl">
+            <p className="text-sm text-muted-foreground mb-4">
+              {isWaiter ? "O pedido será criado com status 'Pendente' e atribuído ao seu ID." : "Enviaremos notificações sobre seu pedido via WhatsApp."}
+            </p>
+            <Button
+              onClick={handleCreateOrder}
+              size="lg"
+              className="w-full bg-purple-900 hover:bg-purple-800 text-white font-bold py-6 rounded-xl shadow-lg"
+              disabled={loading}
+            >
+              {loading ? "Processando..." : isWaiter ? "Finalizar Pedido (Garçom)" : "Prosseguir para Pagamento"}
+            </Button>
+          </Card>
+        )}
       </div>
     </div>
   );

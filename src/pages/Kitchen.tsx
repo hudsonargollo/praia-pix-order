@@ -30,8 +30,29 @@ interface OrderItem {
   quantity: number;
 }
 
+// Extended Order type with waiter information
+interface OrderWithWaiter extends Order {
+  waiter?: {
+    raw_user_meta_data?: {
+      full_name?: string;
+    };
+  } | null;
+}
+
+// Helper function to get waiter name from order
+const getWaiterName = (order: OrderWithWaiter): string | null => {
+  if (!order.waiter_id || !order.created_by_waiter) return null;
+  
+  // Try to get waiter name from the joined data
+  if (order.waiter?.raw_user_meta_data?.full_name) {
+    return order.waiter.raw_user_meta_data.full_name;
+  }
+  
+  return 'Garçom';
+};
+
 const Kitchen = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderWithWaiter[]>([]);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [loading, setLoading] = useState(true);
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
@@ -97,15 +118,22 @@ const Kitchen = () => {
   const loadOrders = async () => {
     try {
       // Load orders that are paid or in progress (paid, in_preparation, ready, completed)
+      // Also include "pending" status for waiter-created orders (they don't need payment)
+      // Include waiter information by joining with auth.users
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
-        .select("*")
-        .in("status", ["paid", "in_preparation", "ready", "completed"])
+        .select(`
+          *,
+          waiter:waiter_id (
+            raw_user_meta_data
+          )
+        `)
+        .or("status.in.(paid,in_preparation,ready,completed),and(status.eq.pending,created_by_waiter.eq.true)")
         .order("created_at", { ascending: true });
 
       if (ordersError) throw ordersError;
 
-      setOrders(ordersData || []);
+      setOrders((ordersData as unknown as OrderWithWaiter[]) || []);
 
       // Load items for each order
       if (ordersData && ordersData.length > 0) {
@@ -184,10 +212,14 @@ const Kitchen = () => {
 
       const oldStatus = currentOrder?.status;
 
-      // Use security definer function to bypass RLS
-      const { error } = await supabase.rpc('mark_order_ready', {
-        _order_id: orderId
-      });
+      // Update order status to ready
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          status: "ready",
+          ready_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
 
       if (error) throw error;
 
@@ -210,10 +242,14 @@ const Kitchen = () => {
   const markAsCompleted = async (orderId: string) => {
     setProcessingOrders(prev => new Set([...prev, orderId]));
     try {
-      // Use security definer function to bypass RLS
-      const { error } = await supabase.rpc('mark_order_completed', {
-        _order_id: orderId
-      });
+      // Update order status to completed
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
 
       if (error) throw error;
 
@@ -259,7 +295,9 @@ const Kitchen = () => {
     );
   }
 
-  const newOrders = orders.filter((o) => o.status === "paid");
+  const newOrders = orders.filter((o) => 
+    o.status === "paid" || (o.status === "pending" && o.created_by_waiter)
+  );
   const inProgressOrders = orders.filter((o) => o.status === "in_preparation");
   const readyOrders = orders.filter((o) => o.status === "ready");
 
@@ -322,45 +360,61 @@ const Kitchen = () => {
                   Nenhum pedido novo
                 </Card>
               ) : (
-                newOrders.map((order) => (
-                  <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-blue-500">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-bold text-base lg:text-lg">
-                          Pedido #{order.order_number}
-                        </h3>
-                        <p className="text-xs lg:text-sm text-muted-foreground">
-                          {order.customer_name}
-                        </p>
-                      </div>
-                      <Badge className="bg-blue-500">Pago</Badge>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                      {orderItems[order.id]?.map((item) => (
-                        <div key={item.id} className="text-xs lg:text-sm">
-                          <span className="font-semibold">{item.quantity}x</span> {item.item_name}
+                newOrders.map((order) => {
+                  const waiterName = getWaiterName(order);
+                  return (
+                    <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-blue-500">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-bold text-base lg:text-lg">
+                            Pedido #{order.order_number}
+                          </h3>
+                          <p className="text-xs lg:text-sm text-muted-foreground">
+                            {order.customer_name}
+                          </p>
+                          {waiterName && (
+                            <p className="text-xs text-blue-600 font-medium">
+                              Atendido por: {waiterName}
+                            </p>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={() => markAsInPreparation(order.id)}
-                      disabled={processingOrders.has(order.id)}
-                    >
-                      {processingOrders.has(order.id) ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Iniciando...
-                        </>
-                      ) : (
-                        <>
-                          <ChefHat className="mr-2 h-4 w-4" />
-                          Iniciar Preparo
-                        </>
+                        <Badge className="bg-blue-500">
+                          {order.status === "paid" ? "Pago" : "Novo"}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2 mb-4">
+                        {orderItems[order.id]?.map((item) => (
+                          <div key={item.id} className="text-xs lg:text-sm">
+                            <span className="font-semibold">{item.quantity}x</span> {item.item_name}
+                          </div>
+                        ))}
+                      </div>
+                      {order.order_notes && (
+                        <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                          <p className="text-xs font-semibold text-yellow-800 mb-1">Observações:</p>
+                          <p className="text-xs text-yellow-700">{order.order_notes}</p>
+                        </div>
                       )}
-                    </Button>
-                  </Card>
-                ))
+                      <Button
+                        className="w-full"
+                        onClick={() => markAsInPreparation(order.id)}
+                        disabled={processingOrders.has(order.id)}
+                      >
+                        {processingOrders.has(order.id) ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Iniciando...
+                          </>
+                        ) : (
+                          <>
+                            <ChefHat className="mr-2 h-4 w-4" />
+                            Iniciar Preparo
+                          </>
+                        )}
+                      </Button>
+                    </Card>
+                  );
+                })
               )}
             </div>
           </div>
@@ -378,45 +432,59 @@ const Kitchen = () => {
                   Nenhum pedido em preparo
                 </Card>
               ) : (
-                inProgressOrders.map((order) => (
-                  <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-primary">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-bold text-base lg:text-lg">
-                          Pedido #{order.order_number}
-                        </h3>
-                        <p className="text-xs lg:text-sm text-muted-foreground">
-                          {order.customer_name}
-                        </p>
-                      </div>
-                      <Badge className="bg-primary">Em Preparo</Badge>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                      {orderItems[order.id]?.map((item) => (
-                        <div key={item.id} className="text-xs lg:text-sm">
-                          <span className="font-semibold">{item.quantity}x</span> {item.item_name}
+                inProgressOrders.map((order) => {
+                  const waiterName = getWaiterName(order);
+                  return (
+                    <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-primary">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-bold text-base lg:text-lg">
+                            Pedido #{order.order_number}
+                          </h3>
+                          <p className="text-xs lg:text-sm text-muted-foreground">
+                            {order.customer_name}
+                          </p>
+                          {waiterName && (
+                            <p className="text-xs text-primary font-medium">
+                              Atendido por: {waiterName}
+                            </p>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={() => markAsReady(order.id)}
-                      disabled={processingOrders.has(order.id)}
-                    >
-                      {processingOrders.has(order.id) ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Marcando...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Marcar como Pronto
-                        </>
+                        <Badge className="bg-primary">Em Preparo</Badge>
+                      </div>
+                      <div className="space-y-2 mb-4">
+                        {orderItems[order.id]?.map((item) => (
+                          <div key={item.id} className="text-xs lg:text-sm">
+                            <span className="font-semibold">{item.quantity}x</span> {item.item_name}
+                          </div>
+                        ))}
+                      </div>
+                      {order.order_notes && (
+                        <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                          <p className="text-xs font-semibold text-yellow-800 mb-1">Observações:</p>
+                          <p className="text-xs text-yellow-700">{order.order_notes}</p>
+                        </div>
                       )}
-                    </Button>
-                  </Card>
-                ))
+                      <Button
+                        className="w-full"
+                        onClick={() => markAsReady(order.id)}
+                        disabled={processingOrders.has(order.id)}
+                      >
+                        {processingOrders.has(order.id) ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Marcando...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Marcar como Pronto
+                          </>
+                        )}
+                      </Button>
+                    </Card>
+                  );
+                })
               )}
             </div>
           </div>
@@ -434,52 +502,66 @@ const Kitchen = () => {
                   Nenhum pedido pronto
                 </Card>
               ) : (
-                readyOrders.map((order) => (
-                  <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-success bg-success/5">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-bold text-base lg:text-lg">
-                          Pedido #{order.order_number}
-                        </h3>
-                        <p className="text-xs lg:text-sm text-muted-foreground">
-                          {order.customer_name}
-                        </p>
-                      </div>
-                      <Badge className="bg-success">Pronto</Badge>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                      {orderItems[order.id]?.map((item) => (
-                        <div key={item.id} className="text-xs lg:text-sm">
-                          <span className="font-semibold">{item.quantity}x</span> {item.item_name}
+                readyOrders.map((order) => {
+                  const waiterName = getWaiterName(order);
+                  return (
+                    <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-success bg-success/5">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-bold text-base lg:text-lg">
+                            Pedido #{order.order_number}
+                          </h3>
+                          <p className="text-xs lg:text-sm text-muted-foreground">
+                            {order.customer_name}
+                          </p>
+                          {waiterName && (
+                            <p className="text-xs text-success font-medium">
+                              Atendido por: {waiterName}
+                            </p>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                    {order.status === 'completed' || processingOrders.has(order.id) ? (
-                      <div className="w-full p-3 bg-green-100 border-2 border-green-500 rounded text-center font-bold text-green-700 text-sm">
-                        ✓ FINALIZADO
+                        <Badge className="bg-success">Pronto</Badge>
                       </div>
-                    ) : (
-                      <Button
-                        className="w-full"
-                        variant="outline"
-                        onClick={() => markAsCompleted(order.id)}
-                        disabled={processingOrders.has(order.id)}
-                      >
-                        {processingOrders.has(order.id) ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Finalizando...
-                          </>
-                        ) : (
-                          <>
-                            <Package className="mr-2 h-4 w-4" />
-                            Finalizar
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </Card>
-                ))
+                      <div className="space-y-2 mb-4">
+                        {orderItems[order.id]?.map((item) => (
+                          <div key={item.id} className="text-xs lg:text-sm">
+                            <span className="font-semibold">{item.quantity}x</span> {item.item_name}
+                          </div>
+                        ))}
+                      </div>
+                      {order.order_notes && (
+                        <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                          <p className="text-xs font-semibold text-yellow-800 mb-1">Observações:</p>
+                          <p className="text-xs text-yellow-700">{order.order_notes}</p>
+                        </div>
+                      )}
+                      {order.status === 'completed' || processingOrders.has(order.id) ? (
+                        <div className="w-full p-3 bg-green-100 border-2 border-green-500 rounded text-center font-bold text-green-700 text-sm">
+                          ✓ FINALIZADO
+                        </div>
+                      ) : (
+                        <Button
+                          className="w-full"
+                          variant="outline"
+                          onClick={() => markAsCompleted(order.id)}
+                          disabled={processingOrders.has(order.id)}
+                        >
+                          {processingOrders.has(order.id) ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Finalizando...
+                            </>
+                          ) : (
+                            <>
+                              <Package className="mr-2 h-4 w-4" />
+                              Finalizar
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </Card>
+                  );
+                })
               )}
             </div>
           </div>

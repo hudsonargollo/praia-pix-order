@@ -21,6 +21,10 @@ export interface Order {
   qr_code_data: string | null;
   pix_copy_paste: string | null;
   completed_at: string | null;
+  order_notes: string | null;
+  created_by_waiter: boolean | null;
+  waiter_id: string | null;
+  commission_amount: number | null;
 }
 
 export interface OrderItem {
@@ -80,6 +84,19 @@ export class RealtimeService {
       .on(
         'postgres_changes',
         {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+          filter: 'and(status=eq.pending,created_by_waiter=eq.true)',
+        },
+        (payload) => {
+          console.log('Kitchen: New waiter order received:', payload);
+          onInsert(payload.new as Order);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
           event: 'UPDATE',
           schema: 'public',
           table: 'orders',
@@ -87,7 +104,9 @@ export class RealtimeService {
         (payload) => {
           const order = payload.new as Order;
           // Only process orders relevant to kitchen
-          if (['paid', 'in_preparation', 'ready'].includes(order.status)) {
+          // Include pending waiter orders and standard kitchen statuses
+          if (['paid', 'in_preparation', 'ready'].includes(order.status) || 
+              (order.status === 'pending' && order.created_by_waiter)) {
             console.log('Kitchen: Order status updated:', payload);
             onUpdate(order);
           }
