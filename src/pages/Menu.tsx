@@ -184,32 +184,23 @@ const Menu = () => {
   }
 
   return (
-    <div className="min-h-screen relative pb-32 md:pb-36 bg-gradient-to-br from-[#FDD835] via-[#FFE082] to-[#FFF176]">
-      {/* Background Image - Mobile Only */}
-      <div 
-        className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat opacity-30"
-        style={{
-          backgroundImage: `url('/bck-menu.webp')`,
-        }}
-      />
+    <div className="min-h-screen bg-gray-50 pb-24">
 
-      {/* Single Sticky Header with Logo and Categories */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900 via-purple-800 to-purple-700 shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            {/* Logo on Left */}
-            <div className="flex-shrink-0">
-              <img 
-                src={logo} 
-                alt="Coco Loko" 
-                className="h-12 md:h-14 drop-shadow-lg cursor-pointer"
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              />
-            </div>
+      {/* Clean Minimal Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-2">
+          <div className="flex items-center justify-between gap-3">
+            {/* Logo */}
+            <img 
+              src={logo} 
+              alt="Coco Loko" 
+              className="h-10 md:h-12 cursor-pointer"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            />
             
-            {/* Categories on Right */}
+            {/* Categories */}
             {categorizedItems.length > 0 && (
-              <div className="flex-1 flex items-center justify-end gap-2 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-1 md:gap-2 overflow-x-auto scrollbar-hide">
                 {categorizedItems.map((category) => {
                   const isSelected = selectedCategory === category.id;
                   const CategoryIcon = getCategoryIcon(category.name);
@@ -219,39 +210,29 @@ const Menu = () => {
                       key={category.id}
                       onClick={() => handleCategoryScroll(category.id)}
                       className={`
-                        relative flex-shrink-0 px-3 md:px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all duration-300 whitespace-nowrap
+                        flex-shrink-0 px-3 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all
                         ${isSelected 
-                          ? 'bg-white text-purple-900 shadow-lg scale-105' 
-                          : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                          ? 'bg-purple-600 text-white' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }
                       `}
                     >
-                      <span className="flex items-center gap-1.5">
+                      <span className="flex items-center gap-1">
                         <CategoryIcon className="w-3 h-3 md:w-4 md:h-4" />
                         <span className="hidden sm:inline">{category.name}</span>
+                        <span className="text-xs opacity-75">({category.items.length})</span>
                       </span>
-                      
-                      {/* Item count badge */}
-                      <div className={`
-                        absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center
-                        ${isSelected 
-                          ? 'bg-purple-600 text-white' 
-                          : 'bg-yellow-400 text-purple-900'
-                        }
-                      `}>
-                        {category.items.length}
-                      </div>
                     </button>
                   );
                 })}
                 
-                {/* Logout Button */}
+                {/* Logout */}
                 <button
                   onClick={handleLogout}
-                  className="flex-shrink-0 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-xl p-2 transition-all duration-300"
+                  className="flex-shrink-0 p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
                   aria-label="Sair"
                 >
-                  <LogOut className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             )}
@@ -260,24 +241,22 @@ const Menu = () => {
       </div>
 
       {/* Menu Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 pt-20 md:pt-24 pb-6 space-y-8">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 md:pt-18 pb-32 space-y-6">
         {categorizedItems.length === 0 ? (
-          <div className="text-center py-12 bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl">
-            <div className="text-6xl mb-4">🥥</div>
-            <p className="text-purple-900 font-bold text-xl mb-2">Ops! Nenhuma categoria encontrada</p>
-            <p className="text-purple-600">Estamos preparando nosso cardápio especial para você!</p>
+          <div className="text-center py-12 bg-white rounded-lg shadow">
+            <div className="text-4xl mb-3">🥥</div>
+            <p className="text-gray-900 font-semibold text-lg">Nenhum item disponível</p>
           </div>
         ) : (
           categorizedItems.map((category) => (
-            <div key={category.id} id={`category-${category.id}`} className="space-y-4 scroll-mt-24">
-              {/* Simple Category Title */}
-              <h2 className="text-2xl md:text-3xl font-bold text-purple-900 mb-4 flex items-center gap-3">
+            <div key={category.id} id={`category-${category.id}`} className="space-y-3 scroll-mt-20">
+              {/* Minimal Category Title */}
+              <h2 className="text-xl md:text-2xl font-semibold text-gray-900 pb-2 border-b border-gray-200 flex items-center gap-2">
                 {(() => {
                   const CategoryIcon = getCategoryIcon(category.name);
-                  return <CategoryIcon className="w-7 h-7 text-purple-600" />;
+                  return <CategoryIcon className="w-5 h-5 text-purple-600" />;
                 })()}
                 {category.name}
-                <span className="text-sm font-normal text-gray-500">({category.items.length})</span>
               </h2>
 
               {/* Enhanced Category Items */}
@@ -289,96 +268,75 @@ const Menu = () => {
                   return (
                     <div 
                       key={item.id} 
-                      className="bg-white/95 backdrop-blur-sm rounded-3xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-3 md:gap-5 border-2 border-gray-100 hover:border-purple-300 group transform hover:scale-[1.02]"
+                      className="bg-white rounded-lg p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow flex items-center gap-3 border border-gray-100"
                     >
-                      {/* Enhanced Item Image */}
+                      {/* Image */}
                       <div 
-                        className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer flex-shrink-0 transition-all duration-300 group-hover:scale-110 shadow-xl border-2 border-white"
+                        className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
                         onClick={() => setSelectedItem(item)}
                       >
                         {item.image_url && !hasImageError ? (
                           <img
                             src={item.image_url}
                             alt={item.name}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            className="w-full h-full object-cover"
                             onError={() => handleImageError(item.id)}
                             loading="lazy"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 via-purple-200 to-purple-300">
-                            <div className="text-center">
-                              <ShoppingCart className="w-6 h-6 text-purple-600 mx-auto mb-1" />
-                              <Star className="w-3 h-3 text-yellow-500 mx-auto" />
-                            </div>
+                          <div className="w-full h-full flex items-center justify-center bg-purple-50">
+                            <ShoppingCart className="w-6 h-6 text-purple-400" />
                           </div>
                         )}
                       </div>
 
-                      {/* Enhanced Item Info */}
+                      {/* Info */}
                       <div 
-                        className="flex-1 cursor-pointer transition-all duration-200 group-hover:translate-x-1 min-w-0"
+                        className="flex-1 min-w-0 cursor-pointer"
                         onClick={() => setSelectedItem(item)}
                       >
-                        <div className="flex items-start gap-2 mb-1 md:mb-2">
-                          <h3 className="font-bold text-gray-900 text-base md:text-xl group-hover:text-purple-700 transition-colors flex-1 truncate">
-                            {item.name}
-                          </h3>
-                          <div className="flex items-center gap-1 text-yellow-500 flex-shrink-0">
-                            <Star className="w-3 h-3 md:w-4 md:h-4 fill-current" />
-                            <span className="text-xs text-gray-500 font-medium hidden md:inline">4.8</span>
-                          </div>
-                        </div>
-                        
+                        <h3 className="font-semibold text-gray-900 text-sm md:text-base truncate">
+                          {item.name}
+                        </h3>
                         {item.description && (
-                          <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-1 md:line-clamp-2 leading-relaxed">
+                          <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">
                             {item.description}
                           </p>
                         )}
-                        
-                        <div className="flex items-center gap-2 md:gap-3">
-                          <p className="text-emerald-600 font-bold text-lg md:text-xl">
-                            R$ {item.price.toFixed(2)}
-                          </p>
-                          <div className="flex items-center gap-1 text-gray-500 text-xs hidden md:flex">
-                            <Clock className="w-3 h-3" />
-                            <span>5-10 min</span>
-                          </div>
-                        </div>
+                        <p className="text-purple-600 font-bold text-base md:text-lg mt-1">
+                          R$ {item.price.toFixed(2)}
+                        </p>
                       </div>
 
-                      {/* Enhanced Add Button */}
+                      {/* Add Button */}
                       <div className="flex-shrink-0">
                         {quantity > 0 ? (
-                          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 bg-gradient-to-r from-purple-50 via-purple-100 to-purple-50 rounded-2xl md:rounded-3xl p-2 md:p-4 border-2 border-purple-200 shadow-xl">
+                          <div className="flex items-center gap-2 bg-purple-50 rounded-lg p-1.5">
                             <button
                               onClick={() => removeItem(item.id)}
-                              className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
-                              aria-label="Remover item"
+                              className="w-8 h-8 rounded-md bg-red-500 hover:bg-red-600 text-white flex items-center justify-center"
+                              aria-label="Remover"
                             >
-                              <Minus className="w-4 h-4 md:w-5 md:h-5" />
+                              <Minus className="w-4 h-4" />
                             </button>
-                            <div className="text-center px-1 md:px-2">
-                              <span className="font-bold text-purple-900 text-lg md:text-xl block">
-                                {quantity}
-                              </span>
-                              <span className="text-xs text-purple-600 font-medium whitespace-nowrap hidden md:inline">
-                                no carrinho
-                              </span>
-                            </div>
+                            <span className="font-bold text-purple-900 text-sm min-w-[20px] text-center">
+                              {quantity}
+                            </span>
                             <button
                               onClick={() => handleAddToCart(item)}
-                              className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
-                              aria-label="Adicionar item"
+                              className="w-8 h-8 rounded-md bg-green-500 hover:bg-green-600 text-white flex items-center justify-center"
+                              aria-label="Adicionar"
                             >
-                              <Plus className="w-4 h-4 md:w-5 md:h-5" />
+                              <Plus className="w-4 h-4" />
                             </button>
                           </div>
                         ) : (
                           <Button
                             onClick={() => handleAddToCart(item)}
-                            className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white px-4 md:px-8 py-3 md:py-4 rounded-2xl md:rounded-3xl font-bold text-xs md:text-sm shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110 border-2 border-purple-500 hover:border-purple-400"
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium"
+                            size="sm"
                           >
-                            <Plus className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                            <Plus className="w-3 h-3 md:w-4 md:h-4 md:mr-1" />
                             <span className="hidden md:inline">Adicionar</span>
                           </Button>
                         )}
@@ -392,34 +350,20 @@ const Menu = () => {
         )}
       </div>
 
-      {/* Fixed Cart Button at Bottom */}
+      {/* Cart Button */}
       {cartState.items.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-3 md:p-4 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.15)] z-50 border-t-2 border-emerald-200">
-          <div className="max-w-4xl mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-lg z-50">
+          <div className="max-w-6xl mx-auto">
             <Button
               onClick={goToCheckout}
-              className="w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 hover:from-emerald-600 hover:via-emerald-700 hover:to-emerald-800 text-white py-4 md:py-6 rounded-2xl md:rounded-3xl font-bold text-base md:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-emerald-400 relative overflow-hidden"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 md:py-4 rounded-lg font-semibold text-sm md:text-base"
             >
-              {/* Animated background */}
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-emerald-600/20 animate-pulse" />
-              
-              <div className="relative z-10 flex items-center justify-between px-2 md:px-4">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <div className="bg-white/20 p-1.5 md:p-2 rounded-full">
-                    <ShoppingCart className="h-5 w-5 md:h-6 md:w-6" />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-bold text-sm md:text-base">
-                      Ver Carrinho ({getTotalItems()})
-                    </div>
-                    <div className="text-emerald-100 text-xs md:text-sm font-medium">
-                      {getTotalItems()} {getTotalItems() === 1 ? 'item' : 'itens'}
-                    </div>
-                  </div>
+              <div className="flex items-center justify-between w-full px-2">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>Ver Carrinho ({getTotalItems()})</span>
                 </div>
-                <div className="font-bold text-lg md:text-xl">
-                  R$ {getTotalPrice().toFixed(2)}
-                </div>
+                <span className="font-bold">R$ {getTotalPrice().toFixed(2)}</span>
               </div>
             </Button>
           </div>
