@@ -34,6 +34,7 @@ import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, C
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { Order } from "@/integrations/supabase/realtime";
+import logo from "@/assets/coco-loko-logo.png";
 
 // Order interface is now imported from realtime service
 
