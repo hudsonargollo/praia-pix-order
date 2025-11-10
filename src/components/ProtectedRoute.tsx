@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     return <>{children}</>;
   }
 
-  // Temporary: Allow waiter email direct access to waiter routes
+  // Allow waiter email direct access to waiter routes
   useEffect(() => {
     const checkWaiterAccess = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -31,7 +31,6 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
         setSession(session);
         setHasRole(true);
         setLoading(false);
-        return;
       }
     };
     
