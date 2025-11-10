@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ShoppingCart, Plus, Minus, Star, Clock, LogOut, Coffee, Droplets, IceCream, Sandwich, Pizza, Cake } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Clock, LogOut, Coffee, Droplets, IceCream, Sandwich, Pizza, Cake } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import logo from "@/assets/coco-loko-logo.png";
@@ -376,10 +376,8 @@ const Menu = () => {
           {selectedItem && (
             <>
               <DialogHeader className="text-center pb-4">
-                <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center justify-center gap-3">
-                  <Star className="w-6 h-6 text-yellow-500 fill-current" />
+                <DialogTitle className="text-2xl font-bold text-gray-900">
                   {selectedItem.name}
-                  <Star className="w-6 h-6 text-yellow-500 fill-current" />
                 </DialogTitle>
               </DialogHeader>
               
@@ -409,21 +407,7 @@ const Menu = () => {
                   </div>
                 )}
 
-                {/* Enhanced Rating and Info */}
-                <div className="flex items-center justify-between bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-2xl border border-yellow-200">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      {[1,2,3,4,5].map((star) => (
-                        <Star key={star} className="w-4 h-4 text-yellow-500 fill-current" />
-                      ))}
-                    </div>
-                    <span className="text-sm font-medium text-gray-600">4.8 (127 avaliações)</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-500 text-sm">
-                    <Clock className="w-4 h-4" />
-                    <span>5-10 min</span>
-                  </div>
-                </div>
+
 
                 {/* Enhanced Price and Actions */}
                 <div className="bg-gradient-to-r from-white to-gray-50 p-6 rounded-2xl border-2 border-gray-200 shadow-lg">
