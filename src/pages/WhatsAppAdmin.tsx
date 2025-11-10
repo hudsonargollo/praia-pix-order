@@ -94,7 +94,7 @@ export default function WhatsAppAdmin() {
       const data = await response.json();
 
       if (data.qrCode) {
-        setQrCode(`data:image/png;base64,${data.qrCode}`);
+        setQrCode(data.qrCode);
         // Poll for connection status
         pollConnectionStatus();
       } else if (data.isConnected) {
@@ -147,7 +147,7 @@ export default function WhatsAppAdmin() {
         const data = await response.json();
 
         if (data.qrCode) {
-          setQrCode(`data:image/png;base64,${data.qrCode}`);
+          setQrCode(data.qrCode);
           clearInterval(qrPollInterval);
           pollConnectionStatus();
         } else if (data.isConnected) {
