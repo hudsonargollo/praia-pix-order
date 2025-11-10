@@ -184,7 +184,7 @@ const Menu = () => {
   }
 
   return (
-    <div className="min-h-screen relative pb-24 bg-gradient-to-br from-[#FDD835] via-[#FFE082] to-[#FFF176]">
+    <div className="min-h-screen relative pb-32 md:pb-36 bg-gradient-to-br from-[#FDD835] via-[#FFE082] to-[#FFF176]">
       {/* Background Image - Mobile Only */}
       <div 
         className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat opacity-30"
@@ -446,37 +446,35 @@ const Menu = () => {
         )}
       </div>
 
-      {/* Enhanced Floating Cart Button */}
+      {/* Fixed Cart Button at Bottom */}
       {cartState.items.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white/95 to-transparent z-50">
+        <div className="fixed bottom-0 left-0 right-0 p-3 md:p-4 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.15)] z-50 border-t-2 border-emerald-200">
           <div className="max-w-4xl mx-auto">
             <Button
               onClick={goToCheckout}
-              className="w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 hover:from-emerald-600 hover:via-emerald-700 hover:to-emerald-800 text-white py-8 rounded-3xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 border-2 border-emerald-400 relative overflow-hidden"
+              className="w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 hover:from-emerald-600 hover:via-emerald-700 hover:to-emerald-800 text-white py-4 md:py-6 rounded-2xl md:rounded-3xl font-bold text-base md:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-emerald-400 relative overflow-hidden"
             >
               {/* Animated background */}
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-emerald-600/20 animate-pulse" />
               
-              <div className="relative z-10 flex items-center justify-center gap-4">
-                <div className="bg-white/20 p-2 rounded-full">
-                  <ShoppingCart className="h-6 w-6" />
-                </div>
-                <div className="text-center">
-                  <div className="font-bold text-xl">
-                    Ver Carrinho ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'itens'})
+              <div className="relative z-10 flex items-center justify-between px-2 md:px-4">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="bg-white/20 p-1.5 md:p-2 rounded-full">
+                    <ShoppingCart className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
-                  <div className="text-emerald-100 text-sm font-medium">
-                    Total: R$ {getTotalPrice().toFixed(2)}
+                  <div className="text-left">
+                    <div className="font-bold text-sm md:text-base">
+                      Ver Carrinho ({getTotalItems()})
+                    </div>
+                    <div className="text-emerald-100 text-xs md:text-sm font-medium">
+                      {getTotalItems()} {getTotalItems() === 1 ? 'item' : 'itens'}
+                    </div>
                   </div>
                 </div>
-                <div className="bg-white/20 p-2 rounded-full animate-bounce">
-                  <span className="text-sm font-bold">🛒</span>
+                <div className="font-bold text-lg md:text-xl">
+                  R$ {getTotalPrice().toFixed(2)}
                 </div>
               </div>
-              
-              {/* Decorative elements */}
-              <div className="absolute top-2 left-4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
-              <div className="absolute bottom-2 right-4 w-2 h-2 bg-pink-400 rounded-full animate-pulse" />
             </Button>
           </div>
         </div>

@@ -235,4 +235,24 @@ All colors MUST be HSL.
       min-height: -webkit-fill-available;
     }
   }
+  
+  /* Prevent horizontal overflow on mobile */
+  body {
+    overflow-x: hidden;
+  }
+  
+  html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  /* Hide scrollbar for category navigation */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
