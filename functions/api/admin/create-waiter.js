@@ -1,7 +1,7 @@
 // This Worker handles the secure creation of waiter accounts using the Supabase Service Role Key.
 // Uses direct REST API calls instead of Supabase JS client for Cloudflare Workers compatibility
 
-export async function onRequestPost(context) {
+export async function onRequest(context) {
   // CORS headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -12,6 +12,13 @@ export async function onRequestPost(context) {
   // Handle CORS preflight
   if (context.request.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  if (context.request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed. Use POST.' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 
   try {

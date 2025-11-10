@@ -1,11 +1,11 @@
 // This Worker handles the secure listing of waiter accounts using the Supabase Service Role Key.
 // Uses direct REST API calls instead of Supabase JS client for Cloudflare Workers compatibility
 
-export async function onRequestGet(context) {
+export async function onRequest(context) {
   // CORS headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
@@ -14,21 +14,32 @@ export async function onRequestGet(context) {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Support both GET and POST methods
+  if (context.request.method !== 'GET' && context.request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   try {
     const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = context.env;
     
     console.log('🔵 List waiters - Environment check:', {
       hasUrl: !!SUPABASE_URL,
       hasKey: !!SUPABASE_SERVICE_KEY,
-      url: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 20)}...` : 'missing'
+      url: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'missing',
+      keyPrefix: SUPABASE_SERVICE_KEY ? `${SUPABASE_SERVICE_KEY.substring(0, 20)}...` : 'missing'
     });
     
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      console.error('🔴 Missing environment variables');
       return new Response(JSON.stringify({ 
-        error: "Supabase environment variables not configured properly.",
+        error: "Database connection not configured. Please check environment variables.",
         details: {
           hasUrl: !!SUPABASE_URL,
-          hasKey: !!SUPABASE_SERVICE_KEY
+          hasKey: !!SUPABASE_SERVICE_KEY,
+          message: "SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in Cloudflare Pages environment"
         }
       }), {
         status: 500,
@@ -38,6 +49,7 @@ export async function onRequestGet(context) {
 
     // List all users using Supabase Admin API directly
     console.log('🔵 Fetching users from Supabase Admin API...');
+    console.log('🔵 Request URL:', `${SUPABASE_URL}/auth/v1/admin/users`);
     
     const listUsersResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
       method: 'GET',
@@ -48,21 +60,55 @@ export async function onRequestGet(context) {
       },
     });
 
-    console.log('🔵 Supabase response status:', listUsersResponse.status);
+    console.log('🔵 Supabase response:', {
+      status: listUsersResponse.status,
+      statusText: listUsersResponse.statusText,
+      ok: listUsersResponse.ok,
+      headers: Object.fromEntries(listUsersResponse.headers.entries())
+    });
 
-    const usersData = await listUsersResponse.json();
+    let usersData;
+    try {
+      usersData = await listUsersResponse.json();
+    } catch (parseError) {
+      console.error('🔴 Failed to parse response as JSON:', parseError);
+      const textResponse = await listUsersResponse.text();
+      console.error('🔴 Raw response:', textResponse);
+      return new Response(JSON.stringify({ 
+        error: "Invalid response from Supabase API",
+        details: {
+          status: listUsersResponse.status,
+          statusText: listUsersResponse.statusText,
+          rawResponse: textResponse.substring(0, 500)
+        }
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (!listUsersResponse.ok) {
-      console.error("🔴 Supabase list users error:", {
+      console.error("🔴 Supabase API error:", {
         status: listUsersResponse.status,
         statusText: listUsersResponse.statusText,
         error: usersData
       });
+      
+      let errorMessage = "Database error finding users";
+      if (listUsersResponse.status === 401) {
+        errorMessage = "Authentication failed - invalid service key";
+      } else if (listUsersResponse.status === 403) {
+        errorMessage = "Access denied - insufficient permissions";
+      } else if (listUsersResponse.status === 404) {
+        errorMessage = "Supabase endpoint not found";
+      }
+      
       return new Response(JSON.stringify({ 
-        error: usersData.msg || usersData.message || "Failed to list users from Supabase",
+        error: errorMessage,
         details: {
           status: listUsersResponse.status,
-          statusText: listUsersResponse.statusText
+          statusText: listUsersResponse.statusText,
+          supabaseError: usersData.msg || usersData.message || usersData.error
         }
       }), {
         status: listUsersResponse.status,
