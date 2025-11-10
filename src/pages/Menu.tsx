@@ -125,22 +125,75 @@ const Menu = () => {
   }
 
   return (
-    <div className="min-h-screen relative pb-24 bg-[#FDD835]">
+    <div className="min-h-screen relative pb-24 bg-gradient-acai md:bg-[#FDD835]">
+      {/* Background Image - Mobile Only */}
+      <div 
+        className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat"
+        style={{
+          backgroundImage: `url('/bck-menu.webp')`,
+        }}
+      />
+
+      {/* Logo Header - Desktop Only */}
+      <div className="hidden md:block relative z-10 bg-[#FDD835] py-6">
+        <div className="max-w-2xl mx-auto px-4">
+          <img 
+            src={logo} 
+            alt="Coco Loko Açaiteria" 
+            className="h-24 mx-auto"
+          />
+        </div>
+      </div>
+
       {/* Fixed Header with Logo */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900 to-purple-700 shadow-xl">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-center">
             <img 
               src={logo} 
               alt="Coco Loko Açaiteria" 
-              className="h-16"
+              className="h-16 md:h-20"
             />
           </div>
         </div>
       </div>
 
+      {/* Category Navigation */}
+      {categories.length > 0 && (
+        <div className="fixed top-24 md:top-28 left-0 right-0 z-40 bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {categories.map((category) => {
+                const categoryItems = menuItems.filter(
+                  (item) => item.category_id === category.id
+                );
+                if (categoryItems.length === 0) return null;
+
+                const isSelected = selectedCategory === category.id;
+                
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => scrollToCategory(category.id)}
+                    className={`
+                      flex-shrink-0 px-6 py-3 rounded-full font-bold text-sm transition-all duration-200 whitespace-nowrap shadow-md
+                      ${isSelected 
+                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white transform scale-105' 
+                        : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-lg border border-gray-200'
+                      }
+                    `}
+                  >
+                    {category.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Menu Content */}
-      <div className="max-w-4xl mx-auto px-4 pt-24 pb-6 space-y-6">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 pt-44 md:pt-48 pb-6 space-y-6">
         {categories.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-purple-900 font-semibold">Nenhuma categoria encontrada</p>
@@ -153,7 +206,7 @@ const Menu = () => {
             if (categoryItems.length === 0) return null;
 
             return (
-              <div key={category.id} id={`category-${category.id}`} className="space-y-4">
+              <div key={category.id} id={`category-${category.id}`} className="space-y-4 scroll-mt-48">
                 {/* Simple Category Header */}
                 <div className="bg-gradient-to-r from-purple-700 to-purple-800 text-white px-6 py-3 rounded-full inline-block shadow-lg">
                   <h2 className="font-bold text-sm uppercase tracking-wide">
