@@ -28,6 +28,7 @@ import Monitoring from "./pages/Monitoring";
 import AdminProducts from "./pages/AdminProducts";
 import AdminWaiters from "./pages/AdminWaiters";
 import SystemDiagnostic from "./pages/SystemDiagnostic";
+import WaiterRedirect from "./pages/WaiterRedirect";
 
 const queryClient = new QueryClient();
 
@@ -140,6 +141,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route path="/redirect" element={<WaiterRedirect />} />
           {/* QR Code direct access route - must be last before catch-all */}
           <Route path="/:tableId" element={<QRRedirect />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
