@@ -251,25 +251,25 @@ export function ProductionMonitoring() {
           <CardDescription className="text-gray-600">Métricas de performance das últimas 24 horas</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="space-y-2 text-center p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-gray-600 font-medium">Total Enviado</p>
-              <p className="text-3xl font-bold text-blue-600">{stats?.totalNotifications || 0}</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="space-y-2 text-center p-3 sm:p-4 bg-blue-50 rounded-lg">
+              <p className="text-xs sm:text-sm text-gray-600 font-medium">Total Enviado</p>
+              <p className="text-2xl sm:text-3xl font-bold text-blue-600">{stats?.totalNotifications || 0}</p>
             </div>
 
-            <div className="space-y-2 text-center p-4 bg-green-50 rounded-lg">
-              <p className="text-sm text-gray-600 font-medium">Bem-sucedidas</p>
-              <p className="text-3xl font-bold text-green-600">{stats?.successfulNotifications || 0}</p>
+            <div className="space-y-2 text-center p-3 sm:p-4 bg-green-50 rounded-lg">
+              <p className="text-xs sm:text-sm text-gray-600 font-medium">Bem-sucedidas</p>
+              <p className="text-2xl sm:text-3xl font-bold text-green-600">{stats?.successfulNotifications || 0}</p>
             </div>
 
-            <div className="space-y-2 text-center p-4 bg-red-50 rounded-lg">
-              <p className="text-sm text-gray-600 font-medium">Falharam</p>
-              <p className="text-3xl font-bold text-red-600">{stats?.failedNotifications || 0}</p>
+            <div className="space-y-2 text-center p-3 sm:p-4 bg-red-50 rounded-lg">
+              <p className="text-xs sm:text-sm text-gray-600 font-medium">Falharam</p>
+              <p className="text-2xl sm:text-3xl font-bold text-red-600">{stats?.failedNotifications || 0}</p>
             </div>
 
-            <div className="space-y-2 text-center p-4 bg-purple-50 rounded-lg">
-              <p className="text-sm text-gray-600 font-medium">Taxa de Entrega</p>
-              <p className="text-3xl font-bold text-purple-600">{stats?.deliveryRate.toFixed(1) || 0}%</p>
+            <div className="space-y-2 text-center p-3 sm:p-4 bg-purple-50 rounded-lg">
+              <p className="text-xs sm:text-sm text-gray-600 font-medium">Taxa de Entrega</p>
+              <p className="text-2xl sm:text-3xl font-bold text-purple-600">{stats?.deliveryRate.toFixed(1) || 0}%</p>
             </div>
           </div>
 
@@ -298,12 +298,12 @@ export function ProductionMonitoring() {
           <CardContent className="pt-6">
             <div className="space-y-3">
               {stats.recentErrors.map((error) => (
-                <div key={error.id} className="flex items-start justify-between p-4 bg-red-50 border border-red-100 rounded-lg">
+                <div key={error.id} className="flex flex-col sm:flex-row sm:items-start sm:justify-between p-3 sm:p-4 bg-red-50 border border-red-100 rounded-lg gap-2">
                   <div className="flex-1">
                     <p className="font-semibold text-sm text-red-800">{error.error_type}</p>
-                    <p className="text-sm text-red-600 mt-1">{error.error_message}</p>
+                    <p className="text-xs sm:text-sm text-red-600 mt-1 break-words">{error.error_message}</p>
                   </div>
-                  <span className="text-xs text-red-500 whitespace-nowrap ml-4 font-medium">
+                  <span className="text-xs text-red-500 font-medium sm:whitespace-nowrap sm:ml-4">
                     {new Date(error.created_at).toLocaleTimeString('pt-BR')}
                   </span>
                 </div>
@@ -328,13 +328,6 @@ export function ProductionMonitoring() {
             >
               <Activity className="h-4 w-4 mr-2" />
               Atualizar Dados
-            </Button>
-            <Button 
-              onClick={() => window.open('/admin', '_blank')} 
-              variant="default"
-              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
-            >
-              Abrir Painel Administrativo
             </Button>
           </div>
         </CardContent>

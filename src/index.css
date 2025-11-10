@@ -200,4 +200,39 @@ All colors MUST be HSL.
   .shadow-glow-green {
     box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
   }
+
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    .mobile-padding {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    .mobile-text-sm {
+      font-size: 0.875rem;
+    }
+    
+    .mobile-gap-2 {
+      gap: 0.5rem;
+    }
+    
+    /* Ensure touch targets are at least 44px */
+    button, .btn, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better mobile scrolling */
+    .mobile-scroll {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Improve mobile viewport handling */
+  @supports (-webkit-touch-callout: none) {
+    .min-h-screen {
+      min-height: -webkit-fill-available;
+    }
+  }
 }
