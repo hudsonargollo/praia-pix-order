@@ -74,64 +74,47 @@ const Admin = () => {
       {/* Enhanced Content */}
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <Card className="bg-gradient-to-r from-white to-blue-50/50 shadow-xl border-0 backdrop-blur-sm">
-              <CardContent className="p-6 sm:p-8">
-                <div className="text-center">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    Bem-vindo ao Sistema de Gestão
-                  </h2>
-                  <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
-                    Gerencie todos os aspectos do seu negócio de forma eficiente e moderna. 
-                    Escolha uma das opções abaixo para começar.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Enhanced Menu Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
             {adminMenuItems.map((item, index) => (
               <Card
                 key={item.title}
-                className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border-0 bg-gradient-to-br from-white to-gray-50/50 backdrop-blur-sm overflow-hidden"
+                className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 border-0 bg-gradient-to-br from-white via-white to-purple-50/30 backdrop-blur-sm overflow-hidden shadow-lg"
                 onClick={() => handleNavigation(item.path)}
               >
-                <CardContent className="p-6 sm:p-8 text-center relative">
+                <CardContent className="p-8 text-center relative h-full flex flex-col justify-between min-h-[200px]">
                   {/* Background Pattern */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-50/20 to-blue-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
                   {/* Icon Container */}
-                  <div className="relative mb-4 sm:mb-6">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-                      <item.icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                  <div className="relative mb-6">
+                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 rounded-3xl flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300 group-hover:rotate-3">
+                      <item.icon className="w-10 h-10 text-white" />
                     </div>
                   </div>
                   
                   {/* Content */}
-                  <div className="relative">
-                    <h3 className="font-bold text-lg sm:text-xl text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">
+                  <div className="relative flex-1">
+                    <h3 className="font-bold text-xl text-gray-900 mb-3 group-hover:text-purple-700 transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 group-hover:text-gray-700 transition-colors leading-relaxed">
+                    <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors leading-relaxed">
                       {item.description}
                     </p>
                   </div>
 
                   {/* Hover Effect Arrow */}
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-                    <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
                   </div>
 
                   {/* Card Number */}
-                  <div className="absolute bottom-2 left-2 opacity-20 group-hover:opacity-30 transition-opacity">
-                    <span className="text-4xl font-bold text-purple-500">
+                  <div className="absolute bottom-3 left-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span className="text-5xl font-bold text-purple-600">
                       {String(index + 1).padStart(2, '0')}
                     </span>
                   </div>
@@ -141,25 +124,29 @@ const Admin = () => {
           </div>
 
           {/* Quick Stats Footer */}
-          <div className="mt-8">
-            <Card className="bg-gradient-to-r from-gray-900 to-gray-800 text-white shadow-xl border-0">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl sm:text-3xl font-bold text-green-400">24/7</div>
-                    <div className="text-xs sm:text-sm text-gray-300">Sistema Online</div>
+          <div className="mt-12">
+            <Card className="bg-gradient-to-r from-purple-900 via-purple-800 to-blue-900 text-white shadow-2xl border-0 overflow-hidden">
+              <CardContent className="p-6 relative">
+                {/* Background decoration */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+                
+                <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+                  <div className="group">
+                    <div className="text-3xl font-bold text-green-400 group-hover:scale-110 transition-transform duration-300">24/7</div>
+                    <div className="text-sm text-purple-100 font-medium">Sistema Online</div>
                   </div>
-                  <div>
-                    <div className="text-2xl sm:text-3xl font-bold text-blue-400">100%</div>
-                    <div className="text-xs sm:text-sm text-gray-300">Seguro</div>
+                  <div className="group">
+                    <div className="text-3xl font-bold text-blue-400 group-hover:scale-110 transition-transform duration-300">100%</div>
+                    <div className="text-sm text-purple-100 font-medium">Seguro</div>
                   </div>
-                  <div>
-                    <div className="text-2xl sm:text-3xl font-bold text-purple-400">∞</div>
-                    <div className="text-xs sm:text-sm text-gray-300">Pedidos</div>
+                  <div className="group">
+                    <div className="text-3xl font-bold text-purple-400 group-hover:scale-110 transition-transform duration-300">∞</div>
+                    <div className="text-sm text-purple-100 font-medium">Pedidos</div>
                   </div>
-                  <div>
-                    <div className="text-2xl sm:text-3xl font-bold text-orange-400">⚡</div>
-                    <div className="text-xs sm:text-sm text-gray-300">Rápido</div>
+                  <div className="group">
+                    <div className="text-3xl font-bold text-orange-400 group-hover:scale-110 transition-transform duration-300">⚡</div>
+                    <div className="text-sm text-purple-100 font-medium">Rápido</div>
                   </div>
                 </div>
               </CardContent>
