@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { LayoutDashboard, Users, ShoppingBag, Settings, BarChart3, MessageSquare, LogOut, ChefHat, TrendingUp } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { LayoutDashboard, Users, ShoppingBag, BarChart3, MessageSquare, LogOut, ChefHat, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/coco-loko-logo.png";

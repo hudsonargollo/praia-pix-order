@@ -15,7 +15,6 @@ interface Order {
   created_at: string;
   total_amount: number;
   status: string;
-  commission_amount?: number;
   customer_name?: string;
   customer_phone?: string;
 }
@@ -52,7 +51,6 @@ const WaiterDashboard = () => {
         created_at, 
         total_amount, 
         status, 
-        commission_amount, 
         customer_name, 
         customer_phone
       `)
@@ -121,7 +119,7 @@ const WaiterDashboard = () => {
   };
 
   const totalSales = orders.reduce((sum, order) => sum + order.total_amount, 0);
-  const totalCommissions = orders.reduce((sum, order) => sum + (order.commission_amount || 0), 0);
+  const totalCommissions = totalSales * 0.1; // 10% commission
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -361,7 +359,7 @@ const WaiterDashboard = () => {
                         {order.total_amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                       </TableCell>
                       <TableCell className="text-right font-semibold text-green-600">
-                        {(order.commission_amount || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        {(order.total_amount * 0.1).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(order.status)} className="font-medium">

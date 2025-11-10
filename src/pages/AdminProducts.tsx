@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Edit, Plus, Upload, ArrowLeft } from 'lucide-react';
+import { Edit, Plus, Upload, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -207,104 +207,166 @@ const AdminProducts = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-sunset text-white p-4 sm:p-6 shadow-medium">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/cashier')}
-              className="text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Gerenciar Produtos</h1>
-              <p className="text-white/90 mt-1 text-sm sm:text-base">
-                Edite descrições, fotos e preços
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      {/* Enhanced Header */}
+      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 text-white shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4 sm:py-6">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/admin')}
+                className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Voltar</span>
+              </Button>
+              <div className="relative">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <ShoppingBag className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                  Gerenciar Produtos
+                </h1>
+                <p className="text-blue-100 mt-1 text-xs sm:text-base font-medium">
+                  Edite descrições, fotos e preços • Cardápio Digital
+                </p>
+              </div>
             </div>
+            <Button
+              onClick={() => {
+                setEditingItem(null);
+                setFormData({
+                  name: '',
+                  description: '',
+                  price: '',
+                  category_id: categories[0]?.id || '',
+                  available: true,
+                  image_url: '',
+                });
+                setIsDialogOpen(true);
+              }}
+              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+              size="sm"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Novo Produto</span>
+            </Button>
           </div>
-          <Button
-            onClick={() => {
-              setEditingItem(null);
-              setFormData({
-                name: '',
-                description: '',
-                price: '',
-                category_id: categories[0]?.id || '',
-                available: true,
-                image_url: '',
-              });
-              setIsDialogOpen(true);
-            }}
-            className="bg-white text-primary hover:bg-white/90"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Produto
-          </Button>
         </div>
       </div>
 
-      {/* Products Grid */}
+      {/* Enhanced Products Grid */}
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Produtos do Cardápio</h2>
+          <p className="text-gray-600">
+            {menuItems.length} produtos cadastrados • Clique em "Editar" para modificar
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {menuItems.map((item) => (
-            <Card key={item.id} className="p-4">
-              <div className="flex gap-4">
+            <Card key={item.id} className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-gray-50/50 backdrop-blur-sm overflow-hidden">
+              <div className="p-4 sm:p-6">
                 {/* Image */}
-                <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                <div className="w-full h-32 sm:h-40 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 mb-4 relative">
                   {item.image_url ? (
                     <img
                       src={item.image_url}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                      Sem foto
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="text-center">
+                        <Upload className="w-8 h-8 mx-auto mb-2" />
+                        <p className="text-xs">Sem foto</p>
+                      </div>
                     </div>
                   )}
+                  
+                  {/* Availability Badge */}
+                  <div className="absolute top-2 right-2">
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
+                      item.available 
+                        ? 'bg-green-500/20 text-green-700 border border-green-500/30' 
+                        : 'bg-red-500/20 text-red-700 border border-red-500/30'
+                    }`}>
+                      {item.available ? '✓ Disponível' : '✗ Indisponível'}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-lg truncate">{item.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {getCategoryName(item.category_id)}
-                  </p>
-                  <p className="text-lg font-bold text-primary mt-1">
-                    R$ {item.price.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {item.available ? '✓ Disponível' : '✗ Indisponível'}
-                  </p>
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between">
+                    <h3 className="font-bold text-lg text-gray-900 line-clamp-2 flex-1">
+                      {item.name}
+                    </h3>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                      {getCategoryName(item.category_id)}
+                    </span>
+                    <span className="text-xl font-bold text-purple-600">
+                      R$ {item.price.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  {item.description && (
+                    <p className="text-sm text-gray-600 line-clamp-2 mt-2">
+                      {item.description}
+                    </p>
+                  )}
                 </div>
+
+                {/* Edit Button */}
+                <Button
+                  onClick={() => handleEdit(item)}
+                  className="w-full mt-4 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  size="sm"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Editar Produto
+                </Button>
               </div>
-
-              {/* Description */}
-              {item.description && (
-                <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
-                  {item.description}
-                </p>
-              )}
-
-              {/* Edit Button */}
-              <Button
-                onClick={() => handleEdit(item)}
-                variant="outline"
-                className="w-full mt-3"
-                size="sm"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Editar
-              </Button>
             </Card>
           ))}
         </div>
+
+        {menuItems.length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag className="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhum produto cadastrado</h3>
+            <p className="text-gray-600 mb-6">Comece criando seu primeiro produto do cardápio</p>
+            <Button
+              onClick={() => {
+                setEditingItem(null);
+                setFormData({
+                  name: '',
+                  description: '',
+                  price: '',
+                  category_id: categories[0]?.id || '',
+                  available: true,
+                  image_url: '',
+                });
+                setIsDialogOpen(true);
+              }}
+              className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Criar Primeiro Produto
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Edit Dialog */}

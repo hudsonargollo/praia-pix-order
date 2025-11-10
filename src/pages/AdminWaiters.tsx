@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, ArrowLeft, Users } from "lucide-react";
 import { z } from "zod";
 
 interface Waiter {
@@ -149,15 +149,55 @@ const AdminWaiters = () => {
   // We will skip the implementation for the edit dialog for now, focusing on the core requirement (Create, View, Delete).
 
   return (
-    <div className="p-4 md:p-8">
-      <Card className="max-w-6xl mx-auto">
-        <CardHeader className="flex flex-row justify-between items-center">
-          <CardTitle className="text-2xl font-bold">Gerenciar Garçons</CardTitle>
-          <Button onClick={openCreateDialog}>
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Novo Garçom
-          </Button>
-        </CardHeader>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      {/* Enhanced Header */}
+      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 text-white shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4 sm:py-6">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.history.back()}
+                className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Voltar</span>
+              </Button>
+              <div className="relative">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                  Gerenciar Garçons
+                </h1>
+                <p className="text-blue-100 mt-1 text-xs sm:text-base font-medium">
+                  Adicione e gerencie a equipe • Sistema de Usuários
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={openCreateDialog}
+              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+              size="sm"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Novo Garçom</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+        <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
+              <Users className="w-5 h-5 mr-2 text-purple-600" />
+              Equipe de Garçons ({waiters.length})
+            </CardTitle>
+          </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8">
@@ -251,6 +291,7 @@ const AdminWaiters = () => {
           </form>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };
