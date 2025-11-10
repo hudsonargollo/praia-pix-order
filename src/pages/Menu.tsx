@@ -193,106 +193,74 @@ const Menu = () => {
         }}
       />
 
-      {/* Logo Header - Desktop Only */}
-      <div className="hidden md:block relative z-10 bg-gradient-to-r from-[#FDD835] to-[#FFE082] py-8 shadow-lg">
-        <div className="max-w-2xl mx-auto px-4">
-          <img 
-            src={logo} 
-            alt="Coco Loko Açaiteria" 
-            className="h-28 mx-auto drop-shadow-lg"
-          />
-        </div>
-      </div>
-
-      {/* Fixed Header with Logo and Logout */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900 via-purple-800 to-purple-700 shadow-2xl border-b-4 border-purple-600">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            {/* Spacer for mobile */}
-            <div className="w-12 md:w-16"></div>
-            
-            {/* Logo */}
-            <img 
-              src={logo} 
-              alt="Coco Loko Açaiteria" 
-              className="h-16 md:h-20 drop-shadow-lg"
-            />
-            
-            {/* Logout Button */}
-            <div className="relative group">
-              <button
-                onClick={handleLogout}
-                className="group bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-2xl p-3 md:p-4 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                aria-label="Fazer logout"
-              >
-                <LogOut className="w-5 h-5 md:w-6 md:h-6 text-white group-hover:text-yellow-300 transition-colors duration-300" />
-              </button>
-              
-              {/* Tooltip */}
-              <div className="absolute right-0 top-full mt-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10">
-                Sair da conta
-                <div className="absolute bottom-full right-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
-              </div>
+      {/* Single Sticky Header with Logo and Categories */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900 via-purple-800 to-purple-700 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            {/* Logo on Left */}
+            <div className="flex-shrink-0">
+              <img 
+                src={logo} 
+                alt="Coco Loko" 
+                className="h-12 md:h-14 drop-shadow-lg cursor-pointer"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              />
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced Category Navigation */}
-      {categorizedItems.length > 0 && (
-        <div className="fixed top-24 md:top-32 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl shadow-2xl border-b-2 border-purple-200">
-          <div className="max-w-4xl mx-auto px-4 py-6">
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {categorizedItems.map((category) => {
-                const isSelected = selectedCategory === category.id;
-                const CategoryIcon = getCategoryIcon(category.name);
+            
+            {/* Categories on Right */}
+            {categorizedItems.length > 0 && (
+              <div className="flex-1 flex items-center justify-end gap-2 overflow-x-auto scrollbar-hide">
+                {categorizedItems.map((category) => {
+                  const isSelected = selectedCategory === category.id;
+                  const CategoryIcon = getCategoryIcon(category.name);
+                  
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryScroll(category.id)}
+                      className={`
+                        relative flex-shrink-0 px-3 md:px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all duration-300 whitespace-nowrap
+                        ${isSelected 
+                          ? 'bg-white text-purple-900 shadow-lg scale-105' 
+                          : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                        }
+                      `}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <CategoryIcon className="w-3 h-3 md:w-4 md:h-4" />
+                        <span className="hidden sm:inline">{category.name}</span>
+                      </span>
+                      
+                      {/* Item count badge */}
+                      <div className={`
+                        absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center
+                        ${isSelected 
+                          ? 'bg-purple-600 text-white' 
+                          : 'bg-yellow-400 text-purple-900'
+                        }
+                      `}>
+                        {category.items.length}
+                      </div>
+                    </button>
+                  );
+                })}
                 
-                return (
-                  <button
-                    key={category.id}
-                    onClick={() => handleCategoryScroll(category.id)}
-                    className={`
-                      group relative flex-shrink-0 px-6 py-3 rounded-3xl font-bold text-sm transition-all duration-300 whitespace-nowrap shadow-lg hover:shadow-2xl transform hover:scale-105
-                      ${isSelected 
-                        ? 'bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white shadow-purple-400/50 scale-105' 
-                        : 'bg-gradient-to-r from-white to-gray-50 text-gray-700 hover:from-purple-50 hover:to-purple-100 hover:text-purple-700 border-2 border-gray-200 hover:border-purple-300'
-                      }
-                    `}
-                  >
-                    <span className="relative z-10 flex items-center gap-2">
-                      <CategoryIcon className="w-4 h-4" />
-                      {category.name}
-                    </span>
-                    
-                    {/* Animated background */}
-                    <div className={`
-                      absolute inset-0 rounded-3xl transition-all duration-300
-                      ${isSelected 
-                        ? 'bg-gradient-to-r from-purple-400/30 to-purple-600/30 animate-pulse' 
-                        : 'bg-gradient-to-r from-purple-400/0 to-purple-600/0 group-hover:from-purple-400/20 group-hover:to-purple-600/20'
-                      }
-                    `} />
-                    
-                    {/* Enhanced item count badge */}
-                    <div className={`
-                      absolute -top-2 -right-2 w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-300 shadow-lg
-                      ${isSelected 
-                        ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-900 animate-bounce' 
-                        : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white group-hover:from-purple-700 group-hover:to-purple-800'
-                      }
-                    `}>
-                      {category.items.length}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="flex-shrink-0 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-xl p-2 transition-all duration-300"
+                  aria-label="Sair"
+                >
+                  <LogOut className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Menu Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-4 pt-48 md:pt-52 pb-6 space-y-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 pt-20 md:pt-24 pb-6 space-y-8">
         {categorizedItems.length === 0 ? (
           <div className="text-center py-12 bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl">
             <div className="text-6xl mb-4">🥥</div>
@@ -301,38 +269,16 @@ const Menu = () => {
           </div>
         ) : (
           categorizedItems.map((category) => (
-            <div key={category.id} id={`category-${category.id}`} className="space-y-6 scroll-mt-52">
-              {/* Enhanced Category Header */}
-              <div className="text-center mb-6">
-                <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white px-6 md:px-10 py-4 md:py-6 rounded-3xl inline-block shadow-2xl border-2 border-purple-500 relative overflow-hidden transform hover:scale-105 transition-transform duration-300">
-                  {/* Animated background pattern */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400/30 to-purple-600/30 animate-pulse" />
-                  <div className="absolute inset-0 opacity-20">
-                    <div className="w-full h-full bg-white/10 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_2px,transparent_2px)] bg-[length:20px_20px]" />
-                  </div>
-                  
-                  <div className="relative z-10 flex items-center gap-3 md:gap-4">
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
-                      {(() => {
-                        const CategoryIcon = getCategoryIcon(category.name);
-                        return <CategoryIcon className="w-4 h-4 text-purple-900" />;
-                      })()}
-                    </div>
-                    <h2 className="font-bold text-lg md:text-2xl uppercase tracking-wide">
-                      {category.name}
-                    </h2>
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-purple-900 font-bold text-sm">
-                        {category.items.length}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Simplified decorative elements - removed blue semicircles */}
-                  <div className="absolute -top-2 -left-2 w-3 h-3 bg-yellow-400 rounded-full opacity-90 animate-bounce" />
-                  <div className="absolute -bottom-2 -right-2 w-3 h-3 bg-yellow-400 rounded-full opacity-80 animate-pulse" />
-                </div>
-              </div>
+            <div key={category.id} id={`category-${category.id}`} className="space-y-4 scroll-mt-24">
+              {/* Simple Category Title */}
+              <h2 className="text-2xl md:text-3xl font-bold text-purple-900 mb-4 flex items-center gap-3">
+                {(() => {
+                  const CategoryIcon = getCategoryIcon(category.name);
+                  return <CategoryIcon className="w-7 h-7 text-purple-600" />;
+                })()}
+                {category.name}
+                <span className="text-sm font-normal text-gray-500">({category.items.length})</span>
+              </h2>
 
               {/* Enhanced Category Items */}
               <div className="grid gap-4">
