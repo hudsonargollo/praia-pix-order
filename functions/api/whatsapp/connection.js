@@ -28,7 +28,7 @@ export async function onRequest(context) {
 
     switch (action) {
       case 'status':
-        // Try to get connection status - use simpler approach
+        // Try to get connection status
         try {
           const statusResponse = await fetch(`${apiUrl}/instance/fetchInstances`, {
             method: 'GET',
@@ -40,21 +40,25 @@ export async function onRequest(context) {
 
           if (statusResponse.ok) {
             const instances = await statusResponse.json();
-            const instance = instances.find(i => i.instanceName === instanceName);
+            const instance = instances.find(i => i.name === instanceName);
             
-            return new Response(JSON.stringify({
-              isConnected: instance?.connectionStatus === 'open',
-              connectionState: instance?.connectionStatus || 'disconnected',
-              phoneNumber: instance?.profilePictureUrl ? 'Connected' : null,
-              lastConnected: instance?.connectionStatus === 'open' ? new Date().toISOString() : null,
-              qrCode: null
-            }), {
-              status: 200,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
+            if (instance) {
+              return new Response(JSON.stringify({
+                isConnected: instance.connectionStatus === 'open',
+                connectionState: instance.connectionStatus || 'disconnected',
+                phoneNumber: instance.number || null,
+                profileName: instance.profileName || null,
+                lastConnected: instance.connectionStatus === 'open' ? instance.updatedAt : null,
+                qrCode: null,
+                instanceData: instance
+              }), {
+                status: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
           }
         } catch (error) {
-          console.log('Status check failed, returning default');
+          console.log('Status check failed:', error.message);
         }
 
         // Fallback response
@@ -62,9 +66,10 @@ export async function onRequest(context) {
           isConnected: false,
           connectionState: 'disconnected',
           phoneNumber: null,
+          profileName: null,
           lastConnected: null,
           qrCode: null,
-          message: 'Evolution API status check failed'
+          message: 'Instance not found or API unavailable'
         }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -73,30 +78,27 @@ export async function onRequest(context) {
       case 'connect':
         // Try to get QR code for connection
         try {
-          // First try to create/restart the instance
-          const createResponse = await fetch(`${apiUrl}/instance/create`, {
-            method: 'POST',
+          // First check if instance already exists and is connected
+          const statusResponse = await fetch(`${apiUrl}/instance/fetchInstances`, {
+            method: 'GET',
             headers: {
               'apikey': apiKey,
               'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              instanceName: instanceName,
-              token: apiKey,
-              qrcode: true,
-              integration: 'WHATSAPP-BAILEYS'
-            })
+            }
           });
 
-          if (createResponse.ok) {
-            const createData = await createResponse.json();
+          if (statusResponse.ok) {
+            const instances = await statusResponse.json();
+            const instance = instances.find(i => i.name === instanceName);
             
-            if (createData.qrcode && createData.qrcode.code) {
+            if (instance && instance.connectionStatus === 'open') {
               return new Response(JSON.stringify({
-                isConnected: false,
-                connectionState: 'qr_required',
-                qrCode: createData.qrcode.code,
-                message: 'Scan QR code to connect WhatsApp'
+                isConnected: true,
+                connectionState: 'connected',
+                phoneNumber: instance.number,
+                profileName: instance.profileName,
+                lastConnected: instance.updatedAt,
+                message: 'WhatsApp already connected'
               }), {
                 status: 200,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -104,8 +106,46 @@ export async function onRequest(context) {
             }
           }
 
-          // Fallback: try to get existing QR code
-          const qrResponse = await fetch(`${apiUrl}/instance/${instanceName}/qrcode`, {
+          // Try to restart the instance to get QR code
+          const restartResponse = await fetch(`${apiUrl}/instance/restart/${instanceName}`, {
+            method: 'PUT',
+            headers: {
+              'apikey': apiKey,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (restartResponse.ok) {
+            // Wait a moment for restart to complete
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Try to get QR code
+            const qrResponse = await fetch(`${apiUrl}/instance/connect/${instanceName}`, {
+              method: 'GET',
+              headers: {
+                'apikey': apiKey,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (qrResponse.ok) {
+              const qrData = await qrResponse.json();
+              if (qrData.base64) {
+                return new Response(JSON.stringify({
+                  isConnected: false,
+                  connectionState: 'qr_required',
+                  qrCode: `data:image/png;base64,${qrData.base64}`,
+                  message: 'Scan QR code to connect WhatsApp'
+                }), {
+                  status: 200,
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+              }
+            }
+          }
+
+          // Fallback: try direct QR code endpoint
+          const qrResponse = await fetch(`${apiUrl}/instance/connect/${instanceName}`, {
             method: 'GET',
             headers: {
               'apikey': apiKey,
@@ -115,11 +155,11 @@ export async function onRequest(context) {
 
           if (qrResponse.ok) {
             const qrData = await qrResponse.json();
-            if (qrData.qrcode) {
+            if (qrData.base64) {
               return new Response(JSON.stringify({
                 isConnected: false,
                 connectionState: 'qr_required',
-                qrCode: qrData.qrcode,
+                qrCode: `data:image/png;base64,${qrData.base64}`,
                 message: 'Scan QR code to connect WhatsApp'
               }), {
                 status: 200,
@@ -135,16 +175,72 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({
           isConnected: false,
           connectionState: 'connecting',
-          message: 'Iniciando conexão WhatsApp... Tente novamente em alguns segundos.'
+          message: 'Iniciando conexão WhatsApp... Aguarde alguns segundos e tente novamente.'
         }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
 
-      case 'disconnect':
-        // Try to disconnect the instance
+      case 'restart':
+        // Restart the instance to force reconnection
         try {
-          const disconnectResponse = await fetch(`${apiUrl}/instance/delete/${instanceName}`, {
+          const restartResponse = await fetch(`${apiUrl}/instance/restart/${instanceName}`, {
+            method: 'PUT',
+            headers: {
+              'apikey': apiKey,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (restartResponse.ok) {
+            // Wait for restart to complete
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Try to get QR code after restart
+            const qrResponse = await fetch(`${apiUrl}/instance/connect/${instanceName}`, {
+              method: 'GET',
+              headers: {
+                'apikey': apiKey,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (qrResponse.ok) {
+              const qrData = await qrResponse.json();
+              if (qrData.base64) {
+                return new Response(JSON.stringify({
+                  success: true,
+                  qrCode: `data:image/png;base64,${qrData.base64}`,
+                  message: 'Instance restarted, scan QR code to reconnect'
+                }), {
+                  status: 200,
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+              }
+            }
+          }
+
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'Instance restarted successfully'
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({
+            success: false,
+            message: 'Failed to restart instance'
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+      case 'disconnect':
+        // Try to logout the instance (safer than delete)
+        try {
+          const logoutResponse = await fetch(`${apiUrl}/instance/logout/${instanceName}`, {
             method: 'DELETE',
             headers: {
               'apikey': apiKey,
@@ -172,7 +268,7 @@ export async function onRequest(context) {
       default:
         return new Response(JSON.stringify({
           error: 'Ação inválida',
-          availableActions: ['status', 'connect', 'disconnect']
+          availableActions: ['status', 'connect', 'restart', 'disconnect']
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
