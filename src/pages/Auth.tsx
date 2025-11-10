@@ -26,18 +26,25 @@ const Auth = () => {
     const { data: { user } } = await supabase.auth.getUser();
     const role = user?.user_metadata?.role || user?.app_metadata?.role;
     
-    console.log('Login successful, user role:', role);
+    console.log('🔵 NEW AUTH CODE LOADED! User role:', role);
+    console.log('🔵 User metadata:', user?.user_metadata);
+    console.log('🔵 App metadata:', user?.app_metadata);
     
     // Redirect based on role
     if (role === 'waiter') {
+      console.log('🔵 Redirecting waiter to dashboard');
       navigate("/waiter-dashboard");
     } else if (role === 'kitchen') {
+      console.log('🔵 Redirecting to kitchen');
       navigate("/kitchen");
     } else if (role === 'cashier') {
+      console.log('🔵 Redirecting to cashier');
       navigate("/cashier");
     } else if (role === 'admin') {
+      console.log('🔵 Redirecting to admin');
       navigate("/admin");
     } else {
+      console.log('🔵 Unknown role, defaulting to admin');
       // Default to admin for unknown roles
       navigate("/admin");
     }
