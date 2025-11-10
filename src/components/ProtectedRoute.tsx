@@ -126,35 +126,13 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   }
 
   if (requiredRole && !hasRole) {
-    // Check if user is a waiter trying to access admin panel
-    const user = session?.user;
-    const userRole = user?.user_metadata?.role || user?.app_metadata?.role;
-    
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
+        <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Acesso Negado</h1>
           <p className="text-muted-foreground">
             Você não tem permissão para acessar esta página.
           </p>
-          
-          {/* Temporary workaround for waiters */}
-          {userRole === 'waiter' && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800 mb-3">
-                <strong>Garçom detectado!</strong> Você foi redirecionado incorretamente devido ao cache do navegador.
-              </p>
-              <button
-                onClick={() => window.location.href = '/waiter-dashboard'}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-              >
-                Ir para Painel do Garçom
-              </button>
-              <p className="text-xs text-blue-600 mt-2">
-                Para corrigir permanentemente: Pressione Cmd+Shift+R (Mac) ou Ctrl+Shift+R (Windows)
-              </p>
-            </div>
-          )}
         </div>
       </div>
     );
