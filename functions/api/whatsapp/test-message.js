@@ -35,6 +35,36 @@ export async function onRequest(context) {
 
     console.log(`Sending test message to ${testNumber}`);
 
+    // First check if instance is connected
+    const statusResponse = await fetch(`${apiUrl}/instance/connectionState/${instanceName}`, {
+      method: 'GET',
+      headers: {
+        'apikey': apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!statusResponse.ok) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'WhatsApp instance not connected or not found'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const statusData = await statusResponse.json();
+    if (statusData.instance?.state !== 'open') {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'WhatsApp instance is not connected. Please connect first.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // Send test message
     const response = await fetch(`${apiUrl}/message/sendText/${instanceName}`, {
       method: 'POST',
@@ -44,7 +74,7 @@ export async function onRequest(context) {
       },
       body: JSON.stringify({
         number: testNumber,
-        text: message || 'Teste de conexão WhatsApp - Coco Loko Açaiteria ✅\n\nSe você recebeu esta mensagem, o WhatsApp está funcionando corretamente!'
+        text: message || '🥥 Teste de conexão WhatsApp - Coco Loko Açaiteria ✅\n\nSe você recebeu esta mensagem, o WhatsApp está funcionando corretamente!\n\n📱 Mensagem enviada em: ' + new Date().toLocaleString('pt-BR')
       })
     });
 

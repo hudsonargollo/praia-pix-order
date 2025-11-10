@@ -283,25 +283,37 @@ export default function WhatsAppAdmin() {
   };
 
   const handleTestMessage = async () => {
+    if (connectionStatus !== 'connected') {
+      toast.error('WhatsApp não está conectado. Conecte primeiro para enviar mensagens.');
+      return;
+    }
+
     try {
+      toast.info('Enviando mensagem de teste...');
+      
       const response = await fetch('/api/whatsapp/test-message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          message: 'Teste de conexão WhatsApp - Coco Loko Açaiteria'
+          message: '🥥 Teste de conexão WhatsApp - Coco Loko Açaiteria ✅\n\nSe você recebeu esta mensagem, o sistema de notificações está funcionando perfeitamente!\n\n📱 Mensagem enviada em: ' + new Date().toLocaleString('pt-BR')
         })
       });
 
-      if (response.ok) {
-        toast.success('Mensagem de teste enviada!');
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success('✅ Mensagem de teste enviada com sucesso!');
+        // Update stats after successful test
+        loadStats();
       } else {
-        toast.error('Erro ao enviar mensagem de teste');
+        console.error('Test message failed:', data);
+        toast.error(`❌ Erro ao enviar mensagem: ${data.error || 'Erro desconhecido'}`);
       }
     } catch (error) {
       console.error('Failed to send test message:', error);
-      toast.error('Erro ao enviar mensagem de teste');
+      toast.error('❌ Erro de conexão ao enviar mensagem de teste');
     }
   };
 

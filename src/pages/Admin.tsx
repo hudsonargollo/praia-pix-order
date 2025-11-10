@@ -25,7 +25,7 @@ const Admin = () => {
   };
 
   const adminMenuItems = [
-    { title: "Painel Gerente", icon: ChefHat, path: "/cashier", description: "Gerenciar pedidos" },
+    { title: "Pedidos", icon: ChefHat, path: "/cashier", description: "Gerenciar pedidos" },
     { title: "Relatórios", icon: BarChart3, path: "/reports", description: "Análises e métricas" },
     { title: "Relatórios Garçons", icon: TrendingUp, path: "/admin/waiter-reports", description: "Performance por garçom" },
     { title: "Produtos", icon: ShoppingBag, path: "/admin/products", description: "Gerenciar cardápio" },
