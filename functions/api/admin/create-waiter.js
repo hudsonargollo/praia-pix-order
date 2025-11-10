@@ -24,10 +24,18 @@ export async function onRequestPost(context) {
       });
     }
 
-    const { email, password, full_name, role } = await context.request.json();
+    const { email, password, full_name, role = 'waiter' } = await context.request.json();
 
-    if (!email || !password || !full_name || role !== 'waiter') {
-      return new Response(JSON.stringify({ error: "Missing required fields or invalid role." }), {
+    if (!email || !password || !full_name) {
+      return new Response(JSON.stringify({ error: "Missing required fields: email, password, and full_name are required." }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate role
+    if (role !== 'waiter') {
+      return new Response(JSON.stringify({ error: "Invalid role. Only 'waiter' role is allowed." }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

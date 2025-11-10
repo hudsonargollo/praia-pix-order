@@ -28,6 +28,7 @@ import Monitoring from "./pages/Monitoring";
 import AdminProducts from "./pages/AdminProducts";
 import AdminWaiters from "./pages/AdminWaiters";
 import AdminWaiterReportsPage from "./pages/AdminWaiterReportsPage";
+import WaiterManagement from "./pages/WaiterManagement";
 import SystemDiagnostic from "./pages/SystemDiagnostic";
 
 const queryClient = new QueryClient();
@@ -114,6 +115,14 @@ const App = () => (
             element={
               <ProtectedRoute requiredRole="admin">
                 <AdminProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/waiter-management"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <WaiterManagement />
               </ProtectedRoute>
             }
           />

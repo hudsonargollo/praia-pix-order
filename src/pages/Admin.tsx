@@ -27,9 +27,8 @@ const Admin = () => {
   const adminMenuItems = [
     { title: "Pedidos", icon: ChefHat, path: "/cashier", description: "Gerenciar pedidos" },
     { title: "Relatórios", icon: BarChart3, path: "/reports", description: "Análises e métricas" },
-    { title: "Relatórios Garçons", icon: TrendingUp, path: "/admin/waiter-reports", description: "Performance por garçom" },
     { title: "Produtos", icon: ShoppingBag, path: "/admin/products", description: "Gerenciar cardápio" },
-    { title: "Garçons", icon: Users, path: "/admin/waiters", description: "Gerenciar equipe" },
+    { title: "Garçons", icon: Users, path: "/waiter-management", description: "Gerenciar equipe e relatórios" },
     { title: "WhatsApp", icon: MessageSquare, path: "/whatsapp-admin", description: "Configurar notificações" },
     { title: "Monitoramento", icon: LayoutDashboard, path: "/monitoring", description: "Status do sistema" },
   ];

@@ -83,7 +83,7 @@ const AdminWaiters = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, full_name }),
+        body: JSON.stringify({ email, password, full_name, role: 'waiter' }),
       });
 
       const data = await response.json();

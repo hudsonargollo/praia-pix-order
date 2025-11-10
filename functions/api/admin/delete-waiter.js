@@ -1,17 +1,25 @@
 // This Worker handles the secure deletion of waiter accounts using the Supabase Service Role Key.
 // Uses direct REST API calls instead of Supabase JS client for Cloudflare Workers compatibility
 
-export async function onRequestDelete(context) {
+export async function onRequest(context) {
   // CORS headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
   // Handle CORS preflight
   if (context.request.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Support both POST and DELETE methods
+  if (context.request.method !== 'POST' && context.request.method !== 'DELETE') {
+    return new Response(JSON.stringify({ error: 'Method not allowed. Use POST or DELETE.' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -30,21 +38,33 @@ export async function onRequestDelete(context) {
       });
     }
 
-    // Extract user ID from the URL path or query parameter
-    const url = new URL(context.request.url);
-    const pathSegments = url.pathname.split('/').filter(Boolean);
-    // Path is /api/admin/delete-waiter/[waiterId] or /api/admin/delete-waiter?id=[waiterId]
-    let waiterId = pathSegments[pathSegments.length - 1];
-    
-    // If the last segment is 'delete-waiter', check query params
-    if (waiterId === 'delete-waiter') {
-      waiterId = url.searchParams.get('id');
+    let waiterId;
+
+    if (context.request.method === 'POST') {
+      // For POST requests, get waiterId from request body
+      const requestBody = await context.request.json();
+      waiterId = requestBody.waiterId;
+    } else {
+      // For DELETE requests, extract user ID from the URL path or query parameter
+      const url = new URL(context.request.url);
+      const pathSegments = url.pathname.split('/').filter(Boolean);
+      // Path is /api/admin/delete-waiter/[waiterId] or /api/admin/delete-waiter?id=[waiterId]
+      waiterId = pathSegments[pathSegments.length - 1];
+      
+      // If the last segment is 'delete-waiter', check query params
+      if (waiterId === 'delete-waiter') {
+        waiterId = url.searchParams.get('id');
+      }
     }
 
-    console.log('Delete waiter request:', { pathname: url.pathname, waiterId, pathSegments });
+    console.log('🔵 Delete waiter request:', { 
+      method: context.request.method,
+      waiterId,
+      url: context.request.url
+    });
 
     if (!waiterId || waiterId === 'delete-waiter') {
-      return new Response(JSON.stringify({ error: "Waiter ID is required." }), {
+      return new Response(JSON.stringify({ error: "Waiter ID is required in request body (POST) or URL path (DELETE)." }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
