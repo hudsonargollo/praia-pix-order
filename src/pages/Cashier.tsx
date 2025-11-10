@@ -338,123 +338,176 @@ const Cashier = () => {
         showToasts={true}
       />
       <ConnectionMonitor />
-      {/* Header */}
-      <div className="bg-gradient-sunset text-white p-4 sm:p-6 shadow-medium">
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold">Gerente</h1>
-              <p className="text-white/90 mt-1 text-sm sm:text-base">Painel de Gerenciamento</p>
-            </div>
-            <div className="flex items-center gap-2">
-              {connectionStatus === 'connected' ? (
-                <div className="flex items-center gap-1 text-green-200">
-                  <Wifi className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm">Online</span>
+      {/* Enhanced Header */}
+      <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 text-white shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-4 sm:py-6">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center space-x-3 sm:space-x-4 flex-1">
+                <div className="relative">
+                  <img 
+                    src={logo} 
+                    alt="Coco Loko" 
+                    className="h-10 sm:h-14 w-auto drop-shadow-lg"
+                  />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                 </div>
-              ) : connectionStatus === 'connecting' ? (
-                <div className="flex items-center gap-1 text-yellow-200">
-                  <Wifi className="h-4 w-4 animate-pulse" />
-                  <span className="text-xs sm:text-sm hidden sm:inline">Conectando...</span>
+                <div>
+                  <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-white to-orange-100 bg-clip-text text-transparent">
+                    Painel Gerente
+                  </h1>
+                  <p className="text-orange-100 mt-1 text-xs sm:text-base font-medium">
+                    Sistema de Gerenciamento • Coco Loko Açaiteria
+                  </p>
                 </div>
-              ) : (
-                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 text-red-200">
-                  <div className="flex items-center gap-1">
-                    <WifiOff className="h-4 w-4" />
-                    <span className="text-xs sm:text-sm">Offline</span>
+              </div>
+              
+              {/* Connection Status */}
+              <div className="flex items-center gap-3">
+                {connectionStatus === 'connected' ? (
+                  <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                    <Wifi className="h-4 w-4 text-green-200" />
+                    <span className="text-xs sm:text-sm text-green-200 font-medium">Online</span>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={reconnect}
-                    className="text-xs text-white border-white/20 hover:bg-white/10 min-h-[32px]"
-                  >
-                    Reconectar
-                  </Button>
-                </div>
-              )}
+                ) : connectionStatus === 'connecting' ? (
+                  <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                    <Wifi className="h-4 w-4 animate-pulse text-yellow-200" />
+                    <span className="text-xs sm:text-sm text-yellow-200 font-medium hidden sm:inline">Conectando...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-red-500/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                      <WifiOff className="h-4 w-4 text-red-200" />
+                      <span className="text-xs sm:text-sm text-red-200 font-medium">Offline</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={reconnect}
+                      className="text-xs text-white border-white/30 hover:bg-white/10 backdrop-blur-sm"
+                    >
+                      Reconectar
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2 justify-between">
-            <div className="flex flex-wrap gap-2">
+            
+            {/* Enhanced Action Buttons */}
+            <div className="flex flex-wrap gap-2 justify-between">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => window.location.href = '/reports'}
+                  className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                  size="sm"
+                >
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Relatórios</span>
+                </Button>
+                <Button
+                  onClick={() => window.location.href = '/admin/products'}
+                  className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                  size="sm"
+                >
+                  <Package className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Produtos</span>
+                </Button>
+                <Button
+                  onClick={() => window.location.href = '/whatsapp-admin'}
+                  className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                  size="sm"
+                >
+                  <Bell className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">WhatsApp</span>
+                </Button>
+              </div>
               <Button
-                onClick={() => window.location.href = '/reports'}
-                className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                onClick={handleLogout}
+                variant="outline"
+                className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
                 size="sm"
               >
-                <BarChart3 className="mr-2 h-4 w-4" />
-                Relatórios
+                <LogOut className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Sair</span>
               </Button>
-            <Button
-              onClick={() => window.location.href = '/admin/products'}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
-              size="sm"
-            >
-              <Package className="mr-2 h-4 w-4" />
-              Gerenciar Produtos
-            </Button>
-            <Button
-              onClick={() => window.location.href = '/whatsapp-admin'}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
-              size="sm"
-            >
-              <Bell className="mr-2 h-4 w-4" />
-              WhatsApp
-            </Button>
             </div>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm"
-              size="sm"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
-            </Button>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-3 sm:p-4">
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <Card className="p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => (document.querySelector('[value="pending"]') as HTMLElement)?.click()}>
-            <div className="flex items-center space-x-2">
-              <Timer className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">Aguardando</p>
-                <p className="text-xl sm:text-2xl font-bold">{pendingOrders.length}</p>
+        {/* Enhanced Summary Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <Card className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-orange-50/50 backdrop-blur-sm overflow-hidden relative" onClick={() => (document.querySelector('[value="pending"]') as HTMLElement)?.click()}>
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="p-4 sm:p-6 relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 transition-all duration-300">
+                  <Timer className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs sm:text-sm text-gray-600 group-hover:text-white/90 transition-colors font-medium">Aguardando</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-white transition-colors">{pendingOrders.length}</p>
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 group-hover:bg-white/20 transition-colors">
+                <div className="bg-orange-500 h-2 rounded-full group-hover:bg-white transition-colors" style={{width: `${Math.min((pendingOrders.length / Math.max(orders.length, 1)) * 100, 100)}%`}}></div>
               </div>
             </div>
           </Card>
-          <Card className="p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => (document.querySelector('[value="progress"]') as HTMLElement)?.click()}>
-            <div className="flex items-center space-x-2">
-              <ChefHat className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">Em Preparo</p>
-                <p className="text-xl sm:text-2xl font-bold">{inProgressOrders.length}</p>
+
+          <Card className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-blue-50/50 backdrop-blur-sm overflow-hidden relative" onClick={() => (document.querySelector('[value="progress"]') as HTMLElement)?.click()}>
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="p-4 sm:p-6 relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 transition-all duration-300">
+                  <ChefHat className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs sm:text-sm text-gray-600 group-hover:text-white/90 transition-colors font-medium">Em Preparo</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-white transition-colors">{inProgressOrders.length}</p>
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 group-hover:bg-white/20 transition-colors">
+                <div className="bg-blue-500 h-2 rounded-full group-hover:bg-white transition-colors" style={{width: `${Math.min((inProgressOrders.length / Math.max(orders.length, 1)) * 100, 100)}%`}}></div>
               </div>
             </div>
           </Card>
-          <Card className="p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => (document.querySelector('[value="ready"]') as HTMLElement)?.click()}>
-            <div className="flex items-center space-x-2">
-              <Package className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">Prontos</p>
-                <p className="text-xl sm:text-2xl font-bold">{readyOrders.length}</p>
+
+          <Card className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-green-50/50 backdrop-blur-sm overflow-hidden relative" onClick={() => (document.querySelector('[value="ready"]') as HTMLElement)?.click()}>
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="p-4 sm:p-6 relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 transition-all duration-300">
+                  <Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs sm:text-sm text-gray-600 group-hover:text-white/90 transition-colors font-medium">Prontos</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-white transition-colors">{readyOrders.length}</p>
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 group-hover:bg-white/20 transition-colors">
+                <div className="bg-green-500 h-2 rounded-full group-hover:bg-white transition-colors" style={{width: `${Math.min((readyOrders.length / Math.max(orders.length, 1)) * 100, 100)}%`}}></div>
               </div>
             </div>
           </Card>
-          <Card className="p-3 sm:p-4">
-            <div className="flex items-center space-x-2">
-              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">Total Hoje</p>
-                <p className="text-base sm:text-xl font-bold truncate">
-                  R$ {orders.filter(o => o.payment_confirmed_at && new Date(o.created_at).toDateString() === new Date().toDateString()).reduce((sum, o) => sum + Number(o.total_amount), 0).toFixed(2)}
-                </p>
+
+          <Card className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-purple-50/50 backdrop-blur-sm overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="p-4 sm:p-6 relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 transition-all duration-300">
+                  <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs sm:text-sm text-gray-600 group-hover:text-white/90 transition-colors font-medium">Total Hoje</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 group-hover:text-white transition-colors">
+                    R$ {orders.filter(o => o.payment_confirmed_at && new Date(o.created_at).toDateString() === new Date().toDateString()).reduce((sum, o) => sum + Number(o.total_amount), 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 group-hover:bg-white/20 transition-colors">
+                <div className="bg-purple-500 h-2 rounded-full group-hover:bg-white transition-colors" style={{width: '75%'}}></div>
               </div>
             </div>
           </Card>

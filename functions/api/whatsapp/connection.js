@@ -106,6 +106,32 @@ export async function onRequest(context) {
             }
           }
 
+          // If instance exists but is disconnected, try to get QR code directly first
+          if (instance && instance.connectionStatus !== 'open') {
+            const qrResponse = await fetch(`${apiUrl}/instance/connect/${instanceName}`, {
+              method: 'GET',
+              headers: {
+                'apikey': apiKey,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (qrResponse.ok) {
+              const qrData = await qrResponse.json();
+              if (qrData.base64) {
+                return new Response(JSON.stringify({
+                  isConnected: false,
+                  connectionState: 'qr_required',
+                  qrCode: `data:image/png;base64,${qrData.base64}`,
+                  message: 'Scan QR code to connect WhatsApp'
+                }), {
+                  status: 200,
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+              }
+            }
+          }
+
           // Try to restart the instance to get QR code
           const restartResponse = await fetch(`${apiUrl}/instance/restart/${instanceName}`, {
             method: 'PUT',
@@ -117,9 +143,9 @@ export async function onRequest(context) {
 
           if (restartResponse.ok) {
             // Wait a moment for restart to complete
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 3000));
             
-            // Try to get QR code
+            // Try to get QR code after restart
             const qrResponse = await fetch(`${apiUrl}/instance/connect/${instanceName}`, {
               method: 'GET',
               headers: {
@@ -248,17 +274,29 @@ export async function onRequest(context) {
             }
           });
 
-          return new Response(JSON.stringify({
-            success: true,
-            message: 'WhatsApp desconectado com sucesso'
-          }), {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
+          if (logoutResponse.ok) {
+            return new Response(JSON.stringify({
+              success: true,
+              message: 'WhatsApp desconectado com sucesso'
+            }), {
+              status: 200,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          } else {
+            // Even if logout fails, consider it successful for UI purposes
+            return new Response(JSON.stringify({
+              success: true,
+              message: 'WhatsApp desconectado'
+            }), {
+              status: 200,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
         } catch (error) {
           return new Response(JSON.stringify({
             success: false,
-            message: 'Erro ao desconectar WhatsApp'
+            message: 'Erro ao desconectar WhatsApp',
+            error: error.message
           }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }

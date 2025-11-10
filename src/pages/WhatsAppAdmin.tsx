@@ -117,7 +117,33 @@ export default function WhatsAppAdmin() {
     setQrCode(null);
 
     try {
-      // First try to restart/reconnect the existing instance
+      // First check if already connected
+      const statusResponse = await fetch('/api/whatsapp/connection?action=status');
+      const statusData = await statusResponse.json();
+
+      if (statusData.isConnected) {
+        setConnectionStatus('connected');
+        setConnectionInfo({
+          phoneNumber: statusData.phoneNumber,
+          connectedAt: statusData.lastConnected,
+          profileName: statusData.profileName
+        });
+        toast.success('WhatsApp já está conectado!');
+        setShowConnectionDialog(false);
+        return;
+      }
+
+      // Try to get QR code directly first
+      const qrResponse = await fetch('/api/whatsapp/qr-code');
+      const qrData = await qrResponse.json();
+
+      if (qrData.success && qrData.qrCode) {
+        setQrCode(qrData.qrCode);
+        pollConnectionStatus();
+        return;
+      }
+
+      // Try restart if QR code generation failed
       const restartResponse = await fetch('/api/whatsapp/connection?action=restart', {
         method: 'POST'
       });
@@ -132,10 +158,7 @@ export default function WhatsAppAdmin() {
       }
 
       // Fallback to connect action
-      const response = await fetch('/api/whatsapp/connection?action=connect', {
-        method: 'GET'
-      });
-
+      const response = await fetch('/api/whatsapp/connection?action=connect');
       const data = await response.json();
 
       if (data.qrCode) {
@@ -145,17 +168,19 @@ export default function WhatsAppAdmin() {
         setConnectionStatus('connected');
         setConnectionInfo({
           phoneNumber: data.phoneNumber,
-          connectedAt: data.lastConnected
+          connectedAt: data.lastConnected,
+          profileName: data.profileName
         });
-        toast.success('WhatsApp já está conectado!');
+        toast.success('WhatsApp conectado com sucesso!');
         setShowConnectionDialog(false);
       } else {
         // Start polling for QR code if not immediately available
+        toast.info('Gerando QR code... Aguarde alguns segundos.');
         pollForQrCode();
       }
     } catch (error) {
       console.error('Failed to connect WhatsApp:', error);
-      toast.error('Erro ao conectar WhatsApp');
+      toast.error('Erro ao conectar WhatsApp. Verifique a conexão com a API.');
       setConnectionStatus('disconnected');
     }
   };
@@ -196,6 +221,18 @@ export default function WhatsAppAdmin() {
   const pollForQrCode = () => {
     const qrPollInterval = setInterval(async () => {
       try {
+        // Try the dedicated QR code endpoint first
+        const qrResponse = await fetch('/api/whatsapp/qr-code');
+        const qrData = await qrResponse.json();
+
+        if (qrData.success && qrData.qrCode) {
+          setQrCode(qrData.qrCode);
+          clearInterval(qrPollInterval);
+          pollConnectionStatus();
+          return;
+        }
+
+        // Fallback to connection endpoint
         const response = await fetch('/api/whatsapp/connection?action=connect');
         const data = await response.json();
 
@@ -207,7 +244,8 @@ export default function WhatsAppAdmin() {
           setConnectionStatus('connected');
           setConnectionInfo({
             phoneNumber: data.phoneNumber,
-            connectedAt: data.lastConnected
+            connectedAt: data.lastConnected,
+            profileName: data.profileName
           });
           clearInterval(qrPollInterval);
           setShowConnectionDialog(false);
@@ -216,16 +254,16 @@ export default function WhatsAppAdmin() {
       } catch (error) {
         console.error('Failed to poll for QR code:', error);
       }
-    }, 2000);
+    }, 3000);
 
-    // Stop polling after 30 seconds
+    // Stop polling after 45 seconds
     setTimeout(() => {
       clearInterval(qrPollInterval);
       if (!qrCode && connectionStatus === 'connecting') {
-        toast.error('Não foi possível gerar QR code. Tente novamente.');
+        toast.error('Não foi possível gerar QR code. Tente reiniciar a conexão.');
         setConnectionStatus('disconnected');
       }
-    }, 30000);
+    }, 45000);
   };
 
   const handleDisconnect = async () => {

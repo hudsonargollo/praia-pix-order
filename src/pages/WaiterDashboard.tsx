@@ -178,46 +178,69 @@ const WaiterDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-acai">
-      {/* Header */}
-      <div className="bg-gradient-sunset text-white p-4 sm:p-6 shadow-medium">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img 
-              src={logo} 
-              alt="Coco Loko" 
-              className="h-12 w-auto"
-            />
-            <div>
-              <h1 className="text-2xl font-bold flex items-center">
-                <LayoutDashboard className="w-6 h-6 mr-2" />
-                Dashboard do Garçom
-              </h1>
-              <p className="text-white/80 text-sm">Bem-vindo, {waiterName}</p>
+      {/* Enhanced Header */}
+      <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 text-white shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4 sm:py-6">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="relative">
+                <img 
+                  src={logo} 
+                  alt="Coco Loko" 
+                  className="h-10 sm:h-14 w-auto drop-shadow-lg"
+                />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+              </div>
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold flex items-center bg-gradient-to-r from-white to-orange-100 bg-clip-text text-transparent">
+                  <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-white" />
+                  Dashboard do Garçom
+                </h1>
+                <p className="text-orange-100 text-xs sm:text-sm font-medium">
+                  Bem-vindo, {waiterName} • Sistema de Vendas
+                </p>
+              </div>
             </div>
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout} 
+              className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+              size="sm"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
           </div>
-          <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-white/20">
-            <LogOut className="w-4 h-4 mr-2" />
-            Sair
-          </Button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4 md:p-8">
 
-        {/* Action Button */}
+        {/* Enhanced Action Button */}
         <div className="mb-8">
-          <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-xl border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold mb-2">Criar Novo Pedido</h3>
-                  <p className="text-white/90">Abra o cardápio para fazer um pedido para o cliente</p>
+          <Card className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 text-white shadow-2xl border-0 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
+            <CardContent className="p-6 sm:p-8 relative">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                      <ShoppingCart className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-bold">Criar Novo Pedido</h3>
+                      <p className="text-green-100 text-sm">Comece a atender um novo cliente</p>
+                    </div>
+                  </div>
+                  <p className="text-white/90 text-sm sm:text-base">
+                    Abra o cardápio digital para fazer um pedido personalizado para o cliente
+                  </p>
                 </div>
                 <Button 
                   onClick={() => navigate("/menu")}
                   size="lg"
-                  className="bg-white text-green-600 hover:bg-gray-100 font-semibold px-8 py-3"
+                  className="bg-white text-green-600 hover:bg-gray-100 font-bold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 w-full sm:w-auto"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   Novo Pedido
@@ -227,39 +250,41 @@ const WaiterDashboard = () => {
           </Card>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-0 hover:shadow-xl hover:bg-gradient-to-br hover:from-blue-500 hover:to-blue-600 transition-all duration-300 group cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        {/* Enhanced Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-blue-50/50 backdrop-blur-sm overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-600 group-hover:text-white transition-colors">
                 Total de Vendas
               </CardTitle>
-              <div className="p-2 bg-gradient-ocean rounded-lg group-hover:bg-white/20">
-                <ShoppingCart className="h-4 w-4 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 group-hover:shadow-xl transition-all duration-300">
+                <ShoppingCart className="h-5 w-5 text-white" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900 group-hover:text-white transition-colors">
+            <CardContent className="relative z-10">
+              <div className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-white transition-colors mb-2">
                 {totalSales.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </div>
-              <p className="text-sm text-gray-500 group-hover:text-white/90 transition-colors flex items-center mt-1">
-                <TrendingUp className="w-3 h-3 mr-1" />
+              <p className="text-sm text-gray-500 group-hover:text-white/90 transition-colors flex items-center">
+                <TrendingUp className="w-4 h-4 mr-2" />
                 {orders.length} pedidos realizados
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-0 hover:shadow-xl hover:bg-gradient-to-br hover:from-orange-500 hover:to-red-500 transition-all duration-300 group cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-orange-50/50 backdrop-blur-sm overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-600 group-hover:text-white transition-colors">
                 Suas Comissões (10%)
               </CardTitle>
-              <div className="p-2 bg-gradient-sunset rounded-lg group-hover:bg-white/20">
-                <DollarSign className="h-4 w-4 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 group-hover:shadow-xl transition-all duration-300">
+                <DollarSign className="h-5 w-5 text-white" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600 group-hover:text-white transition-colors">
+            <CardContent className="relative z-10">
+              <div className="text-2xl sm:text-3xl font-bold text-green-600 group-hover:text-white transition-colors mb-2">
                 {totalCommissions.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </div>
               <p className="text-sm text-gray-500 group-hover:text-white/90 transition-colors">
@@ -268,17 +293,18 @@ const WaiterDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-0 hover:shadow-xl hover:bg-gradient-to-br hover:from-purple-500 hover:to-purple-600 transition-all duration-300 group cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-purple-50/50 backdrop-blur-sm overflow-hidden relative sm:col-span-2 lg:col-span-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-600 group-hover:text-white transition-colors">
                 Performance
               </CardTitle>
-              <div className="p-2 bg-gradient-acai rounded-lg group-hover:bg-white/20">
-                <Users className="h-4 w-4 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 group-hover:shadow-xl transition-all duration-300">
+                <Users className="h-5 w-5 text-white" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600 group-hover:text-white transition-colors">
+            <CardContent className="relative z-10">
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600 group-hover:text-white transition-colors mb-2">
                 {orders.length > 0 ? (totalSales / orders.length).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "R$ 0,00"}
               </div>
               <p className="text-sm text-gray-500 group-hover:text-white/90 transition-colors">
