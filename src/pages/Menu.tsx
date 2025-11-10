@@ -109,7 +109,7 @@ const Menu = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center bg-gradient-acai md:bg-[#FDD835]">
+      <div className="min-h-screen relative flex items-center justify-center bg-[#FDD835]">
         {/* Background Image - Mobile Only */}
         <div 
           className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat"
@@ -117,15 +117,18 @@ const Menu = () => {
             backgroundImage: `url('/bck-menu.webp')`,
           }}
         />
-        <p className="relative z-10 text-purple-900 font-semibold bg-white px-6 py-3 rounded-full shadow-lg">
-          Carregando cardápio...
-        </p>
+        <div className="relative z-10 bg-white px-8 py-4 rounded-2xl shadow-2xl border border-purple-200">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 border-3 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-purple-900 font-bold">Carregando cardápio...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative pb-24 bg-gradient-acai md:bg-[#FDD835]">
+    <div className="min-h-screen relative pb-24 bg-[#FDD835]">
       {/* Background Image - Mobile Only */}
       <div 
         className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat"
@@ -158,11 +161,11 @@ const Menu = () => {
         </div>
       </div>
 
-      {/* Category Navigation */}
+      {/* Enhanced Category Navigation */}
       {categories.length > 0 && (
-        <div className="fixed top-24 md:top-28 left-0 right-0 z-40 bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200">
-          <div className="max-w-4xl mx-auto px-4 py-4">
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="fixed top-24 md:top-28 left-0 right-0 z-40 bg-white/98 backdrop-blur-xl shadow-xl border-b border-purple-100">
+          <div className="max-w-4xl mx-auto px-4 py-5">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {categories.map((category) => {
                 const categoryItems = menuItems.filter(
                   (item) => item.category_id === category.id
@@ -176,14 +179,31 @@ const Menu = () => {
                     key={category.id}
                     onClick={() => scrollToCategory(category.id)}
                     className={`
-                      flex-shrink-0 px-6 py-3 rounded-full font-bold text-sm transition-all duration-200 whitespace-nowrap shadow-md
+                      group relative flex-shrink-0 px-6 py-3 rounded-2xl font-bold text-sm transition-all duration-300 whitespace-nowrap shadow-lg hover:shadow-xl
                       ${isSelected 
-                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white transform scale-105' 
-                        : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-lg border border-gray-200'
+                        ? 'bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white transform scale-105 shadow-purple-300' 
+                        : 'bg-gradient-to-r from-white to-gray-50 text-gray-700 hover:from-purple-50 hover:to-purple-100 hover:text-purple-700 border border-gray-200 hover:border-purple-200'
                       }
                     `}
                   >
-                    {category.name}
+                    <span className="relative z-10">{category.name}</span>
+                    <div className={`
+                      absolute inset-0 rounded-2xl transition-opacity duration-300
+                      ${isSelected 
+                        ? 'bg-gradient-to-r from-purple-400/20 to-purple-600/20' 
+                        : 'bg-gradient-to-r from-purple-400/0 to-purple-600/0 group-hover:from-purple-400/10 group-hover:to-purple-600/10'
+                      }
+                    `} />
+                    {/* Item count badge */}
+                    <div className={`
+                      absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-300
+                      ${isSelected 
+                        ? 'bg-white text-purple-700 shadow-lg' 
+                        : 'bg-purple-600 text-white group-hover:bg-purple-700'
+                      }
+                    `}>
+                      {categoryItems.length}
+                    </div>
                   </button>
                 );
               })}
@@ -207,14 +227,31 @@ const Menu = () => {
 
             return (
               <div key={category.id} id={`category-${category.id}`} className="space-y-4 scroll-mt-48">
-                {/* Simple Category Header */}
-                <div className="bg-gradient-to-r from-purple-700 to-purple-800 text-white px-6 py-3 rounded-full inline-block shadow-lg">
-                  <h2 className="font-bold text-sm uppercase tracking-wide">
-                    {category.name}
-                  </h2>
+                {/* Enhanced Category Header */}
+                <div className="text-center mb-2">
+                  <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white px-8 py-4 rounded-2xl inline-block shadow-2xl border border-purple-500 relative overflow-hidden">
+                    {/* Background pattern */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-purple-600/20" />
+                    <div className="relative z-10 flex items-center gap-3">
+                      <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                        <ShoppingCart className="w-3 h-3 text-white" />
+                      </div>
+                      <h2 className="font-bold text-lg uppercase tracking-wide">
+                        {category.name}
+                      </h2>
+                      <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-xs">
+                          {categoryItems.length}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Decorative elements */}
+                    <div className="absolute -top-1 -left-1 w-3 h-3 bg-yellow-400 rounded-full opacity-80" />
+                    <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-pink-400 rounded-full opacity-60" />
+                  </div>
                 </div>
 
-                {/* Simple Category Items */}
+                {/* Enhanced Category Items */}
                 <div className="space-y-4">
                   {categoryItems.map((item) => {
                     const quantity = getItemQuantity(item.id);
@@ -222,39 +259,39 @@ const Menu = () => {
                     return (
                       <div 
                         key={item.id} 
-                        className="bg-white rounded-2xl p-4 shadow-lg flex items-center gap-4"
+                        className="bg-white rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-4 border border-gray-100 hover:border-purple-200 group"
                       >
-                        {/* Item Image */}
+                        {/* Enhanced Item Image */}
                         <div 
-                          className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 cursor-pointer flex-shrink-0"
+                          className="w-20 h-20 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer flex-shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-lg"
                           onClick={() => setSelectedItem(item)}
                         >
                           {item.image_url ? (
                             <img
                               src={item.image_url}
                               alt={item.name}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                              <ShoppingCart className="w-8 h-8 text-gray-400" />
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-purple-200">
+                              <ShoppingCart className="w-8 h-8 text-purple-500" />
                             </div>
                           )}
                         </div>
 
-                        {/* Item Info */}
+                        {/* Enhanced Item Info */}
                         <div 
-                          className="flex-1 cursor-pointer"
+                          className="flex-1 cursor-pointer transition-opacity duration-200 group-hover:opacity-90"
                           onClick={() => setSelectedItem(item)}
                         >
-                          <h3 className="font-bold text-gray-900 text-lg mb-1">
+                          <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-purple-700 transition-colors">
                             {item.name}
                           </h3>
                           {item.description && (
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                            <p className="text-sm text-gray-600 mb-2 line-clamp-2 leading-relaxed">
                               {item.description}
                             </p>
                           )}
@@ -263,22 +300,27 @@ const Menu = () => {
                           </p>
                         </div>
 
-                        {/* Add Button */}
+                        {/* Enhanced Add Button */}
                         <div className="flex-shrink-0">
                           {quantity > 0 ? (
-                            <div className="flex items-center gap-2 bg-gray-50 rounded-full p-2">
+                            <div className="flex items-center gap-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-3 border border-purple-200 shadow-lg">
                               <button
                                 onClick={() => removeItem(item.id)}
-                                className="w-8 h-8 rounded-full bg-purple-700 text-white flex items-center justify-center font-bold text-sm"
+                                className="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white flex items-center justify-center font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                               >
                                 -
                               </button>
-                              <span className="font-bold text-purple-900 text-sm w-6 text-center">
-                                {quantity}
-                              </span>
+                              <div className="text-center">
+                                <span className="font-bold text-purple-900 text-lg block">
+                                  {quantity}
+                                </span>
+                                <span className="text-xs text-purple-600 font-medium">
+                                  no carrinho
+                                </span>
+                              </div>
                               <button
                                 onClick={() => addToCart(item)}
-                                className="w-8 h-8 rounded-full bg-purple-700 text-white flex items-center justify-center font-bold text-sm"
+                                className="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white flex items-center justify-center font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                               >
                                 +
                               </button>
@@ -286,7 +328,7 @@ const Menu = () => {
                           ) : (
                             <Button
                               onClick={() => addToCart(item)}
-                              className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2 rounded-full font-bold text-sm"
+                              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-purple-500"
                             >
                               Adicionar
                             </Button>
