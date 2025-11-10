@@ -25,79 +25,97 @@ export async function onRequest(context) {
   }
 
   try {
-    // Get Evolution API config
-    const apiUrl = context.env.EVOLUTION_API_URL || 'http://wppapi.clubemkt.digital';
-    const apiKey = context.env.EVOLUTION_API_KEY || 'DD451E404240-4C45-AF35-BFCA6A976927';
-    const instanceName = context.env.EVOLUTION_INSTANCE_NAME || 'cocooo';
+    // Get Evolution API config from environment variables
+    const apiUrl = context.env.VITE_EVOLUTION_API_URL || context.env.EVOLUTION_API_URL || 'http://wppapi.clubemkt.digital';
+    const apiKey = context.env.VITE_EVOLUTION_API_KEY || context.env.EVOLUTION_API_KEY || 'DD451E404240-4C45-AF35-BFCA6A976927';
+    const instanceName = context.env.VITE_EVOLUTION_INSTANCE_NAME || context.env.EVOLUTION_INSTANCE_NAME || 'cocooo';
     const testNumber = context.env.TEST_PHONE_NUMBER || '5573189719731'; // Admin phone number
 
-    const { message } = await context.request.json();
-
-    console.log(`Sending test message to ${testNumber}`);
-
-    // First check if instance is connected
-    const statusResponse = await fetch(`${apiUrl}/instance/connectionState/${instanceName}`, {
-      method: 'GET',
-      headers: {
-        'apikey': apiKey,
-        'Content-Type': 'application/json'
-      }
+    console.log('🔵 WhatsApp Test Config:', {
+      apiUrl: apiUrl ? `${apiUrl.substring(0, 20)}...` : 'missing',
+      hasApiKey: !!apiKey,
+      instanceName,
+      testNumber
     });
 
-    if (!statusResponse.ok) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'WhatsApp instance not connected or not found'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    let requestBody;
+    try {
+      requestBody = await context.request.json();
+    } catch (e) {
+      requestBody = {};
     }
+    
+    const { message } = requestBody;
 
-    const statusData = await statusResponse.json();
-    if (statusData.instance?.state !== 'open') {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'WhatsApp instance is not connected. Please connect first.'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    console.log(`🔵 Sending test message to ${testNumber}`);
+
+    // Skip connection check for now and try to send directly
+    console.log('🔵 Attempting to send message directly...');
 
     // Send test message
+    const messageText = message || `🥥 Teste de conexão WhatsApp - Coco Loko Açaiteria ✅
+
+Se você recebeu esta mensagem, o WhatsApp está funcionando corretamente!
+
+📱 Mensagem enviada em: ${new Date().toLocaleString('pt-BR')}
+🏪 Sistema: Coco Loko Açaiteria
+✅ Status: Operacional`;
+
+    const messagePayload = {
+      number: testNumber,
+      text: messageText
+    };
+
+    console.log('🔵 Message payload:', messagePayload);
+    console.log('🔵 API URL:', `${apiUrl}/message/sendText/${instanceName}`);
+
     const response = await fetch(`${apiUrl}/message/sendText/${instanceName}`, {
       method: 'POST',
       headers: {
         'apikey': apiKey,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        number: testNumber,
-        text: message || '🥥 Teste de conexão WhatsApp - Coco Loko Açaiteria ✅\n\nSe você recebeu esta mensagem, o WhatsApp está funcionando corretamente!\n\n📱 Mensagem enviada em: ' + new Date().toLocaleString('pt-BR')
-      })
+      body: JSON.stringify(messagePayload)
+    });
+
+    console.log('🔵 WhatsApp API response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
     });
 
     if (response.ok) {
       const data = await response.json();
+      console.log('✅ Message sent successfully:', data);
       return new Response(JSON.stringify({
         success: true,
-        messageId: data.key?.id,
-        message: 'Mensagem de teste enviada com sucesso'
+        messageId: data.key?.id || data.messageId,
+        message: 'Mensagem de teste enviada com sucesso!',
+        details: data
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     } else {
       const errorData = await response.text();
-      console.error('Failed to send test message:', errorData);
+      console.error('❌ Failed to send test message:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
       
       return new Response(JSON.stringify({
         success: false,
-        error: 'Failed to send test message',
-        details: errorData
+        error: `Failed to send message (${response.status})`,
+        details: errorData,
+        debug: {
+          apiUrl,
+          instanceName,
+          testNumber,
+          hasApiKey: !!apiKey
+        }
       }), {
-        status: 500,
+        status: response.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }

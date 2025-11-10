@@ -103,37 +103,77 @@ const AdminProducts = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Por favor, selecione uma imagem');
+      toast.error('❌ Por favor, selecione uma imagem válida');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Imagem muito grande. Máximo 5MB');
+      toast.error('❌ Imagem muito grande. Máximo 5MB');
       return;
     }
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      console.log('📤 Uploading image:', { name: file.name, size: file.size, type: file.type });
+      
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `menu-items/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(filePath, file);
+      console.log('📤 Upload path:', filePath);
 
-      if (uploadError) throw uploadError;
+      // Try to create the bucket if it doesn't exist
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'product-images');
+      
+      if (!bucketExists) {
+        console.log('🪣 Creating product-images bucket...');
+        const { error: bucketError } = await supabase.storage.createBucket('product-images', {
+          public: true,
+          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+          fileSizeLimit: 5242880 // 5MB
+        });
+        
+        if (bucketError) {
+          console.error('❌ Bucket creation error:', bucketError);
+          // Continue anyway, bucket might already exist
+        }
+      }
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('❌ Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('✅ Upload successful:', uploadData);
 
       const { data: { publicUrl } } = supabase.storage
         .from('product-images')
         .getPublicUrl(filePath);
 
+      console.log('🔗 Public URL:', publicUrl);
+
       setFormData({ ...formData, image_url: publicUrl });
-      toast.success('Imagem enviada com sucesso!');
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error('Erro ao enviar imagem');
+      toast.success('✅ Imagem enviada com sucesso!');
+      
+    } catch (error: any) {
+      console.error('❌ Error uploading image:', error);
+      
+      if (error.message?.includes('not found')) {
+        toast.error('❌ Bucket de imagens não encontrado. Contacte o administrador.');
+      } else if (error.message?.includes('permission')) {
+        toast.error('❌ Sem permissão para enviar imagens.');
+      } else {
+        toast.error(`❌ Erro ao enviar imagem: ${error.message || 'Erro desconhecido'}`);
+      }
     } finally {
       setUploading(false);
     }
@@ -145,34 +185,57 @@ const AdminProducts = () => {
       return;
     }
 
+    // Validate price
+    const price = parseFloat(formData.price);
+    if (isNaN(price) || price < 0) {
+      toast.error('Preço deve ser um número válido');
+      return;
+    }
+
     setSaving(true);
     try {
       const itemData = {
-        name: formData.name,
-        description: formData.description || null,
-        price: parseFloat(formData.price),
+        name: formData.name.trim(),
+        description: formData.description?.trim() || null,
+        price: price,
         category_id: formData.category_id,
         available: formData.available,
-        image_url: formData.image_url || null,
+        image_url: formData.image_url?.trim() || null,
       };
+
+      console.log('💾 Saving product:', { editingItem: !!editingItem, itemData });
 
       if (editingItem) {
         // Update existing item
-        const { error } = await supabase
+        console.log('📝 Updating product:', editingItem.id);
+        const { data, error } = await supabase
           .from('menu_items')
           .update(itemData)
-          .eq('id', editingItem.id);
+          .eq('id', editingItem.id)
+          .select();
 
-        if (error) throw error;
-        toast.success('Produto atualizado!');
+        if (error) {
+          console.error('❌ Update error:', error);
+          throw error;
+        }
+        
+        console.log('✅ Product updated:', data);
+        toast.success('✅ Produto atualizado com sucesso!');
       } else {
         // Create new item
-        const { error } = await supabase
+        console.log('➕ Creating new product');
+        const { data, error } = await supabase
           .from('menu_items')
-          .insert(itemData);
+          .insert(itemData)
+          .select();
 
-        if (error) throw error;
-        toast.success('Produto criado!');
+        if (error) {
+          console.error('❌ Insert error:', error);
+          throw error;
+        }
+        
+        console.log('✅ Product created:', data);
+        toast.success('✅ Produto criado com sucesso!');
       }
 
       setIsDialogOpen(false);
@@ -185,10 +248,23 @@ const AdminProducts = () => {
         available: true,
         image_url: '',
       });
-      loadData();
-    } catch (error) {
-      console.error('Error saving item:', error);
-      toast.error('Erro ao salvar produto');
+      
+      // Reload data to show changes
+      await loadData();
+      
+    } catch (error: any) {
+      console.error('❌ Error saving product:', error);
+      
+      // Provide specific error messages
+      if (error.message?.includes('permission')) {
+        toast.error('❌ Erro de permissão. Verifique se você tem acesso para editar produtos.');
+      } else if (error.message?.includes('network')) {
+        toast.error('❌ Erro de conexão. Verifique sua internet.');
+      } else if (error.code === '23505') {
+        toast.error('❌ Já existe um produto com este nome.');
+      } else {
+        toast.error(`❌ Erro ao salvar produto: ${error.message || 'Erro desconhecido'}`);
+      }
     } finally {
       setSaving(false);
     }
