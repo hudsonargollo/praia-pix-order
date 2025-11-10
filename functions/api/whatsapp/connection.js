@@ -28,65 +28,84 @@ export async function onRequest(context) {
 
     switch (action) {
       case 'status':
-        // Check connection status
-        const statusResponse = await fetch(`${apiUrl}/instance/connectionState/${instanceName}`, {
-          method: 'GET',
-          headers: {
-            'apikey': apiKey,
-            'Content-Type': 'application/json'
-          }
-        });
+        // Try to get connection status - use simpler approach
+        try {
+          const statusResponse = await fetch(`${apiUrl}/instance/fetchInstances`, {
+            method: 'GET',
+            headers: {
+              'apikey': apiKey,
+              'Content-Type': 'application/json'
+            }
+          });
 
-        if (!statusResponse.ok) {
-          throw new Error(`Failed to get connection status: ${statusResponse.status}`);
+          if (statusResponse.ok) {
+            const instances = await statusResponse.json();
+            const instance = instances.find(i => i.instanceName === instanceName);
+            
+            return new Response(JSON.stringify({
+              isConnected: instance?.connectionStatus === 'open',
+              connectionState: instance?.connectionStatus || 'disconnected',
+              phoneNumber: instance?.profilePictureUrl ? 'Connected' : null,
+              lastConnected: instance?.connectionStatus === 'open' ? new Date().toISOString() : null,
+              qrCode: null
+            }), {
+              status: 200,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+        } catch (error) {
+          console.log('Status check failed, returning default');
         }
 
-        const statusData = await statusResponse.json();
-        const isConnected = statusData.state === 'open';
-
+        // Fallback response
         return new Response(JSON.stringify({
-          isConnected,
-          connectionState: statusData.state || 'disconnected',
-          phoneNumber: statusData.instance?.owner || null,
-          lastConnected: isConnected ? new Date().toISOString() : null,
-          qrCode: null
+          isConnected: false,
+          connectionState: 'disconnected',
+          phoneNumber: null,
+          lastConnected: null,
+          qrCode: null,
+          message: 'Evolution API status check failed'
         }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
 
       case 'connect':
-        // Try to connect and get QR code if needed
-        const connectResponse = await fetch(`${apiUrl}/instance/connect/${instanceName}`, {
-          method: 'GET',
-          headers: {
-            'apikey': apiKey,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!connectResponse.ok) {
-          throw new Error(`Failed to connect: ${connectResponse.status}`);
-        }
-
-        const connectData = await connectResponse.json();
-
-        // If already connected
-        if (connectData.state === 'open') {
-          return new Response(JSON.stringify({
-            isConnected: true,
-            connectionState: 'connected',
-            phoneNumber: connectData.instance?.owner || null,
-            lastConnected: new Date().toISOString()
-          }), {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-
-        // If needs QR code, try to get it
+        // Try to get QR code for connection
         try {
-          const qrResponse = await fetch(`${apiUrl}/instance/qrcode/${instanceName}`, {
+          // First try to create/restart the instance
+          const createResponse = await fetch(`${apiUrl}/instance/create`, {
+            method: 'POST',
+            headers: {
+              'apikey': apiKey,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              instanceName: instanceName,
+              token: apiKey,
+              qrcode: true,
+              integration: 'WHATSAPP-BAILEYS'
+            })
+          });
+
+          if (createResponse.ok) {
+            const createData = await createResponse.json();
+            
+            if (createData.qrcode && createData.qrcode.code) {
+              return new Response(JSON.stringify({
+                isConnected: false,
+                connectionState: 'qr_required',
+                qrCode: createData.qrcode.code,
+                message: 'Scan QR code to connect WhatsApp'
+              }), {
+                status: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+          }
+
+          // Fallback: try to get existing QR code
+          const qrResponse = await fetch(`${apiUrl}/instance/${instanceName}/qrcode`, {
             method: 'GET',
             headers: {
               'apikey': apiKey,
@@ -96,50 +115,63 @@ export async function onRequest(context) {
 
           if (qrResponse.ok) {
             const qrData = await qrResponse.json();
-            return new Response(JSON.stringify({
-              isConnected: false,
-              connectionState: 'qr_required',
-              qrCode: qrData.qrcode || qrData.base64,
-              message: 'Scan QR code to connect WhatsApp'
-            }), {
-              status: 200,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
+            if (qrData.qrcode) {
+              return new Response(JSON.stringify({
+                isConnected: false,
+                connectionState: 'qr_required',
+                qrCode: qrData.qrcode,
+                message: 'Scan QR code to connect WhatsApp'
+              }), {
+                status: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
           }
-        } catch (qrError) {
-          console.log('QR code not available yet');
+        } catch (error) {
+          console.log('Connect failed:', error.message);
         }
 
+        // Return connecting state if QR code generation fails
         return new Response(JSON.stringify({
           isConnected: false,
           connectionState: 'connecting',
-          message: 'Connecting to WhatsApp...'
+          message: 'Iniciando conexão WhatsApp... Tente novamente em alguns segundos.'
         }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
 
       case 'disconnect':
-        // Disconnect the instance
-        const disconnectResponse = await fetch(`${apiUrl}/instance/logout/${instanceName}`, {
-          method: 'DELETE',
-          headers: {
-            'apikey': apiKey,
-            'Content-Type': 'application/json'
-          }
-        });
+        // Try to disconnect the instance
+        try {
+          const disconnectResponse = await fetch(`${apiUrl}/instance/delete/${instanceName}`, {
+            method: 'DELETE',
+            headers: {
+              'apikey': apiKey,
+              'Content-Type': 'application/json'
+            }
+          });
 
-        return new Response(JSON.stringify({
-          success: true,
-          message: 'WhatsApp disconnected successfully'
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'WhatsApp desconectado com sucesso'
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({
+            success: false,
+            message: 'Erro ao desconectar WhatsApp'
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
 
       default:
         return new Response(JSON.stringify({
-          error: 'Invalid action',
+          error: 'Ação inválida',
           availableActions: ['status', 'connect', 'disconnect']
         }), {
           status: 400,
