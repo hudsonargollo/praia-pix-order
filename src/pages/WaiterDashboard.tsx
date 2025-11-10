@@ -113,9 +113,9 @@ const WaiterDashboard = () => {
   };
 
   const canGeneratePIX = (order: Order) => {
-    // Allow PIX generation for pending orders or orders without payment
-    const allowedStatuses = ['pending', 'in progress', 'completed'];
-    return allowedStatuses.includes(order.status.toLowerCase()) && 
+    // Allow PIX generation for orders that haven't been paid yet
+    const unpaidStatuses = ['pending', 'in_preparation', 'ready'];
+    return unpaidStatuses.includes(order.status.toLowerCase()) && 
            order.customer_name && 
            order.customer_phone;
   };
@@ -126,17 +126,42 @@ const WaiterDashboard = () => {
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":
-        return "default";
-      case "in progress":
-        return "secondary";
-      case "completed":
-        return "default"; // Use default for completed instead of success
+        return "secondary"; // Yellow for pending orders
+      case "pending_payment":
+        return "destructive"; // Red for awaiting payment
       case "paid":
-        return "default";
+        return "default"; // Blue for paid orders
+      case "in_preparation":
+        return "secondary"; // Yellow for in preparation
+      case "ready":
+        return "default"; // Blue for ready orders
+      case "completed":
+        return "default"; // Green for completed
       case "cancelled":
-        return "destructive";
+        return "destructive"; // Red for cancelled
       default:
         return "outline";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return "Pendente";
+      case "pending_payment":
+        return "Aguardando Pagamento";
+      case "paid":
+        return "Pago";
+      case "in_preparation":
+        return "Em Preparo";
+      case "ready":
+        return "Pronto";
+      case "completed":
+        return "Concluído";
+      case "cancelled":
+        return "Cancelado";
+      default:
+        return status;
     }
   };
 
@@ -179,6 +204,28 @@ const WaiterDashboard = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4 md:p-8">
+
+        {/* Action Button */}
+        <div className="mb-8">
+          <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-xl border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Criar Novo Pedido</h3>
+                  <p className="text-white/90">Abra o cardápio para fazer um pedido para o cliente</p>
+                </div>
+                <Button 
+                  onClick={() => navigate("/menu")}
+                  size="lg"
+                  className="bg-white text-green-600 hover:bg-gray-100 font-semibold px-8 py-3"
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Novo Pedido
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -292,7 +339,7 @@ const WaiterDashboard = () => {
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(order.status)} className="font-medium">
-                          {order.status}
+                          {getStatusLabel(order.status)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -301,10 +348,10 @@ const WaiterDashboard = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => handleGeneratePIX(order)}
-                            className="flex items-center gap-1"
+                            className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
                           >
                             <QrCode className="w-3 h-3" />
-                            PIX
+                            Gerar PIX
                           </Button>
                         )}
                       </TableCell>
@@ -316,7 +363,7 @@ const WaiterDashboard = () => {
                         <div className="flex flex-col items-center">
                           <ShoppingCart className="w-12 h-12 text-gray-300 mb-2" />
                           <p>Nenhum pedido encontrado</p>
-                          <p className="text-sm">Seus pedidos aparecerão aqui quando você fizer vendas</p>
+                          <p className="text-sm">Clique em "Novo Pedido" para começar a atender clientes</p>
                         </div>
                       </TableCell>
                     </TableRow>
