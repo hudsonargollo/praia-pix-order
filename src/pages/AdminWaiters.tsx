@@ -174,7 +174,7 @@ const AdminWaiters = () => {
                   Gerenciar Garçons
                 </h1>
                 <p className="text-blue-100 mt-1 text-xs sm:text-base font-medium">
-                  Adicione e gerencie a equipe • Sistema de Usuários
+                  Adicione e gerencie a equipe • Gestão de Garçons
                 </p>
               </div>
             </div>

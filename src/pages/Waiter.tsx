@@ -23,13 +23,13 @@ const Waiter = () => {
       <Card className="w-full max-w-md p-8 shadow-xl">
         {/* Back Button */}
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={() => navigate("/")}
-          className="mb-4"
+          className="mb-4 hover:bg-gray-100 transition-all duration-300"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
+          Voltar para Início
         </Button>
 
         {/* Logo */}
@@ -51,11 +51,11 @@ const Waiter = () => {
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="username">Usuário</Label>
+            <Label htmlFor="username">Email</Label>
             <Input
               id="username"
-              type="text"
-              placeholder="Digite seu usuário"
+              type="email"
+              placeholder="Digite seu email"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -84,12 +84,7 @@ const Waiter = () => {
           </Button>
         </form>
 
-        {/* Info Message */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800 text-center">
-            <strong>Em desenvolvimento:</strong> O sistema de garçom estará disponível em breve.
-          </p>
-        </div>
+
       </Card>
     </div>
   );

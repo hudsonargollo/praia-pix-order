@@ -36,7 +36,7 @@ const WaiterDashboard = () => {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      toast.error("Usuário não autenticado.");
+      toast.error("Você precisa fazer login.");
       navigate("/auth");
       return;
     }
