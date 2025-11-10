@@ -159,24 +159,26 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-acai p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-acai p-6">
+      <Card className="w-full max-w-lg shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+        <CardHeader className="space-y-8 pb-8 pt-10 px-10">
           <div className="flex justify-center">
             <img 
               src={logo} 
               alt="Coco Loko Açaiteria" 
-              className="h-24 w-auto"
+              className="h-28 w-auto"
             />
           </div>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-lg text-gray-600 font-medium">
             Entre com suas credenciais para acessar o sistema
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+        <CardContent className="px-10 pb-10">
+          <form onSubmit={handleAuth} className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="email" className="text-base font-semibold text-gray-700">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -185,10 +187,13 @@ const Auth = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 maxLength={255}
+                className="h-12 text-base px-4 border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20 rounded-lg"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+            <div className="space-y-3">
+              <Label htmlFor="password" className="text-base font-semibold text-gray-700">
+                Senha
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -198,13 +203,17 @@ const Auth = () => {
                 required
                 minLength={6}
                 maxLength={100}
+                className="h-12 text-base px-4 border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20 rounded-lg"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button 
+              type="submit" 
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg hover:shadow-xl transition-all duration-200 mt-8" 
+              disabled={loading}
+            >
               {loading ? "Processando..." : "Entrar"}
             </Button>
           </form>
-
         </CardContent>
       </Card>
     </div>

@@ -29,7 +29,7 @@ INSERT INTO auth.users (
   gen_random_uuid(),
   'authenticated',
   'authenticated',
-  'garcom@cocoloko.com',
+  'garcom3@cocoloko.com',
   crypt('123456', gen_salt('bf')),
   NOW(),
   NOW(),
@@ -51,7 +51,7 @@ DECLARE
   user_uuid UUID;
 BEGIN
   -- Get the user ID we just created
-  SELECT id INTO user_uuid FROM auth.users WHERE email = 'garcom@cocoloko.com';
+  SELECT id INTO user_uuid FROM auth.users WHERE email = 'garcom3@cocoloko.com';
   
   -- Create identity for the user (required for auth to work properly)
   INSERT INTO auth.identities (
@@ -68,7 +68,7 @@ BEGIN
     user_uuid,
     jsonb_build_object(
       'sub', user_uuid::text, 
-      'email', 'garcom@cocoloko.com',
+      'email', 'garcom3@cocoloko.com',
       'email_verified', true,
       'phone_verified', false
     ),

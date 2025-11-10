@@ -68,11 +68,7 @@ const Admin = () => {
       {/* Content */}
       <div className="p-4 md:p-8">
         <Card className="max-w-6xl mx-auto shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl">Menu Principal</CardTitle>
-            <p className="text-muted-foreground">
-              Escolha a área que deseja gerenciar
-            </p>
+          <CardHeader className="pb-6">
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

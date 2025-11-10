@@ -38,36 +38,15 @@ const AdminWaiters = () => {
   const fetchWaiters = async () => {
     setLoading(true);
     try {
-      // Try Supabase Edge Function first
-      console.log('🔵 Calling Supabase Edge Function: list-waiters');
-      const { data, error } = await supabase.functions.invoke('list-waiters');
+      console.log('🔵 Calling Cloudflare Function: /api/admin/list-waiters');
       
-      if (error) {
-        console.error("Edge Function error:", error);
-        // Fallback to direct database query
-        console.log('🔵 Fallback: Querying auth.users directly');
-        
-        const { data: authUsers, error: authError } = await supabase
-          .from('auth.users')
-          .select('id, email, raw_user_meta_data, created_at')
-          .or('raw_user_meta_data->>role.eq.waiter,raw_app_meta_data->>role.eq.waiter');
-        
-        if (authError) {
-          console.error("Database query error:", authError);
-          toast.error("Erro ao carregar lista de garçons");
-          setWaiters([]);
-          return;
-        }
-        
-        // Transform the data to match expected format
-        const transformedWaiters = (authUsers || []).map(user => ({
-          id: user.id,
-          email: user.email,
-          full_name: user.raw_user_meta_data?.full_name || user.email,
-          created_at: user.created_at
-        }));
-        
-        setWaiters(transformedWaiters);
+      const response = await fetch('/api/admin/list-waiters');
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error("API error:", data);
+        toast.error(data.error || "Erro ao carregar lista de garçons");
+        setWaiters([]);
         return;
       }
       
@@ -96,21 +75,27 @@ const AdminWaiters = () => {
 
       const { email, password, full_name } = validation.data;
 
-      console.log('🔵 Creating waiter via Supabase Edge Function:', { email, full_name });
+      console.log('🔵 Creating waiter via Cloudflare Function:', { email, full_name });
 
-      // Use Supabase Edge Function to create waiter
-      const { data, error } = await supabase.functions.invoke('create-waiter', {
-        body: { email, password, full_name },
+      // Use Cloudflare Function to create waiter
+      const response = await fetch('/api/admin/create-waiter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, full_name }),
       });
 
-      if (error) {
-        console.error('API error:', error);
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('API error:', data);
         
         // Provide helpful error messages
-        if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
+        if (data.error?.includes('already exists') || data.error?.includes('duplicate')) {
           throw new Error("Este email já está cadastrado.");
         } else {
-          throw new Error(error.message || "Erro ao criar conta de garçom.");
+          throw new Error(data.error || "Erro ao criar conta de garçom.");
         }
       }
 
@@ -131,13 +116,19 @@ const AdminWaiters = () => {
     if (!window.confirm("Tem certeza que deseja deletar este garçom? Esta ação é irreversível.")) return;
 
     try {
-      // Use Supabase Edge Function to delete waiter
-      const { data, error } = await supabase.functions.invoke('delete-waiter', {
-        body: { waiterId },
+      // Use Cloudflare Function to delete waiter
+      const response = await fetch('/api/admin/delete-waiter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ waiterId }),
       });
 
-      if (error) {
-        throw new Error(error.message || "Erro ao deletar conta de garçom.");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao deletar conta de garçom.");
       }
 
       toast.success("Garçom deletado com sucesso!");

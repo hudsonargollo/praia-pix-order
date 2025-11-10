@@ -63,12 +63,15 @@ export default function WhatsAppAdmin() {
 
   const checkConnectionStatus = async () => {
     try {
-      const response = await fetch('/api/whatsapp/connection');
+      const response = await fetch('/api/whatsapp/connection?action=status');
       const data = await response.json();
       
-      if (data.connected) {
+      if (data.isConnected) {
         setConnectionStatus('connected');
-        setConnectionInfo(data);
+        setConnectionInfo({
+          phoneNumber: data.phoneNumber,
+          connectedAt: data.lastConnected
+        });
       } else {
         setConnectionStatus('disconnected');
       }
@@ -84,22 +87,26 @@ export default function WhatsAppAdmin() {
     setQrCode(null);
 
     try {
-      const response = await fetch('/api/whatsapp/connection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'connect' })
+      const response = await fetch('/api/whatsapp/connection?action=connect', {
+        method: 'GET'
       });
 
       const data = await response.json();
 
       if (data.qrCode) {
-        setQrCode(data.qrCode);
+        setQrCode(`data:image/png;base64,${data.qrCode}`);
         // Poll for connection status
         pollConnectionStatus();
-      } else if (data.connected) {
+      } else if (data.isConnected) {
         setConnectionStatus('connected');
-        setConnectionInfo(data);
+        setConnectionInfo({
+          phoneNumber: data.phoneNumber,
+          connectedAt: data.lastConnected
+        });
         toast.success('WhatsApp já está conectado!');
+      } else {
+        // Start polling for QR code if not immediately available
+        pollForQrCode();
       }
     } catch (error) {
       console.error('Failed to connect WhatsApp:', error);
@@ -111,12 +118,15 @@ export default function WhatsAppAdmin() {
   const pollConnectionStatus = () => {
     const pollInterval = setInterval(async () => {
       try {
-        const response = await fetch('/api/whatsapp/connection');
+        const response = await fetch('/api/whatsapp/connection?action=status');
         const data = await response.json();
 
-        if (data.connected) {
+        if (data.isConnected) {
           setConnectionStatus('connected');
-          setConnectionInfo(data);
+          setConnectionInfo({
+            phoneNumber: data.phoneNumber,
+            connectedAt: data.lastConnected
+          });
           setQrCode(null);
           clearInterval(pollInterval);
           toast.success('WhatsApp conectado com sucesso!');
@@ -130,12 +140,38 @@ export default function WhatsAppAdmin() {
     setTimeout(() => clearInterval(pollInterval), 120000);
   };
 
+  const pollForQrCode = () => {
+    const qrPollInterval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/whatsapp/connection?action=status');
+        const data = await response.json();
+
+        if (data.qrCode) {
+          setQrCode(`data:image/png;base64,${data.qrCode}`);
+          clearInterval(qrPollInterval);
+          pollConnectionStatus();
+        } else if (data.isConnected) {
+          setConnectionStatus('connected');
+          setConnectionInfo({
+            phoneNumber: data.phoneNumber,
+            connectedAt: data.lastConnected
+          });
+          clearInterval(qrPollInterval);
+          toast.success('WhatsApp conectado com sucesso!');
+        }
+      } catch (error) {
+        console.error('Failed to poll for QR code:', error);
+      }
+    }, 1000);
+
+    // Stop polling after 30 seconds
+    setTimeout(() => clearInterval(qrPollInterval), 30000);
+  };
+
   const handleDisconnect = async () => {
     try {
-      await fetch('/api/whatsapp/connection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'disconnect' })
+      await fetch('/api/whatsapp/connection?action=disconnect', {
+        method: 'GET'
       });
 
       setConnectionStatus('disconnected');
