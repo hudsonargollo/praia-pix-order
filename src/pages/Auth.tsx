@@ -16,7 +16,7 @@ const authSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -125,52 +125,31 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: validation.data.email,
-          password: validation.data.password,
-        });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: validation.data.email,
+        password: validation.data.password,
+      });
 
-        if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            toast.error("Email ou senha incorretos");
-          } else {
-            toast.error(error.message);
-          }
-          return;
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Email ou senha incorretos");
+        } else {
+          toast.error(error.message);
         }
+        return;
+      }
 
-        toast.success("Login realizado com sucesso!");
-        const session = (await supabase.auth.getSession()).data.session;
-        if (session) {
-          // Use email-based redirect for waiter
-          if (validation.data.email === 'garcom1@cocoloko.com') {
-            console.log('🔵 Waiter login successful, redirecting to dashboard');
-            // Force redirect to current domain to avoid custom domain issues
-            window.location.href = `${window.location.origin}/waiter-dashboard`;
-          } else {
-            redirectToRolePage(session);
-          }
+      toast.success("Login realizado com sucesso!");
+      const session = (await supabase.auth.getSession()).data.session;
+      if (session) {
+        // Use email-based redirect for waiter
+        if (validation.data.email === 'garcom1@cocoloko.com') {
+          console.log('🔵 Waiter login successful, redirecting to dashboard');
+          // Force redirect to current domain to avoid custom domain issues
+          window.location.href = `${window.location.origin}/waiter-dashboard`;
+        } else {
+          redirectToRolePage(session);
         }
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email: validation.data.email,
-          password: validation.data.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/kitchen`,
-          },
-        });
-
-        if (error) {
-          if (error.message.includes("already registered")) {
-            toast.error("Este email já está cadastrado");
-          } else {
-            toast.error(error.message);
-          }
-          return;
-        }
-
-        toast.success("Conta criada com sucesso!");
       }
     } catch (error: any) {
       toast.error("Erro ao processar autenticação");
@@ -190,11 +169,8 @@ const Auth = () => {
               className="h-24 w-auto"
             />
           </div>
-          <CardTitle className="text-center text-2xl">{isLogin ? "Login" : "Criar Conta"}</CardTitle>
           <CardDescription className="text-center">
-            {isLogin
-              ? "Entre com suas credenciais para acessar o sistema"
-              : "Crie uma conta para acessar o sistema"}
+            Entre com suas credenciais para acessar o sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -225,20 +201,10 @@ const Auth = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Processando..." : isLogin ? "Entrar" : "Cadastrar"}
+              {loading ? "Processando..." : "Entrar"}
             </Button>
           </form>
-          <div className="mt-4 text-center">
-            <Button
-              variant="link"
-              onClick={() => setIsLogin(!isLogin)}
-              type="button"
-            >
-              {isLogin
-                ? "Não tem conta? Cadastre-se"
-                : "Já tem conta? Faça login"}
-            </Button>
-          </div>
+
         </CardContent>
       </Card>
     </div>
