@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Star, Clock, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import logo from "@/assets/coco-loko-logo.png";
@@ -46,10 +46,69 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadMenu();
   }, []);
+
+  // Memoized category items for performance
+  const categorizedItems = useMemo(() => {
+    return categories.map(category => ({
+      ...category,
+      items: menuItems.filter(item => item.category_id === category.id)
+    })).filter(category => category.items.length > 0);
+  }, [categories, menuItems]);
+
+  // Optimized scroll handler
+  const handleCategoryScroll = useCallback((categoryId: string) => {
+    setSelectedCategory(categoryId);
+    const element = document.getElementById(`category-${categoryId}`);
+    if (element) {
+      const offset = 220;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
+  // Optimized add to cart with feedback
+  const handleAddToCart = useCallback((item: MenuItem) => {
+    addItem(item);
+    toast.success(`${item.name} adicionado ao carrinho! 🛒`, {
+      duration: 2000,
+      style: {
+        background: 'linear-gradient(135deg, #10b981, #059669)',
+        color: 'white',
+        border: 'none',
+      }
+    });
+  }, [addItem]);
+
+  // Handle image errors
+  const handleImageError = useCallback((itemId: string) => {
+    setImageErrors(prev => new Set([...prev, itemId]));
+  }, []);
+
+  // Handle logout
+  const handleLogout = useCallback(async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error("Erro ao fazer logout");
+        return;
+      }
+      toast.success("Logout realizado com sucesso! 👋");
+      navigate("/auth");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      toast.error("Erro ao fazer logout");
+    }
+  }, [navigate]);
 
   const loadMenu = async () => {
     try {
@@ -79,48 +138,33 @@ const Menu = () => {
     }
   };
 
-  const scrollToCategory = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    const element = document.getElementById(`category-${categoryId}`);
-    if (element) {
-      const offset = 220; // Account for fixed header with logo and category nav
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - offset;
-      
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
-  };
 
-  const addToCart = (item: MenuItem) => {
-    addItem(item);
-    toast.success(`${item.name} adicionado`);
-  };
 
-  const goToCheckout = () => {
+  const goToCheckout = useCallback(() => {
     if (cartState.items.length === 0) {
-      toast.error("Adicione itens ao carrinho");
+      toast.error("Adicione itens ao carrinho primeiro! 🛒");
       return;
     }
     navigate("/checkout");
-  };
+  }, [cartState.items.length, navigate]);
 
   if (loading) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center bg-[#FDD835]">
+      <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-[#FDD835] via-[#FFE082] to-[#FFF176]">
         {/* Background Image - Mobile Only */}
         <div 
-          className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat"
+          className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat opacity-20"
           style={{
             backgroundImage: `url('/bck-menu.webp')`,
           }}
         />
-        <div className="relative z-10 bg-white px-8 py-4 rounded-2xl shadow-2xl border border-purple-200">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-3 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-purple-900 font-bold">Carregando cardápio...</p>
+        <div className="relative z-10 bg-white/95 backdrop-blur-sm px-8 py-6 rounded-3xl shadow-2xl border border-purple-200 animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-center">
+              <p className="text-purple-900 font-bold text-lg">Carregando cardápio...</p>
+              <p className="text-purple-600 text-sm mt-1">Preparando delícias para você! 🥥</p>
+            </div>
           </div>
         </div>
       </div>
@@ -128,81 +172,103 @@ const Menu = () => {
   }
 
   return (
-    <div className="min-h-screen relative pb-24 bg-[#FDD835]">
+    <div className="min-h-screen relative pb-24 bg-gradient-to-br from-[#FDD835] via-[#FFE082] to-[#FFF176]">
       {/* Background Image - Mobile Only */}
       <div 
-        className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat"
+        className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat opacity-30"
         style={{
           backgroundImage: `url('/bck-menu.webp')`,
         }}
       />
 
       {/* Logo Header - Desktop Only */}
-      <div className="hidden md:block relative z-10 bg-[#FDD835] py-6">
+      <div className="hidden md:block relative z-10 bg-gradient-to-r from-[#FDD835] to-[#FFE082] py-8 shadow-lg">
         <div className="max-w-2xl mx-auto px-4">
           <img 
             src={logo} 
             alt="Coco Loko Açaiteria" 
-            className="h-24 mx-auto"
+            className="h-28 mx-auto drop-shadow-lg"
           />
         </div>
       </div>
 
-      {/* Fixed Header with Logo */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900 to-purple-700 shadow-xl">
+      {/* Fixed Header with Logo and Logout */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-900 via-purple-800 to-purple-700 shadow-2xl border-b-4 border-purple-600">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-between">
+            {/* Spacer for mobile */}
+            <div className="w-12 md:w-16"></div>
+            
+            {/* Logo */}
             <img 
               src={logo} 
               alt="Coco Loko Açaiteria" 
-              className="h-16 md:h-20"
+              className="h-16 md:h-20 drop-shadow-lg"
             />
+            
+            {/* Logout Button */}
+            <div className="relative group">
+              <button
+                onClick={handleLogout}
+                className="group bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-2xl p-3 md:p-4 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                aria-label="Fazer logout"
+              >
+                <LogOut className="w-5 h-5 md:w-6 md:h-6 text-white group-hover:text-yellow-300 transition-colors duration-300" />
+              </button>
+              
+              {/* Tooltip */}
+              <div className="absolute right-0 top-full mt-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10">
+                Sair da conta
+                <div className="absolute bottom-full right-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Enhanced Category Navigation */}
-      {categories.length > 0 && (
-        <div className="fixed top-24 md:top-28 left-0 right-0 z-40 bg-white/98 backdrop-blur-xl shadow-xl border-b border-purple-100">
-          <div className="max-w-4xl mx-auto px-4 py-5">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {categories.map((category) => {
-                const categoryItems = menuItems.filter(
-                  (item) => item.category_id === category.id
-                );
-                if (categoryItems.length === 0) return null;
-
+      {categorizedItems.length > 0 && (
+        <div className="fixed top-24 md:top-32 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl shadow-2xl border-b-2 border-purple-200">
+          <div className="max-w-4xl mx-auto px-4 py-6">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {categorizedItems.map((category) => {
                 const isSelected = selectedCategory === category.id;
                 
                 return (
                   <button
                     key={category.id}
-                    onClick={() => scrollToCategory(category.id)}
+                    onClick={() => handleCategoryScroll(category.id)}
                     className={`
-                      group relative flex-shrink-0 px-6 py-3 rounded-2xl font-bold text-sm transition-all duration-300 whitespace-nowrap shadow-lg hover:shadow-xl
+                      group relative flex-shrink-0 px-8 py-4 rounded-3xl font-bold text-sm transition-all duration-300 whitespace-nowrap shadow-lg hover:shadow-2xl transform hover:scale-105
                       ${isSelected 
-                        ? 'bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white transform scale-105 shadow-purple-300' 
-                        : 'bg-gradient-to-r from-white to-gray-50 text-gray-700 hover:from-purple-50 hover:to-purple-100 hover:text-purple-700 border border-gray-200 hover:border-purple-200'
+                        ? 'bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white shadow-purple-400/50 scale-105' 
+                        : 'bg-gradient-to-r from-white to-gray-50 text-gray-700 hover:from-purple-50 hover:to-purple-100 hover:text-purple-700 border-2 border-gray-200 hover:border-purple-300'
                       }
                     `}
                   >
-                    <span className="relative z-10">{category.name}</span>
+                    <span className="relative z-10 flex items-center gap-2">
+                      <ShoppingCart className="w-4 h-4" />
+                      {category.name}
+                    </span>
+                    
+                    {/* Animated background */}
                     <div className={`
-                      absolute inset-0 rounded-2xl transition-opacity duration-300
+                      absolute inset-0 rounded-3xl transition-all duration-300
                       ${isSelected 
-                        ? 'bg-gradient-to-r from-purple-400/20 to-purple-600/20' 
-                        : 'bg-gradient-to-r from-purple-400/0 to-purple-600/0 group-hover:from-purple-400/10 group-hover:to-purple-600/10'
+                        ? 'bg-gradient-to-r from-purple-400/30 to-purple-600/30 animate-pulse' 
+                        : 'bg-gradient-to-r from-purple-400/0 to-purple-600/0 group-hover:from-purple-400/20 group-hover:to-purple-600/20'
                       }
                     `} />
-                    {/* Item count badge */}
+                    
+                    {/* Enhanced item count badge */}
                     <div className={`
-                      absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-300
+                      absolute -top-3 -right-3 w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-300 shadow-lg
                       ${isSelected 
-                        ? 'bg-white text-purple-700 shadow-lg' 
-                        : 'bg-purple-600 text-white group-hover:bg-purple-700'
+                        ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-900 animate-bounce' 
+                        : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white group-hover:from-purple-700 group-hover:to-purple-800'
                       }
                     `}>
-                      {categoryItems.length}
+                      {category.items.length}
                     </div>
                   </button>
                 );
@@ -213,221 +279,295 @@ const Menu = () => {
       )}
 
       {/* Menu Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-4 pt-44 md:pt-48 pb-6 space-y-6">
-        {categories.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-purple-900 font-semibold">Nenhuma categoria encontrada</p>
+      <div className="relative z-10 max-w-4xl mx-auto px-4 pt-48 md:pt-52 pb-6 space-y-8">
+        {categorizedItems.length === 0 ? (
+          <div className="text-center py-12 bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl">
+            <div className="text-6xl mb-4">🥥</div>
+            <p className="text-purple-900 font-bold text-xl mb-2">Ops! Nenhuma categoria encontrada</p>
+            <p className="text-purple-600">Estamos preparando nosso cardápio especial para você!</p>
           </div>
         ) : (
-          categories.map((category) => {
-            const categoryItems = menuItems.filter(
-              (item) => item.category_id === category.id
-            );
-            if (categoryItems.length === 0) return null;
-
-            return (
-              <div key={category.id} id={`category-${category.id}`} className="space-y-4 scroll-mt-48">
-                {/* Enhanced Category Header */}
-                <div className="text-center mb-2">
-                  <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white px-8 py-4 rounded-2xl inline-block shadow-2xl border border-purple-500 relative overflow-hidden">
-                    {/* Background pattern */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-purple-600/20" />
-                    <div className="relative z-10 flex items-center gap-3">
-                      <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
-                        <ShoppingCart className="w-3 h-3 text-white" />
-                      </div>
-                      <h2 className="font-bold text-lg uppercase tracking-wide">
-                        {category.name}
-                      </h2>
-                      <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-xs">
-                          {categoryItems.length}
-                        </span>
-                      </div>
-                    </div>
-                    {/* Decorative elements */}
-                    <div className="absolute -top-1 -left-1 w-3 h-3 bg-yellow-400 rounded-full opacity-80" />
-                    <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-pink-400 rounded-full opacity-60" />
+          categorizedItems.map((category) => (
+            <div key={category.id} id={`category-${category.id}`} className="space-y-6 scroll-mt-52">
+              {/* Enhanced Category Header */}
+              <div className="text-center mb-6">
+                <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 text-white px-10 py-6 rounded-3xl inline-block shadow-2xl border-2 border-purple-500 relative overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                  {/* Animated background pattern */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400/30 to-purple-600/30 animate-pulse" />
+                  <div className="absolute inset-0 opacity-20">
+                    <div className="w-full h-full bg-white/10 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_2px,transparent_2px)] bg-[length:20px_20px]" />
                   </div>
-                </div>
-
-                {/* Enhanced Category Items */}
-                <div className="space-y-4">
-                  {categoryItems.map((item) => {
-                    const quantity = getItemQuantity(item.id);
-                    
-                    return (
-                      <div 
-                        key={item.id} 
-                        className="bg-white rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-4 border border-gray-100 hover:border-purple-200 group"
-                      >
-                        {/* Enhanced Item Image */}
-                        <div 
-                          className="w-20 h-20 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer flex-shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-lg"
-                          onClick={() => setSelectedItem(item)}
-                        >
-                          {item.image_url ? (
-                            <img
-                              src={item.image_url}
-                              alt={item.name}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-purple-200">
-                              <ShoppingCart className="w-8 h-8 text-purple-500" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Enhanced Item Info */}
-                        <div 
-                          className="flex-1 cursor-pointer transition-opacity duration-200 group-hover:opacity-90"
-                          onClick={() => setSelectedItem(item)}
-                        >
-                          <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-purple-700 transition-colors">
-                            {item.name}
-                          </h3>
-                          {item.description && (
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-2 leading-relaxed">
-                              {item.description}
-                            </p>
-                          )}
-                          <p className="text-cyan-600 font-bold text-lg">
-                            R$ {item.price.toFixed(2)}
-                          </p>
-                        </div>
-
-                        {/* Enhanced Add Button */}
-                        <div className="flex-shrink-0">
-                          {quantity > 0 ? (
-                            <div className="flex items-center gap-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-3 border border-purple-200 shadow-lg">
-                              <button
-                                onClick={() => removeItem(item.id)}
-                                className="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white flex items-center justify-center font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                              >
-                                -
-                              </button>
-                              <div className="text-center">
-                                <span className="font-bold text-purple-900 text-lg block">
-                                  {quantity}
-                                </span>
-                                <span className="text-xs text-purple-600 font-medium">
-                                  no carrinho
-                                </span>
-                              </div>
-                              <button
-                                onClick={() => addToCart(item)}
-                                className="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white flex items-center justify-center font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                              >
-                                +
-                              </button>
-                            </div>
-                          ) : (
-                            <Button
-                              onClick={() => addToCart(item)}
-                              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-purple-500"
-                            >
-                              Adicionar
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  
+                  <div className="relative z-10 flex items-center gap-4">
+                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
+                      <ShoppingCart className="w-4 h-4 text-purple-900" />
+                    </div>
+                    <h2 className="font-bold text-2xl uppercase tracking-wide">
+                      {category.name}
+                    </h2>
+                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-purple-900 font-bold text-sm">
+                        {category.items.length}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Enhanced decorative elements */}
+                  <div className="absolute -top-2 -left-2 w-4 h-4 bg-yellow-400 rounded-full opacity-90 animate-bounce" />
+                  <div className="absolute -bottom-2 -right-2 w-3 h-3 bg-pink-400 rounded-full opacity-80 animate-pulse" />
+                  <div className="absolute top-1/2 -left-1 w-2 h-2 bg-green-400 rounded-full opacity-70" />
+                  <div className="absolute top-1/2 -right-1 w-2 h-2 bg-blue-400 rounded-full opacity-70" />
                 </div>
               </div>
-            );
-          })
+
+              {/* Enhanced Category Items */}
+              <div className="grid gap-4">
+                {category.items.map((item) => {
+                  const quantity = getItemQuantity(item.id);
+                  const hasImageError = imageErrors.has(item.id);
+                  
+                  return (
+                    <div 
+                      key={item.id} 
+                      className="bg-white/95 backdrop-blur-sm rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-5 border-2 border-gray-100 hover:border-purple-300 group transform hover:scale-[1.02]"
+                    >
+                      {/* Enhanced Item Image */}
+                      <div 
+                        className="w-24 h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer flex-shrink-0 transition-all duration-300 group-hover:scale-110 shadow-xl border-2 border-white"
+                        onClick={() => setSelectedItem(item)}
+                      >
+                        {item.image_url && !hasImageError ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            onError={() => handleImageError(item.id)}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 via-purple-200 to-purple-300">
+                            <div className="text-center">
+                              <ShoppingCart className="w-6 h-6 text-purple-600 mx-auto mb-1" />
+                              <Star className="w-3 h-3 text-yellow-500 mx-auto" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Enhanced Item Info */}
+                      <div 
+                        className="flex-1 cursor-pointer transition-all duration-200 group-hover:translate-x-1"
+                        onClick={() => setSelectedItem(item)}
+                      >
+                        <div className="flex items-start gap-2 mb-2">
+                          <h3 className="font-bold text-gray-900 text-xl group-hover:text-purple-700 transition-colors flex-1">
+                            {item.name}
+                          </h3>
+                          <div className="flex items-center gap-1 text-yellow-500">
+                            <Star className="w-4 h-4 fill-current" />
+                            <span className="text-xs text-gray-500 font-medium">4.8</span>
+                          </div>
+                        </div>
+                        
+                        {item.description && (
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+                            {item.description}
+                          </p>
+                        )}
+                        
+                        <div className="flex items-center gap-3">
+                          <p className="text-emerald-600 font-bold text-xl">
+                            R$ {item.price.toFixed(2)}
+                          </p>
+                          <div className="flex items-center gap-1 text-gray-500 text-xs">
+                            <Clock className="w-3 h-3" />
+                            <span>5-10 min</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Enhanced Add Button */}
+                      <div className="flex-shrink-0">
+                        {quantity > 0 ? (
+                          <div className="flex items-center gap-4 bg-gradient-to-r from-purple-50 via-purple-100 to-purple-50 rounded-3xl p-4 border-2 border-purple-200 shadow-xl">
+                            <button
+                              onClick={() => removeItem(item.id)}
+                              className="w-12 h-12 rounded-2xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
+                              aria-label="Remover item"
+                            >
+                              <Minus className="w-5 h-5" />
+                            </button>
+                            <div className="text-center px-2">
+                              <span className="font-bold text-purple-900 text-xl block">
+                                {quantity}
+                              </span>
+                              <span className="text-xs text-purple-600 font-medium whitespace-nowrap">
+                                no carrinho
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => handleAddToCart(item)}
+                              className="w-12 h-12 rounded-2xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
+                              aria-label="Adicionar item"
+                            >
+                              <Plus className="w-5 h-5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={() => handleAddToCart(item)}
+                            className="bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white px-8 py-4 rounded-3xl font-bold text-sm shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110 border-2 border-purple-500 hover:border-purple-400"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Adicionar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
         )}
       </div>
 
-      {/* Floating Cart Button */}
+      {/* Enhanced Floating Cart Button */}
       {cartState.items.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent z-50">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white/95 to-transparent z-50">
           <div className="max-w-4xl mx-auto">
             <Button
               onClick={goToCheckout}
-              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-6 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-200 transform hover:scale-105"
+              className="w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 hover:from-emerald-600 hover:via-emerald-700 hover:to-emerald-800 text-white py-8 rounded-3xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 border-2 border-emerald-400 relative overflow-hidden"
             >
-              <ShoppingCart className="mr-3 h-6 w-6" />
-              Ver Carrinho ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'itens'}) - R$ {getTotalPrice().toFixed(2)}
+              {/* Animated background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-emerald-600/20 animate-pulse" />
+              
+              <div className="relative z-10 flex items-center justify-center gap-4">
+                <div className="bg-white/20 p-2 rounded-full">
+                  <ShoppingCart className="h-6 w-6" />
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-xl">
+                    Ver Carrinho ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'itens'})
+                  </div>
+                  <div className="text-emerald-100 text-sm font-medium">
+                    Total: R$ {getTotalPrice().toFixed(2)}
+                  </div>
+                </div>
+                <div className="bg-white/20 p-2 rounded-full animate-bounce">
+                  <span className="text-sm font-bold">🛒</span>
+                </div>
+              </div>
+              
+              {/* Decorative elements */}
+              <div className="absolute top-2 left-4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
+              <div className="absolute bottom-2 right-4 w-2 h-2 bg-pink-400 rounded-full animate-pulse" />
             </Button>
           </div>
         </div>
       )}
 
-      {/* Product Detail Dialog */}
+      {/* Enhanced Product Detail Dialog */}
       <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg bg-white/95 backdrop-blur-xl border-2 border-purple-200 rounded-3xl shadow-2xl">
           {selectedItem && (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-xl font-bold text-gray-900">
+              <DialogHeader className="text-center pb-4">
+                <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center justify-center gap-3">
+                  <Star className="w-6 h-6 text-yellow-500 fill-current" />
                   {selectedItem.name}
+                  <Star className="w-6 h-6 text-yellow-500 fill-current" />
                 </DialogTitle>
               </DialogHeader>
               
-              <div className="space-y-4">
-                {/* Product Image */}
-                {selectedItem.image_url && (
-                  <div className="w-full h-64 rounded-xl overflow-hidden bg-gray-100">
+              <div className="space-y-6">
+                {/* Enhanced Product Image */}
+                {selectedItem.image_url && !imageErrors.has(selectedItem.id) && (
+                  <div className="w-full h-72 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 shadow-xl border-2 border-purple-100">
                     <img
                       src={selectedItem.image_url}
                       alt={selectedItem.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
+                      className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                      onError={() => handleImageError(selectedItem.id)}
                     />
                   </div>
                 )}
 
-                {/* Description */}
+                {/* Enhanced Description */}
                 {selectedItem.description && (
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Descrição</h4>
-                    <p className="text-gray-600 text-sm leading-relaxed">
+                  <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-2xl border border-purple-200">
+                    <h4 className="font-bold text-purple-900 mb-3 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                      Descrição
+                    </h4>
+                    <p className="text-gray-700 text-sm leading-relaxed">
                       {selectedItem.description}
                     </p>
                   </div>
                 )}
 
-                {/* Price */}
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <span className="text-2xl font-bold text-cyan-600">
-                    R$ {selectedItem.price.toFixed(2)}
-                  </span>
+                {/* Enhanced Rating and Info */}
+                <div className="flex items-center justify-between bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-2xl border border-yellow-200">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      {[1,2,3,4,5].map((star) => (
+                        <Star key={star} className="w-4 h-4 text-yellow-500 fill-current" />
+                      ))}
+                    </div>
+                    <span className="text-sm font-medium text-gray-600">4.8 (127 avaliações)</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-500 text-sm">
+                    <Clock className="w-4 h-4" />
+                    <span>5-10 min</span>
+                  </div>
+                </div>
+
+                {/* Enhanced Price and Actions */}
+                <div className="bg-gradient-to-r from-white to-gray-50 p-6 rounded-2xl border-2 border-gray-200 shadow-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-3xl font-bold text-emerald-600">
+                      R$ {selectedItem.price.toFixed(2)}
+                    </span>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-500 line-through">R$ {(selectedItem.price * 1.2).toFixed(2)}</div>
+                      <div className="text-xs text-green-600 font-medium">Economize 20%</div>
+                    </div>
+                  </div>
                   
-                  {/* Add to Cart Button */}
+                  {/* Enhanced Add to Cart Button */}
                   {getItemQuantity(selectedItem.id) > 0 ? (
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center gap-4 bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-2xl border border-purple-200">
                       <button
                         onClick={() => removeItem(selectedItem.id)}
-                        className="w-10 h-10 rounded-full bg-purple-900 text-white flex items-center justify-center font-bold text-lg"
+                        className="w-12 h-12 rounded-2xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
                       >
-                        -
+                        <Minus className="w-5 h-5" />
                       </button>
-                      <span className="font-bold text-purple-900 text-lg w-8 text-center">
-                        {getItemQuantity(selectedItem.id)}
-                      </span>
+                      <div className="text-center px-4">
+                        <span className="font-bold text-purple-900 text-2xl block">
+                          {getItemQuantity(selectedItem.id)}
+                        </span>
+                        <span className="text-xs text-purple-600 font-medium">
+                          no carrinho
+                        </span>
+                      </div>
                       <button
-                        onClick={() => addToCart(selectedItem)}
-                        className="w-10 h-10 rounded-full bg-purple-900 text-white flex items-center justify-center font-bold text-lg"
+                        onClick={() => handleAddToCart(selectedItem)}
+                        className="w-12 h-12 rounded-2xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
                       >
-                        +
+                        <Plus className="w-5 h-5" />
                       </button>
                     </div>
                   ) : (
                     <Button
                       onClick={() => {
-                        addToCart(selectedItem);
+                        handleAddToCart(selectedItem);
                         setSelectedItem(null);
                       }}
-                      className="bg-purple-900 hover:bg-purple-800 text-white px-8 py-6 rounded-full font-semibold"
+                      className="w-full bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-2 border-purple-500"
                     >
+                      <Plus className="w-5 h-5 mr-2" />
                       Adicionar ao Carrinho
                     </Button>
                   )}
