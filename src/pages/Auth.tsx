@@ -159,59 +159,94 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-acai p-6">
-      <Card className="w-full max-w-lg shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-        <CardHeader className="space-y-8 pb-8 pt-10 px-10">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 p-6">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+      </div>
+      
+      <Card className="relative w-full max-w-xl shadow-2xl border-0 bg-white/98 backdrop-blur-md overflow-hidden">
+        {/* Logo highlight background */}
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-yellow-50 to-transparent"></div>
+        
+        <CardHeader className="relative space-y-10 pb-12 pt-12 px-12">
+          {/* Logo with enhanced highlighting */}
           <div className="flex justify-center">
-            <img 
-              src={logo} 
-              alt="Coco Loko Açaiteria" 
-              className="h-28 w-auto"
-            />
+            <div className="relative">
+              {/* Logo glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-200 to-orange-200 rounded-full blur-xl opacity-30 scale-110"></div>
+              <div className="relative bg-white rounded-2xl p-6 shadow-xl border border-yellow-200/50">
+                <img 
+                  src={logo} 
+                  alt="Coco Loko Açaiteria" 
+                  className="h-20 w-auto"
+                />
+              </div>
+            </div>
           </div>
-          <CardDescription className="text-center text-lg text-gray-600 font-medium">
-            Entre com suas credenciais para acessar o sistema
-          </CardDescription>
+          
+          {/* Welcome text with better typography */}
+          <div className="text-center space-y-3">
+            <h1 className="text-2xl font-bold text-gray-800">
+              Bem-vindo de volta!
+            </h1>
+            <CardDescription className="text-lg text-gray-600 font-medium leading-relaxed">
+              Entre com suas credenciais para acessar o sistema
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent className="px-10 pb-10">
-          <form onSubmit={handleAuth} className="space-y-6">
-            <div className="space-y-3">
-              <Label htmlFor="email" className="text-base font-semibold text-gray-700">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                maxLength={255}
-                className="h-12 text-base px-4 border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20 rounded-lg"
-              />
+        
+        <CardContent className="px-12 pb-12">
+          <form onSubmit={handleAuth} className="space-y-8">
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <Label htmlFor="email" className="text-lg font-bold text-gray-800">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  maxLength={255}
+                  className="h-14 text-lg px-6 border-2 border-gray-300 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 rounded-xl bg-gray-50 focus:bg-white transition-all duration-200"
+                />
+              </div>
+              
+              <div className="space-y-4">
+                <Label htmlFor="password" className="text-lg font-bold text-gray-800">
+                  Senha
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  maxLength={100}
+                  className="h-14 text-lg px-6 border-2 border-gray-300 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 rounded-xl bg-gray-50 focus:bg-white transition-all duration-200"
+                />
+              </div>
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="password" className="text-base font-semibold text-gray-700">
-                Senha
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                maxLength={100}
-                className="h-12 text-base px-4 border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20 rounded-lg"
-              />
-            </div>
+            
             <Button 
               type="submit" 
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg hover:shadow-xl transition-all duration-200 mt-8" 
+              className="w-full h-16 text-lg font-bold bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 rounded-xl mt-10" 
               disabled={loading}
             >
-              {loading ? "Processando..." : "Entrar"}
+              {loading ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Processando...
+                </div>
+              ) : (
+                "Entrar no Sistema"
+              )}
             </Button>
           </form>
         </CardContent>
