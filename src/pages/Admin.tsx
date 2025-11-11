@@ -26,11 +26,9 @@ const Admin = () => {
 
   const adminMenuItems = [
     { title: "Pedidos", icon: ChefHat, path: "/cashier", description: "Gerenciar pedidos" },
-    { title: "Relatórios", icon: BarChart3, path: "/reports", description: "Análises e métricas" },
     { title: "Produtos", icon: ShoppingBag, path: "/admin/products", description: "Gerenciar cardápio" },
-    { title: "Garçons", icon: Users, path: "/waiter-management", description: "Gerenciar equipe e relatórios" },
-    { title: "WhatsApp", icon: MessageSquare, path: "/whatsapp-admin", description: "Configurar notificações" },
-    { title: "Monitoramento", icon: LayoutDashboard, path: "/monitoring", description: "Status do sistema" },
+    { title: "Relatórios", icon: BarChart3, path: "/reports", description: "Análises e métricas" },
+    { title: "Garçons", icon: Users, path: "/waiter-management", description: "Gerenciar equipe" },
   ];
 
   return (
@@ -66,30 +64,30 @@ const Admin = () => {
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Responsive Grid - 2x2 on desktop */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
             {adminMenuItems.map((item) => (
               <Card
                 key={item.title}
                 className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 border-0 bg-gradient-to-br from-white via-white to-purple-50/30 backdrop-blur-sm overflow-hidden shadow-lg aspect-square"
                 onClick={() => handleNavigation(item.path)}
               >
-                <CardContent className="p-6 text-center relative h-full flex flex-col justify-center items-center">
+                <CardContent className="p-8 text-center relative h-full flex flex-col justify-center items-center">
                   {/* Background Pattern */}
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-50/20 to-blue-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
                   {/* Icon Container */}
-                  <div className="relative mb-4">
-                    <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
-                      <item.icon className="w-8 h-8 text-white" />
+                  <div className="relative mb-6">
+                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
+                      <item.icon className="w-10 h-10 text-white" />
                     </div>
                   </div>
                   
                   {/* Content */}
                   <div className="relative">
-                    <h3 className="font-bold text-lg text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">
+                    <h3 className="font-bold text-xl text-gray-900 mb-3 group-hover:text-purple-700 transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-xs text-gray-600 group-hover:text-gray-700 transition-colors">
+                    <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors">
                       {item.description}
                     </p>
                   </div>
