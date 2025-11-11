@@ -71,7 +71,7 @@ export async function onRequestGet(context) {
 
     // Return formatted response
     const paymentStatus = {
-      id: data.id.toString(),
+      id: String(data.id), // Ensure ID is always a string
       status: data.status,
       statusDetail: data.status_detail,
       transactionAmount: data.transaction_amount,

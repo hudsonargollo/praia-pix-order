@@ -63,7 +63,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const pixData = payment.point_of_interaction?.transaction_data;
     
     return new Response(JSON.stringify({
-      id: payment.id,
+      id: String(payment.id), // Convert to string for consistency
       status: payment.status,
       qrCode: pixData?.qr_code || '',
       qrCodeBase64: pixData?.qr_code_base64 || '',
