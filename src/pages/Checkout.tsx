@@ -241,10 +241,22 @@ const Checkout = () => {
 
         {/* Customer Info */}
         {isEditingInfo || !customerInfo.name || !customerInfo.phone ? (
-          <CustomerInfoForm
-            onCustomerInfoChange={setCustomerInfo}
-            initialData={customerInfo}
-          />
+          <>
+            <CustomerInfoForm
+              onCustomerInfoChange={setCustomerInfo}
+              initialData={customerInfo}
+            />
+            {/* Confirm button to exit editing mode */}
+            {customerInfo.name && customerInfo.phone && customerInfo.phone.replace(/\D/g, '').length === 11 && (
+              <Button
+                onClick={() => setIsEditingInfo(false)}
+                size="lg"
+                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-6 rounded-xl shadow-lg"
+              >
+                Confirmar Dados
+              </Button>
+            )}
+          </>
         ) : (
           <Card className="p-6 shadow-lg border-2 border-cyan-100 rounded-2xl">
             <h2 className="font-bold text-xl mb-4 text-purple-900">
