@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import CustomerInfoForm, { CustomerInfo } from "@/components/CustomerInfoForm";
@@ -178,63 +178,74 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-purple-900 text-white p-6 shadow-medium">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mb-2 text-white hover:bg-white/20"
-          onClick={() => navigate("/menu")}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-2xl font-bold">Finalizar Pedido</h1>
-        {customerInfo && customerInfo.name && (
-          <p className="text-white/90 mt-1">{customerInfo.name}</p>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      {/* Enhanced Header */}
+      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white shadow-2xl sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-4 sm:py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/20 transition-all"
+              onClick={() => navigate("/menu")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold">Finalizar Pedido</h1>
+              {customerInfo && customerInfo.name && (
+                <p className="text-white/90 text-sm mt-0.5">{customerInfo.name}</p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="max-w-2xl mx-auto p-4 space-y-6">
+      <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6 pb-24">
         {/* Order Summary */}
-        <Card className="p-6 shadow-lg border-2 border-purple-100 rounded-2xl">
-          <h2 className="font-bold text-xl mb-4 text-purple-900">Resumo do Pedido</h2>
-          <div className="space-y-3">
+        <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 sm:p-6">
+            <h2 className="font-bold text-lg sm:text-xl text-white flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5" />
+              Resumo do Pedido
+            </h2>
+          </div>
+          <div className="p-4 sm:p-6 space-y-3">
             {cartState.items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900">{item.name}</p>
-                  <p className="text-sm text-gray-600">R$ {item.price.toFixed(2)} cada</p>
+              <div key={item.id} className="flex items-start sm:items-center justify-between py-3 border-b border-gray-100 last:border-0 gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{item.name}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">R$ {item.price.toFixed(2)} cada</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 bg-purple-50 rounded-lg p-1">
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
+                  <div className="flex items-center gap-1.5 bg-purple-50 rounded-lg p-1">
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="w-7 h-7 rounded-md bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
+                      className="w-7 h-7 rounded-md bg-red-500 hover:bg-red-600 active:scale-95 text-white flex items-center justify-center transition-all shadow-sm"
                       aria-label="Remover um"
                     >
-                      <span className="text-lg">−</span>
+                      <span className="text-lg leading-none">−</span>
                     </button>
-                    <span className="font-bold text-purple-900 text-base min-w-[20px] text-center">
+                    <span className="font-bold text-purple-900 text-sm sm:text-base min-w-[24px] text-center">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => addItem(item)}
-                      className="w-7 h-7 rounded-md bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
+                      className="w-7 h-7 rounded-md bg-green-500 hover:bg-green-600 active:scale-95 text-white flex items-center justify-center transition-all shadow-sm"
                       aria-label="Adicionar mais"
                     >
-                      <span className="text-lg">+</span>
+                      <span className="text-lg leading-none">+</span>
                     </button>
                   </div>
-                  <span className="font-bold text-cyan-600 min-w-[80px] text-right">
+                  <span className="font-bold text-cyan-600 text-sm sm:text-base min-w-[70px] sm:min-w-[80px] text-right">
                     R$ {(item.price * item.quantity).toFixed(2)}
                   </span>
                 </div>
               </div>
             ))}
-            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-4 mt-4 flex justify-between font-bold text-xl">
-              <span className="text-purple-900">Total</span>
-              <span className="text-purple-900">R$ {getTotalPrice().toFixed(2)}</span>
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-4 mt-4 flex justify-between items-center shadow-sm">
+              <span className="font-bold text-lg sm:text-xl text-purple-900">Total</span>
+              <span className="font-bold text-xl sm:text-2xl text-purple-900">R$ {getTotalPrice().toFixed(2)}</span>
             </div>
           </div>
         </Card>
@@ -251,36 +262,38 @@ const Checkout = () => {
               <Button
                 onClick={() => setIsEditingInfo(false)}
                 size="lg"
-                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-6 rounded-xl shadow-lg"
+                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-98"
               >
-                Confirmar Dados
+                ✓ Confirmar Dados
               </Button>
             )}
           </>
         ) : (
-          <Card className="p-6 shadow-lg border-2 border-cyan-100 rounded-2xl">
-            <h2 className="font-bold text-xl mb-4 text-purple-900">
-              {isWaiter ? "Dados do Cliente (Pedido Assistido)" : "Seus Dados"}
-            </h2>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Nome</Label>
-                <p className="text-lg">{customerInfo.name}</p>
+          <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 sm:p-6">
+              <h2 className="font-bold text-lg sm:text-xl text-white">
+                {isWaiter ? "Dados do Cliente" : "Seus Dados"}
+              </h2>
+            </div>
+            <div className="p-4 sm:p-6 space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <Label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Nome</Label>
+                <p className="text-base sm:text-lg font-semibold text-gray-900 mt-1">{customerInfo.name}</p>
               </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">WhatsApp</Label>
-                <p className="text-lg">+55 {customerInfo.phone}</p>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <Label className="text-xs font-medium text-gray-600 uppercase tracking-wide">WhatsApp</Label>
+                <p className="text-base sm:text-lg font-semibold text-gray-900 mt-1">+55 {customerInfo.phone}</p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditingInfo(true)}
-                className="mt-2"
+                className="w-full sm:w-auto border-2 hover:bg-gray-50"
               >
-                Editar Dados
+                ✏️ Editar Dados
               </Button>
-              <p className="text-sm text-muted-foreground mt-4">
-                Enviaremos notificações sobre seu pedido via WhatsApp.
+              <p className="text-xs sm:text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                💬 Enviaremos notificações sobre seu pedido via WhatsApp
               </p>
             </div>
           </Card>
@@ -296,19 +309,34 @@ const Checkout = () => {
 
         {/* Order Action Button */}
         {(!isEditingInfo && customerInfo.name && customerInfo.phone) && (
-          <Card className="p-6 shadow-lg border-2 border-green-100 rounded-2xl">
-            <p className="text-sm text-muted-foreground mb-4">
-              {isWaiter ? "O pedido será criado com status 'Pendente' e atribuído ao seu ID." : "Enviaremos notificações sobre seu pedido via WhatsApp."}
-            </p>
-            <Button
-              onClick={handleCreateOrder}
-              size="lg"
-              className="w-full bg-purple-900 hover:bg-purple-800 text-white font-bold py-6 rounded-xl shadow-lg"
-              disabled={loading}
-            >
-              {loading ? "Processando..." : isWaiter ? "Finalizar Pedido (Garçom)" : "Prosseguir para Pagamento"}
-            </Button>
-          </Card>
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-2xl p-4 sm:relative sm:border-0 sm:shadow-none sm:p-0 z-20">
+            <div className="max-w-2xl mx-auto">
+              <Card className="shadow-xl border-0 bg-gradient-to-br from-green-50 to-emerald-50 sm:shadow-lg">
+                <div className="p-4 sm:p-6 space-y-4">
+                  <p className="text-xs sm:text-sm text-gray-700 bg-white/80 rounded-lg p-3 border border-gray-200">
+                    {isWaiter ? "🎯 O pedido será criado e atribuído ao seu ID" : "📱 Você receberá atualizações via WhatsApp"}
+                  </p>
+                  <Button
+                    onClick={handleCreateOrder}
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 hover:from-purple-700 hover:via-purple-800 hover:to-indigo-800 text-white font-bold py-6 sm:py-7 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-98 text-base sm:text-lg"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin">⏳</span>
+                        Processando...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        {isWaiter ? "✓ Finalizar Pedido" : "💳 Prosseguir para Pagamento"}
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          </div>
         )}
       </div>
     </div>
