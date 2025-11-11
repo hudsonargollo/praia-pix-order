@@ -165,7 +165,7 @@ const Menu = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-[#FDD835] via-[#FFE082] to-[#FFF176]">
+      <div className="min-h-screen relative flex items-center justify-center md:bg-gray-50">
         {/* Background Image - Mobile Only */}
         <div 
           className="md:hidden fixed inset-0 bg-cover bg-top bg-no-repeat opacity-20"
@@ -188,11 +188,15 @@ const Menu = () => {
 
   return (
     <div className="min-h-screen relative pb-24">
-      {/* Background - Image on mobile, Yellow on desktop */}
+      {/* Background - Image on mobile, solid color on desktop */}
       <div 
-        className="fixed inset-0 bg-cover bg-top bg-no-repeat md:bg-none md:bg-[#FDD835]"
+        className="fixed inset-0 md:bg-none"
         style={{
-          backgroundImage: `url('/bck-menu.webp')`,
+          backgroundImage: window.innerWidth < 768 ? `url('/bck-menu.webp')` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'top',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: window.innerWidth >= 768 ? '#f8f9fa' : 'transparent'
         }}
       />
 
@@ -244,19 +248,19 @@ const Menu = () => {
           </div>
         </div>
 
-        {/* Desktop: White header with logo and categories */}
-        <div className="hidden md:block bg-white border-b border-gray-200">
-          <div className="max-w-6xl mx-auto px-4 py-4">
-            {/* Logo and Logout */}
-            <div className="flex items-center justify-between mb-4">
+        {/* Desktop: Gradient header with centered logo and categories */}
+        <div className="hidden md:block bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 shadow-xl">
+          <div className="max-w-6xl mx-auto px-4 py-6">
+            {/* Logo centered with logout on right */}
+            <div className="flex items-center justify-center mb-6 relative">
               <img 
                 src={logo} 
                 alt="Coco Loko" 
-                className="h-16 w-auto"
+                className="h-20 w-auto drop-shadow-lg"
               />
               <button
                 onClick={handleLogout}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+                className="absolute right-0 p-2 text-white hover:text-white/80 hover:bg-white/20 rounded-full transition-all"
                 aria-label="Sair"
               >
                 <LogOut className="w-5 h-5" />
@@ -265,7 +269,7 @@ const Menu = () => {
 
             {/* Category Navigation */}
             {categorizedItems.length > 0 && (
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 flex-wrap">
                 {categorizedItems.map((category) => {
                   const isSelected = selectedCategory === category.id;
                   
@@ -274,10 +278,10 @@ const Menu = () => {
                       key={category.id}
                       onClick={() => handleCategoryScroll(category.id)}
                       className={`
-                        px-4 py-2 rounded-full transition-all font-medium text-sm
+                        px-5 py-2.5 rounded-full transition-all font-medium text-sm shadow-md hover:shadow-lg
                         ${isSelected 
-                          ? 'bg-purple-500 text-white shadow-md' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm'
+                          ? 'bg-white text-purple-700 scale-105' 
+                          : 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
                         }
                       `}
                     >
