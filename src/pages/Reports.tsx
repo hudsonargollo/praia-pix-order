@@ -151,12 +151,13 @@ const Reports = () => {
                 {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="bg-white hover:bg-gray-50 text-gray-900 border-gray-300">
+                  <Button variant="outline" className="bg-white hover:bg-gray-50 text-gray-900 border-gray-300 w-full sm:w-auto">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    Selecionar Período
+                    <span className="hidden sm:inline">Selecionar Período</span>
+                    <span className="sm:hidden">Período</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
@@ -172,9 +173,10 @@ const Reports = () => {
                   />
                 </PopoverContent>
               </Popover>
-              <Button onClick={exportToCSV} variant="outline" className="bg-white hover:bg-gray-50 text-gray-900 border-gray-300">
+              <Button onClick={exportToCSV} variant="outline" className="bg-white hover:bg-gray-50 text-gray-900 border-gray-300 w-full sm:w-auto">
                 <Download className="mr-2 h-4 w-4" />
-                Exportar CSV
+                <span className="hidden sm:inline">Exportar CSV</span>
+                <span className="sm:hidden">Exportar</span>
               </Button>
             </div>
           </div>
