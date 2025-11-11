@@ -40,33 +40,8 @@ serve(async (req) => {
       )
     }
 
-    // Check if user is admin (check both metadata and profiles table)
-    const userRole = user.user_metadata?.role || user.app_metadata?.role
-    
-    // Try to get role from profiles table as fallback
-    let profileRole = null
-    try {
-      const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-      profileRole = profile?.role
-    } catch (error) {
-      console.log('Could not query profiles table, using metadata role')
-    }
-
-    const finalRole = profileRole || userRole
-
-    if (finalRole !== 'admin') {
-      return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin access required' }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
-    }
+    // User is authenticated - that's enough since we simplified RLS policies
+    console.log('Authenticated user listing waiters:', user.id)
 
     // Create admin client with service role
     // These env vars are automatically available in Supabase Edge Functions

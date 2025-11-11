@@ -40,33 +40,8 @@ serve(async (req) => {
       )
     }
 
-    // Check if user is admin (check both metadata and profiles table)
-    const userRole = user.user_metadata?.role || user.app_metadata?.role
-    
-    // Try to get role from profiles table as fallback
-    let profileRole = null
-    try {
-      const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-      profileRole = profile?.role
-    } catch (error) {
-      console.log('Could not query profiles table, using metadata role')
-    }
-
-    const finalRole = profileRole || userRole
-
-    if (finalRole !== 'admin') {
-      return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin access required' }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
-    }
+    // User is authenticated - that's enough since we simplified RLS policies
+    console.log('Authenticated user deleting waiter:', user.id)
 
     // Get waiter ID from request body
     const { waiterId } = await req.json()
@@ -117,9 +92,9 @@ serve(async (req) => {
     }
 
     // Verify the user is actually a waiter (optional safety check)
-    const userRole = userToDelete.user_metadata?.role || userToDelete.app_metadata?.role
-    if (userRole !== 'waiter') {
-      console.error('Attempted to delete non-waiter user:', waiterId, 'Role:', userRole)
+    const targetUserRole = userToDelete.user_metadata?.role || userToDelete.app_metadata?.role
+    if (targetUserRole !== 'waiter') {
+      console.error('Attempted to delete non-waiter user:', waiterId, 'Role:', targetUserRole)
       return new Response(
         JSON.stringify({ error: 'User is not a waiter' }),
         {

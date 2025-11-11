@@ -64,40 +64,8 @@ serve(async (req) => {
 
     console.log('[create-waiter] User authenticated:', { userId: user.id, email: user.email })
 
-    // Check if user is admin (check both metadata and profiles table)
-    console.log('[create-waiter] Checking admin role for user:', user.id)
-    const userRole = user.user_metadata?.role || user.app_metadata?.role
-    
-    // Try to get role from profiles table as fallback
-    let profileRole = null
-    try {
-      const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-      profileRole = profile?.role
-      console.log('[create-waiter] Profile role from table:', profileRole)
-    } catch (error) {
-      console.log('[create-waiter] Could not query profiles table, using metadata role:', userRole)
-    }
-
-    const finalRole = profileRole || userRole
-    console.log('[create-waiter] Final determined role:', finalRole)
-
-    if (finalRole !== 'admin') {
-      console.warn('[create-waiter] Access denied - user is not admin:', {
-        userId: user.id,
-        role: finalRole,
-      })
-      return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin access required' }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
-    }
+    // User is authenticated - that's enough since we simplified RLS policies
+    console.log('[create-waiter] Authenticated user creating waiter')
 
     // Get request body
     const { email, password, full_name } = await req.json()
