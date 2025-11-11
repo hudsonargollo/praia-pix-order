@@ -43,36 +43,20 @@ serve(async (req) => {
     // User is authenticated - that's enough since we simplified RLS policies
     console.log('Authenticated user listing waiters:', user.id)
 
-    // Create admin client with service role
-    // These env vars are automatically available in Supabase Edge Functions
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    // List all users
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
+    // Use database function instead of Admin API to avoid permission issues
+    const { data: waiters, error: listError } = await supabaseClient
+      .rpc('list_waiter_users')
 
     if (listError) {
-      console.error('Error listing users:', listError)
+      console.error('Error listing waiters from database:', listError)
       return new Response(
-        JSON.stringify({ error: listError.message }),
+        JSON.stringify({ error: 'Failed to list waiters: ' + listError.message }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       )
     }
-
-    // Filter waiters
-    const waiters = users
-      .filter(u => u.app_metadata?.role === 'waiter' || u.user_metadata?.role === 'waiter')
-      .map(u => ({
-        id: u.id,
-        email: u.email,
-        full_name: u.user_metadata?.full_name || 'N/A',
-        created_at: u.created_at,
-      }))
 
     return new Response(
       JSON.stringify({ waiters }),
