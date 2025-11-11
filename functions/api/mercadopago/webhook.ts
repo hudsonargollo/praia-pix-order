@@ -4,7 +4,7 @@
 interface Env {
   VITE_MERCADOPAGO_ACCESS_TOKEN: string;
   VITE_SUPABASE_URL: string;
-  SUPABASE_SERVICE_ROLE_KEY: string;
+  SUPABASE_SERVICE_KEY: string;
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -59,7 +59,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     // Update order in Supabase
     const supabaseUrl = context.env.VITE_SUPABASE_URL;
-    const serviceRoleKey = context.env.SUPABASE_SERVICE_ROLE_KEY;
+    const serviceRoleKey = context.env.SUPABASE_SERVICE_KEY;
 
     const updateResponse = await fetch(`${supabaseUrl}/rest/v1/orders?id=eq.${orderId}`, {
       method: 'PATCH',
