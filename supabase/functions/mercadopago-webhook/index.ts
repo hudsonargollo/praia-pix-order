@@ -119,7 +119,7 @@ serve(async (req) => {
     // Log webhook processing
     await supabase.from('payment_webhooks').insert({
       order_id: orderId,
-      payment_id: paymentId,
+      mercadopago_payment_id: paymentId,
       webhook_type: webhookData.type,
       webhook_action: webhookData.action,
       payment_status: payment.status,

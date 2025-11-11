@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS public.payment_webhooks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID REFERENCES public.orders(id) ON DELETE CASCADE,
-  payment_id TEXT NOT NULL,
+  mercadopago_payment_id TEXT NOT NULL,
   webhook_type TEXT NOT NULL,
   webhook_action TEXT,
   payment_status TEXT NOT NULL,
@@ -19,7 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_payment_webhooks_order_id
 ON public.payment_webhooks(order_id);
 
 CREATE INDEX IF NOT EXISTS idx_payment_webhooks_payment_id 
-ON public.payment_webhooks(payment_id);
+ON public.payment_webhooks(mercadopago_payment_id);
 
 CREATE INDEX IF NOT EXISTS idx_payment_webhooks_processed_at 
 ON public.payment_webhooks(processed_at DESC);
