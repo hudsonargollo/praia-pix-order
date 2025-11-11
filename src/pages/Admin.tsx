@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { LayoutDashboard, Users, ShoppingBag, BarChart3, MessageSquare, LogOut, ChefHat, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Users, ShoppingBag, BarChart3, MessageSquare, LogOut, ChefHat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/coco-loko-logo.png";
@@ -48,14 +48,6 @@ const Admin = () => {
                 />
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
               </div>
-              <div>
-                <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                  Painel Administrativo
-                </h1>
-                <p className="text-blue-100 mt-1 text-xs sm:text-base font-medium">
-                  Sistema de Gestão • Coco Loko Açaiteria
-                </p>
-              </div>
             </div>
             <Button
               onClick={handleLogout}
@@ -73,31 +65,31 @@ const Admin = () => {
       {/* Enhanced Content */}
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Enhanced Menu Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-            {adminMenuItems.map((item, index) => (
+          {/* Responsive Grid - 2x2 on desktop */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
+            {adminMenuItems.map((item) => (
               <Card
                 key={item.title}
-                className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 border-0 bg-gradient-to-br from-white via-white to-purple-50/30 backdrop-blur-sm overflow-hidden shadow-lg"
+                className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 border-0 bg-gradient-to-br from-white via-white to-purple-50/30 backdrop-blur-sm overflow-hidden shadow-lg aspect-square"
                 onClick={() => handleNavigation(item.path)}
               >
-                <CardContent className="p-8 text-center relative h-full flex flex-col justify-between min-h-[200px]">
+                <CardContent className="p-6 text-center relative h-full flex flex-col justify-center items-center">
                   {/* Background Pattern */}
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-50/20 to-blue-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
                   {/* Icon Container */}
-                  <div className="relative mb-6">
-                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 rounded-3xl flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300 group-hover:rotate-3">
-                      <item.icon className="w-10 h-10 text-white" />
+                  <div className="relative mb-4">
+                    <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
+                      <item.icon className="w-8 h-8 text-white" />
                     </div>
                   </div>
                   
                   {/* Content */}
-                  <div className="relative flex-1">
-                    <h3 className="font-bold text-xl text-gray-900 mb-3 group-hover:text-purple-700 transition-colors">
+                  <div className="relative">
+                    <h3 className="font-bold text-lg text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors leading-relaxed">
+                    <p className="text-xs text-gray-600 group-hover:text-gray-700 transition-colors">
                       {item.description}
                     </p>
                   </div>
@@ -111,45 +103,9 @@ const Admin = () => {
                     </div>
                   </div>
 
-                  {/* Card Number */}
-                  <div className="absolute bottom-3 left-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <span className="text-5xl font-bold text-purple-600">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                  </div>
                 </CardContent>
               </Card>
             ))}
-          </div>
-
-          {/* Quick Stats Footer */}
-          <div className="mt-12">
-            <Card className="bg-gradient-to-r from-purple-900 via-purple-800 to-blue-900 text-white shadow-2xl border-0 overflow-hidden">
-              <CardContent className="p-6 relative">
-                {/* Background decoration */}
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20"></div>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
-                
-                <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-                  <div className="group">
-                    <div className="text-3xl font-bold text-green-400 group-hover:scale-110 transition-transform duration-300">24/7</div>
-                    <div className="text-sm text-purple-100 font-medium">Sistema Online</div>
-                  </div>
-                  <div className="group">
-                    <div className="text-3xl font-bold text-blue-400 group-hover:scale-110 transition-transform duration-300">100%</div>
-                    <div className="text-sm text-purple-100 font-medium">Seguro</div>
-                  </div>
-                  <div className="group">
-                    <div className="text-3xl font-bold text-purple-400 group-hover:scale-110 transition-transform duration-300">∞</div>
-                    <div className="text-sm text-purple-100 font-medium">Pedidos</div>
-                  </div>
-                  <div className="group">
-                    <div className="text-3xl font-bold text-orange-400 group-hover:scale-110 transition-transform duration-300">⚡</div>
-                    <div className="text-sm text-purple-100 font-medium">Rápido</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>

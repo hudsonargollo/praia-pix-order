@@ -29,7 +29,7 @@ export async function onRequest(context) {
     const apiUrl = context.env.VITE_EVOLUTION_API_URL || context.env.EVOLUTION_API_URL || 'http://wppapi.clubemkt.digital';
     const apiKey = context.env.VITE_EVOLUTION_API_KEY || context.env.EVOLUTION_API_KEY || 'DD451E404240-4C45-AF35-BFCA6A976927';
     const instanceName = context.env.VITE_EVOLUTION_INSTANCE_NAME || context.env.EVOLUTION_INSTANCE_NAME || 'cocooo';
-    const testNumber = context.env.TEST_PHONE_NUMBER || '5573189719731'; // Admin phone number
+    const testNumber = context.env.TEST_PHONE_NUMBER || '5555997145414'; // Test phone number
 
     console.log('🔵 WhatsApp Test Config:', {
       apiUrl: apiUrl ? `${apiUrl.substring(0, 20)}...` : 'missing',

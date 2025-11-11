@@ -1,126 +1,133 @@
-# 🎯 Current System Status
+# Current Status - Admin Features Fix
 
-**Last Updated**: November 8, 2025  
-**Production URL**: https://7d610d4f.coco-loko-acaiteria.pages.dev  
-**Status**: ✅ LIVE & OPERATIONAL
+## ✅ What's Been Done
 
-## ✅ What's Working
+### 1. RLS Policies Applied Successfully
+- ✅ First SQL run completed successfully
+- ✅ Policies created for order_items (INSERT, UPDATE, DELETE)
+- ✅ Policies created for orders (admin full access)
+- ✅ Policies verified for menu_items (admin access)
+- ✅ Policies verified for menu_categories (admin access)
 
-### Customer Flow
-- QR code ordering system
-- Menu browsing and cart management
-- PIX payment via MercadoPago
-- Payment confirmation and polling
-- WhatsApp notifications via Evolution API
+### 2. Error on Second Run (Expected)
+- ⚠️ Error: "policy already exists"
+- ℹ️ This is **normal** - means policies were already created
+- ✅ No action needed - first run was successful
 
-### Kitchen Dashboard
-- Real-time order display
-- Loading states on all buttons
-- Order status management (Iniciar → Pronto → Finalizado)
-- "PEDIDO FINALIZADO" completion status
-- Uses secure RPC functions for updates
-
-### Cashier Dashboard
-- Order monitoring across all statuses
-- Real-time synchronization with Kitchen
-- Mobile-responsive design
-- Touch-friendly interface
-
-### WhatsApp Integration
-- Evolution API connected (instance: "cocooo")
-- Automatic notifications on payment and order ready
-- CORS proxy via Cloudflare Functions
-- Message queue management
-
-### Database
-- RLS policies configured
-- Security definer functions for status updates
-- Real-time subscriptions enabled
-- WhatsApp notification tracking
-
-## 🧪 Quick Test
-
-To verify everything is working:
-
-1. **Visit**: https://7d610d4f.coco-loko-acaiteria.pages.dev
-2. **Kitchen**: /kitchen (view and manage orders)
-3. **Cashier**: /cashier (monitor all orders)
-
-## 📱 Evolution API Details
-
-- **URL**: http://wppapi.clubemkt.digital
-- **Instance**: cocooo
-- **Status**: Connected
-- **WhatsApp**: 573189719731
-
-## 🔧 If You Need To...
-
-### Deploy Updates
-```bash
-npm run build
-npx wrangler pages deploy dist
-```
-
-### Test WhatsApp Locally
-```bash
-npx tsx test-evolution-send-message.ts
-```
-
-### Check Database Functions
-Run `VERIFY_SETUP.sql` in Supabase SQL Editor
-
-### View Logs
-```bash
-npx wrangler pages deployment tail
-```
-
-## 📊 System Architecture
-
-```
-Customer → QR Code → Menu → Cart → Checkout
-                                      ↓
-                                  PIX Payment
-                                      ↓
-                              Payment Polling
-                                      ↓
-                         Order Status: in_preparation
-                                      ↓
-                            Kitchen Dashboard
-                                      ↓
-                         Mark Ready → WhatsApp
-                                      ↓
-                            Cashier Dashboard
-                                      ↓
-                         Mark Completed → Done
-```
-
-## 🎯 What You Can Do Now
-
-1. **Test the full flow** - Place a test order and track it through the system
-2. **Train staff** - Show kitchen and cashier teams how to use their dashboards
-3. **Monitor orders** - Watch real-time updates as orders come in
-4. **Customize messages** - Update WhatsApp templates in the code if needed
-5. **Add features** - Request new functionality or improvements
-
-## 💡 Potential Improvements
-
-- Add order history and reporting
-- Implement customer loyalty program
-- Add more payment methods
-- Create admin dashboard for analytics
-- Add inventory management
-- Implement table management system
-
-## 📞 Need Help?
-
-Just ask! I can help you with:
-- Testing specific features
-- Adding new functionality
-- Fixing any issues
-- Customizing the system
-- Training and documentation
-- Performance optimization
+### 3. WhatsApp Test Message Fixed
+- ✅ Updated to send to: 5555997145414
+- ✅ Deployed to production
 
 ---
 
-**Your açaí shop ordering system is ready to go! 🍇✨**
+## 🧪 What to Test Now
+
+### Priority 1: Edit Orders (Most Important)
+**Why**: This was the main issue - RLS policies were blocking order_items operations
+
+**Test**: 
+1. Go to `/cashier`
+2. Click "Editar" on any order
+3. Try to add/remove items
+4. Save changes
+
+**Expected**: Should work now ✅
+
+### Priority 2: Edit Products
+**Test**:
+1. Go to `/admin/products`
+2. Click "Editar Produto"
+3. Make changes
+4. Save
+
+**Expected**: Should work ✅
+
+### Priority 3: Waiter Management
+**Test**:
+1. Go to `/waiter-management`
+2. Check if list loads
+3. Try create/delete
+
+**Expected**: May still have Edge Function issues (separate from RLS)
+
+---
+
+## 📊 Expected Results
+
+### What Should Work Now:
+- ✅ Edit products (add, update, delete)
+- ✅ Edit orders (add/remove items, change quantities)
+- ✅ Cancel orders
+- ✅ Update order status
+- ✅ Manage menu items
+- ✅ Manage menu categories
+
+### What Might Still Have Issues:
+- ⚠️ Waiter list loading (Edge Function issue, not RLS)
+- ⚠️ Waiter edit (intentionally disabled in code)
+
+---
+
+## 🔍 How to Verify Policies
+
+Run this in Supabase SQL Editor:
+
+```sql
+SELECT 
+  tablename,
+  policyname,
+  cmd
+FROM pg_policies
+WHERE tablename IN ('order_items', 'orders', 'menu_items')
+  AND (policyname LIKE '%Staff%' OR policyname LIKE '%Admin%')
+ORDER BY tablename, cmd;
+```
+
+**Expected Output**:
+```
+order_items | Staff can delete order items | DELETE
+order_items | Staff can insert order items | INSERT
+order_items | Staff can update order items | UPDATE
+orders      | Admin full access to orders  | ALL
+menu_items  | Admins can manage menu items | ALL
+```
+
+---
+
+## 🚀 Next Actions
+
+### Immediate:
+1. **Test the features** (see TEST_ADMIN_FEATURES_NOW.md)
+2. **Report results** - which work, which don't
+3. **Check console** for any errors
+
+### If Tests Pass:
+- ✅ Mark as complete
+- ✅ No deployment needed (database-only fix)
+- ✅ Features are working!
+
+### If Tests Fail:
+- 📋 Note specific error messages
+- 📋 Check browser console
+- 📋 Report back for further investigation
+
+---
+
+## 📁 Reference Files
+
+- `TEST_ADMIN_FEATURES_NOW.md` - Testing guide ⭐
+- `QUICK_FIX_REFERENCE.md` - Quick reference
+- `ADMIN_FEATURES_FIX_SUMMARY.md` - Complete overview
+
+---
+
+## ✅ Summary
+
+**RLS Policies**: Applied successfully ✅  
+**Error Seen**: Normal (policies already exist) ✅  
+**Ready to Test**: Yes! ✅  
+**Expected Result**: Admin features should work now ✅
+
+---
+
+**Next Step**: Test the features and report back! 🧪

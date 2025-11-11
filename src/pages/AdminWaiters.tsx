@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -24,12 +25,14 @@ const waiterSchema = z.object({
 });
 
 const AdminWaiters = () => {
+  const navigate = useNavigate();
   const [waiters, setWaiters] = useState<Waiter[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentWaiter, setCurrentWaiter] = useState<Partial<Waiter> & { password?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWaiters();
@@ -38,19 +41,46 @@ const AdminWaiters = () => {
   const fetchWaiters = async () => {
     setLoading(true);
     try {
-      console.log('🔵 Calling Cloudflare Function: /api/admin/list-waiters');
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
       
-      const response = await fetch('/api/admin/list-waiters');
-      const data = await response.json();
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate('/auth');
+        return;
+      }
+
+      console.log('🔵 Calling Supabase Edge Function: list-waiters');
       
-      if (!response.ok) {
-        console.error("API error:", data);
-        toast.error(data.error || "Erro ao carregar lista de garçons");
+      // Call Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('list-waiters', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+      
+      if (error) {
+        console.error("Edge Function error:", error);
+        
+        // Handle specific error cases
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          toast.error("Sessão expirada. Faça login novamente.");
+          navigate('/auth');
+          return;
+        }
+        
+        if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
+          toast.error("Acesso negado. Apenas administradores podem gerenciar garçons.");
+          navigate('/');
+          return;
+        }
+        
+        toast.error("Erro ao carregar lista de garçons");
         setWaiters([]);
         return;
       }
       
-      setWaiters(data.waiters || []);
+      setWaiters(data?.waiters || []);
       
     } catch (error) {
       console.error("Error fetching waiters:", error);
@@ -75,28 +105,54 @@ const AdminWaiters = () => {
 
       const { email, password, full_name } = validation.data;
 
-      console.log('🔵 Creating waiter via Cloudflare Function:', { email, full_name });
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate('/auth');
+        setIsSubmitting(false);
+        return;
+      }
 
-      // Use Cloudflare Function to create waiter
-      const response = await fetch('/api/admin/create-waiter', {
-        method: 'POST',
+      console.log('🔵 Creating waiter via Supabase Edge Function:', { email, full_name });
+
+      // Call Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('create-waiter', {
+        body: { email, password, full_name },
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, full_name, role: 'waiter' }),
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('API error:', data);
+      if (error) {
+        console.error('Edge Function error:', error);
         
-        // Provide helpful error messages
-        if (data.error?.includes('already exists') || data.error?.includes('duplicate')) {
-          throw new Error("Este email já está cadastrado.");
-        } else {
-          throw new Error(data.error || "Erro ao criar conta de garçom.");
+        // Handle specific error cases
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          toast.error("Sessão expirada. Faça login novamente.");
+          navigate('/auth');
+          return;
         }
+        
+        if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
+          toast.error("Acesso negado. Apenas administradores podem gerenciar garçons.");
+          navigate('/');
+          return;
+        }
+        
+        if (error.message?.includes('already exists') || error.message?.includes('duplicate') || error.message?.includes('já existe')) {
+          toast.error("Este email já está cadastrado.");
+          return;
+        }
+        
+        if (error.message?.includes('400') || error.message?.includes('Bad Request')) {
+          toast.error("Preencha todos os campos obrigatórios.");
+          return;
+        }
+        
+        toast.error("Erro ao criar conta de garçom.");
+        return;
       }
 
       toast.success("Garçom criado com sucesso!");
@@ -106,7 +162,7 @@ const AdminWaiters = () => {
 
     } catch (error: any) {
       console.error('Create waiter error:', error);
-      toast.error(error.message || "Erro desconhecido ao criar garçom.");
+      toast.error("Erro no servidor. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -115,27 +171,59 @@ const AdminWaiters = () => {
   const handleDeleteWaiter = async (waiterId: string) => {
     if (!window.confirm("Tem certeza que deseja deletar este garçom? Esta ação é irreversível.")) return;
 
+    setDeletingId(waiterId);
+
     try {
-      // Use Cloudflare Function to delete waiter
-      const response = await fetch('/api/admin/delete-waiter', {
-        method: 'POST',
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate('/auth');
+        return;
+      }
+
+      // Call Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('delete-waiter', {
+        body: { waiterId },
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ waiterId }),
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao deletar conta de garçom.");
+      if (error) {
+        console.error('Edge Function error:', error);
+        
+        // Handle specific error cases
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          toast.error("Sessão expirada. Faça login novamente.");
+          navigate('/auth');
+          return;
+        }
+        
+        if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
+          toast.error("Acesso negado. Apenas administradores podem gerenciar garçons.");
+          navigate('/');
+          return;
+        }
+        
+        if (error.message?.includes('400') || error.message?.includes('Bad Request')) {
+          toast.error("Garçom não encontrado.");
+          return;
+        }
+        
+        toast.error("Erro ao deletar conta de garçom.");
+        return;
       }
 
       toast.success("Garçom deletado com sucesso!");
       fetchWaiters(); // Refresh list
 
     } catch (error: any) {
-      toast.error(error.message || "Erro desconhecido ao deletar garçom.");
+      console.error('Delete waiter error:', error);
+      toast.error("Erro no servidor. Tente novamente.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -225,8 +313,17 @@ const AdminWaiters = () => {
                         {/* <Button variant="outline" size="sm" onClick={() => { /* Open edit dialog */ /* }}>
                           <Edit className="w-4 h-4" />
                         </Button> */}
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteWaiter(waiter.id)}>
-                          <Trash2 className="w-4 h-4" />
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteWaiter(waiter.id)}
+                          disabled={deletingId === waiter.id}
+                        >
+                          {deletingId === waiter.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
                         </Button>
                       </TableCell>
                     </TableRow>

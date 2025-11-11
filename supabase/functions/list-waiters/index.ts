@@ -40,14 +40,25 @@ serve(async (req) => {
       )
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+    // Check if user is admin (check both metadata and profiles table)
+    const userRole = user.user_metadata?.role || user.app_metadata?.role
+    
+    // Try to get role from profiles table as fallback
+    let profileRole = null
+    try {
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      profileRole = profile?.role
+    } catch (error) {
+      console.log('Could not query profiles table, using metadata role')
+    }
 
-    if (profile?.role !== 'admin') {
+    const finalRole = profileRole || userRole
+
+    if (finalRole !== 'admin') {
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
         {

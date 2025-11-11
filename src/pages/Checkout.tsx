@@ -14,7 +14,7 @@ import OrderNotesInput from "@/components/OrderNotesInput";
 const Checkout = () => {
   const navigate = useNavigate();
   
-  const { state: cartState, clearCart } = useCart();
+  const { state: cartState, clearCart, addItem, removeItem } = useCart();
   const [loading, setLoading] = useState(false);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: "",
@@ -201,13 +201,35 @@ const Checkout = () => {
           <h2 className="font-bold text-xl mb-4 text-purple-900">Resumo do Pedido</h2>
           <div className="space-y-3">
             {cartState.items.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm py-2 border-b border-gray-100 last:border-0">
-                <span className="text-gray-700">
-                  <span className="font-bold text-purple-900">{item.quantity}x</span> {item.name}
-                </span>
-                <span className="font-bold text-cyan-600">
-                  R$ {(item.price * item.quantity).toFixed(2)}
-                </span>
+              <div key={item.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900">{item.name}</p>
+                  <p className="text-sm text-gray-600">R$ {item.price.toFixed(2)} cada</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-purple-50 rounded-lg p-1">
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="w-7 h-7 rounded-md bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
+                      aria-label="Remover um"
+                    >
+                      <span className="text-lg">−</span>
+                    </button>
+                    <span className="font-bold text-purple-900 text-base min-w-[20px] text-center">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => addItem(item)}
+                      className="w-7 h-7 rounded-md bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
+                      aria-label="Adicionar mais"
+                    >
+                      <span className="text-lg">+</span>
+                    </button>
+                  </div>
+                  <span className="font-bold text-cyan-600 min-w-[80px] text-right">
+                    R$ {(item.price * item.quantity).toFixed(2)}
+                  </span>
+                </div>
               </div>
             ))}
             <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-4 mt-4 flex justify-between font-bold text-xl">

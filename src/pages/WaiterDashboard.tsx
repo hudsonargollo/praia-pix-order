@@ -28,19 +28,23 @@ const WaiterDashboard = () => {
   const [showPIXGenerator, setShowPIXGenerator] = useState(false);
 
   useEffect(() => {
+    console.log('🚀 WaiterDashboard mounted');
     fetchWaiterData();
   }, []);
 
   const fetchWaiterData = async () => {
     setLoading(true);
+    console.log('📊 Fetching waiter data...');
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
+      console.error('❌ No user found, redirecting to auth');
       toast.error("Você precisa fazer login.");
       navigate("/auth");
       return;
     }
 
+    console.log('✅ User found:', user.email, 'Role:', user.user_metadata?.role);
     setWaiterName(user.user_metadata?.full_name || user.email || "Garçom");
 
     // Fetch orders placed by the current waiter
@@ -199,15 +203,26 @@ const WaiterDashboard = () => {
                 </p>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              onClick={handleLogout} 
-              className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
-              size="sm"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Sair</span>
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate("/waiter-diagnostic")} 
+                className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                size="sm"
+                title="System Diagnostics"
+              >
+                🔧
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={handleLogout} 
+                className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                size="sm"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Sair</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -216,7 +231,7 @@ const WaiterDashboard = () => {
       <div className="max-w-7xl mx-auto p-4 md:p-8">
 
         {/* Enhanced Action Button */}
-        <div className="mb-8">
+        <div className="mb-8" data-testid="new-order-section">
           <Card className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 text-white shadow-2xl border-0 overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
             <CardContent className="p-6 sm:p-8 relative">
@@ -236,9 +251,13 @@ const WaiterDashboard = () => {
                   </p>
                 </div>
                 <Button 
-                  onClick={() => navigate("/menu")}
+                  onClick={() => {
+                    console.log('🛒 Novo Pedido button clicked, navigating to /menu');
+                    navigate("/menu");
+                  }}
                   size="lg"
                   className="bg-white text-green-600 hover:bg-gray-100 font-bold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 w-full sm:w-auto"
+                  data-testid="new-order-button"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   Novo Pedido

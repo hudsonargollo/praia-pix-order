@@ -30,6 +30,7 @@ import AdminWaiters from "./pages/AdminWaiters";
 import AdminWaiterReportsPage from "./pages/AdminWaiterReportsPage";
 import WaiterManagement from "./pages/WaiterManagement";
 import SystemDiagnostic from "./pages/SystemDiagnostic";
+import WaiterDiagnostic from "./pages/WaiterDiagnostic";
 
 const queryClient = new QueryClient();
 
@@ -155,6 +156,14 @@ const App = () => (
             element={
               <ProtectedRoute requiredRole="admin">
                 <SystemDiagnostic />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/waiter-diagnostic"
+            element={
+              <ProtectedRoute requiredRole="waiter">
+                <WaiterDiagnostic />
               </ProtectedRoute>
             }
           />

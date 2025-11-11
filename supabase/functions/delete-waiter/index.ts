@@ -40,14 +40,25 @@ serve(async (req) => {
       )
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+    // Check if user is admin (check both metadata and profiles table)
+    const userRole = user.user_metadata?.role || user.app_metadata?.role
+    
+    // Try to get role from profiles table as fallback
+    let profileRole = null
+    try {
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      profileRole = profile?.role
+    } catch (error) {
+      console.log('Could not query profiles table, using metadata role')
+    }
 
-    if (profile?.role !== 'admin') {
+    const finalRole = profileRole || userRole
+
+    if (finalRole !== 'admin') {
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
         {
@@ -61,8 +72,22 @@ serve(async (req) => {
     const { waiterId } = await req.json()
 
     if (!waiterId) {
+      console.error('Missing waiterId in request body')
       return new Response(
         JSON.stringify({ error: 'Waiter ID is required' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    // Validate waiterId format (should be a UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(waiterId)) {
+      console.error('Invalid waiterId format:', waiterId)
+      return new Response(
+        JSON.stringify({ error: 'Invalid waiter ID format' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -77,6 +102,35 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Verify the user exists before attempting deletion
+    const { data: userToDelete, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(waiterId)
+
+    if (getUserError || !userToDelete) {
+      console.error('User not found:', waiterId, getUserError)
+      return new Response(
+        JSON.stringify({ error: 'Waiter not found' }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    // Verify the user is actually a waiter (optional safety check)
+    const userRole = userToDelete.user_metadata?.role || userToDelete.app_metadata?.role
+    if (userRole !== 'waiter') {
+      console.error('Attempted to delete non-waiter user:', waiterId, 'Role:', userRole)
+      return new Response(
+        JSON.stringify({ error: 'User is not a waiter' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    console.log('Deleting waiter:', waiterId, 'Email:', userToDelete.email)
+
     // Delete the waiter user
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(waiterId)
 
@@ -85,11 +139,13 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: deleteError.message }),
         {
-          status: 400,
+          status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       )
     }
+
+    console.log('Successfully deleted waiter:', waiterId)
 
     return new Response(
       JSON.stringify({

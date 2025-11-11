@@ -96,25 +96,39 @@ export default function SystemDiagnostic() {
       });
     }
 
-    // 5. Check Waiter API
+    // 5. Check Waiter API (Supabase Edge Function)
     try {
-      const response = await fetch('/api/admin/list-waiters');
-      const data = await response.json();
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (response.ok) {
-        diagnostics.push({
-          name: 'Waiter Management API',
-          status: 'success',
-          message: `API working (${data.waiters?.length || 0} waiters)`,
-          details: 'Environment variables configured correctly'
-        });
-      } else {
+      if (!session) {
         diagnostics.push({
           name: 'Waiter Management API',
           status: 'error',
-          message: 'API error',
-          details: data.error || 'Check environment variables in Cloudflare'
+          message: 'Not authenticated',
+          details: 'Login required to test waiter API'
         });
+      } else {
+        const { data, error } = await supabase.functions.invoke('list-waiters', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        });
+        
+        if (error) {
+          diagnostics.push({
+            name: 'Waiter Management API',
+            status: 'error',
+            message: error.message || 'API error',
+            details: 'Supabase Edge Function failed'
+          });
+        } else {
+          diagnostics.push({
+            name: 'Waiter Management API',
+            status: 'success',
+            message: `API working (${data.waiters?.length || 0} waiters)`,
+            details: 'Supabase Edge Function configured correctly'
+          });
+        }
       }
     } catch (error: any) {
       diagnostics.push({

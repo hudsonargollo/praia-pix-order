@@ -61,14 +61,25 @@ const WaiterManagement = () => {
   const fetchWaiters = async () => {
     setLoading(true);
     try {
-      console.log('🔵 Fetching waiters from Cloudflare Function...');
+      console.log('🔵 Fetching waiters from Supabase Edge Function...');
       
-      const response = await fetch('/api/admin/list-waiters');
-      const data = await response.json();
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (!response.ok) {
-        console.error("❌ API error:", data);
-        toast.error(data.error || "Erro ao carregar lista de garçons");
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate('/auth');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('list-waiters', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+      
+      if (error) {
+        console.error("❌ API error:", error);
+        toast.error(error.message || "Erro ao carregar lista de garçons");
         setWaiters([]);
         return;
       }
@@ -101,23 +112,28 @@ const WaiterManagement = () => {
 
       console.log('🔵 Creating waiter:', { email, full_name });
 
-      const response = await fetch('/api/admin/create-waiter', {
-        method: 'POST',
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate('/auth');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-waiter', {
+        body: { email, password, full_name },
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, full_name, role: 'waiter' }),
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('❌ Create waiter error:', data);
+      if (error) {
+        console.error('❌ Create waiter error:', error);
         
-        if (data.error?.includes('already exists') || data.error?.includes('duplicate')) {
+        if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
           throw new Error("Este email já está cadastrado.");
         } else {
-          throw new Error(data.error || "Erro ao criar conta de garçom.");
+          throw new Error(error.message || "Erro ao criar conta de garçom.");
         }
       }
 
@@ -140,18 +156,23 @@ const WaiterManagement = () => {
     try {
       console.log('🔵 Deleting waiter:', waiterId);
 
-      const response = await fetch('/api/admin/delete-waiter', {
-        method: 'POST',
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate('/auth');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('delete-waiter', {
+        body: { waiterId },
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ waiterId }),
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao deletar conta de garçom.");
+      if (error) {
+        throw new Error(error.message || "Erro ao deletar conta de garçom.");
       }
 
       toast.success("✅ Garçom deletado com sucesso!");

@@ -49,6 +49,7 @@ const Menu = () => {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    console.log('🍽️ Menu component mounted');
     loadMenu();
   }, []);
 
@@ -125,6 +126,7 @@ const Menu = () => {
   const loadMenu = async () => {
     try {
       setLoading(true);
+      console.log('📋 Loading menu data...');
       
       const { data: categoriesData, error: catError } = await supabase
         .from("menu_categories")
@@ -140,10 +142,11 @@ const Menu = () => {
 
       if (itemsError) throw itemsError;
 
+      console.log('✅ Menu loaded:', categoriesData?.length, 'categories,', itemsData?.length, 'items');
       setCategories(categoriesData || []);
       setMenuItems(itemsData || []);
     } catch (error) {
-      console.error("Error loading menu:", error);
+      console.error("❌ Error loading menu:", error);
       toast.error("Erro ao carregar cardápio");
     } finally {
       setLoading(false);
@@ -184,64 +187,112 @@ const Menu = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen relative pb-24">
+      {/* Background - Image on mobile, Yellow on desktop */}
+      <div 
+        className="fixed inset-0 bg-cover bg-top bg-no-repeat md:bg-none md:bg-[#FDD835]"
+        style={{
+          backgroundImage: `url('/bck-menu.webp')`,
+        }}
+      />
 
-      {/* Clean Minimal Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-2">
-          <div className="flex items-center justify-between gap-3">
-            {/* Logo */}
-            <img 
-              src={logo} 
-              alt="Coco Loko" 
-              className="h-10 md:h-12 cursor-pointer"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            />
+      {/* Header - Desktop: Logo + Categories, Mobile: Background Image */}
+      <div className="fixed top-0 left-0 right-0 z-50 shadow-lg">
+        {/* Mobile: Header Background Image */}
+        <div 
+          className="md:hidden bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('/header.webp')`,
+          }}
+        >
+          <div className="max-w-6xl mx-auto px-4 pt-32 pb-2">
+            {/* Logout - Top Right */}
+            <button
+              onClick={handleLogout}
+              className="absolute right-4 top-4 p-2 text-white hover:text-gray-200 hover:bg-white/20 rounded-full transition-all backdrop-blur-sm"
+              aria-label="Sair"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
             
-            {/* Categories */}
+            {/* Category Navigation - Centered on Desktop, Scroll on Mobile */}
             {categorizedItems.length > 0 && (
-              <div className="flex items-center gap-1 md:gap-2 overflow-x-auto scrollbar-hide">
+              <div className="relative">
+                <div className="flex items-center justify-start lg:justify-center gap-2 overflow-x-auto lg:overflow-x-visible scrollbar-hide pb-2 px-2 snap-x snap-mandatory lg:snap-none animate-[bounce-right_2s_ease-in-out_1]">
+                  {categorizedItems.map((category) => {
+                    const isSelected = selectedCategory === category.id;
+                    
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => handleCategoryScroll(category.id)}
+                        className={`
+                          flex-shrink-0 px-4 py-2 rounded-full transition-all font-medium text-sm snap-start lg:snap-align-none
+                          ${isSelected 
+                            ? 'bg-purple-500 text-white shadow-md' 
+                            : 'bg-white/80 text-gray-700 hover:bg-white shadow-sm backdrop-blur-sm'
+                          }
+                        `}
+                      >
+                        {category.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop: White header with logo and categories */}
+        <div className="hidden md:block bg-white border-b border-gray-200">
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            {/* Logo and Logout */}
+            <div className="flex items-center justify-between mb-4">
+              <img 
+                src={logo} 
+                alt="Coco Loko" 
+                className="h-16 w-auto"
+              />
+              <button
+                onClick={handleLogout}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+                aria-label="Sair"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Category Navigation */}
+            {categorizedItems.length > 0 && (
+              <div className="flex items-center justify-center gap-2">
                 {categorizedItems.map((category) => {
                   const isSelected = selectedCategory === category.id;
-                  const CategoryIcon = getCategoryIcon(category.name);
                   
                   return (
                     <button
                       key={category.id}
                       onClick={() => handleCategoryScroll(category.id)}
                       className={`
-                        flex-shrink-0 px-3 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all
+                        px-4 py-2 rounded-full transition-all font-medium text-sm
                         ${isSelected 
-                          ? 'bg-purple-600 text-white' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-purple-500 text-white shadow-md' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm'
                         }
                       `}
                     >
-                      <span className="flex items-center gap-1">
-                        <CategoryIcon className="w-3 h-3 md:w-4 md:h-4" />
-                        <span className="hidden sm:inline">{category.name}</span>
-                        <span className="text-xs opacity-75">({category.items.length})</span>
-                      </span>
+                      {category.name}
                     </button>
                   );
                 })}
-                
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="flex-shrink-0 p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
-                  aria-label="Sair"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Menu Content */}
-      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 md:pt-18 pb-32 space-y-6">
+      {/* Menu Content - Adjusted padding for fixed header */}
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-48 md:pt-56 pb-32 space-y-6">
         {categorizedItems.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <div className="text-4xl mb-3">🥥</div>
@@ -249,18 +300,16 @@ const Menu = () => {
           </div>
         ) : (
           categorizedItems.map((category) => (
-            <div key={category.id} id={`category-${category.id}`} className="space-y-3 scroll-mt-20">
-              {/* Minimal Category Title */}
-              <h2 className="text-xl md:text-2xl font-semibold text-gray-900 pb-2 border-b border-gray-200 flex items-center gap-2">
-                {(() => {
-                  const CategoryIcon = getCategoryIcon(category.name);
-                  return <CategoryIcon className="w-5 h-5 text-purple-600" />;
-                })()}
-                {category.name}
-              </h2>
+            <div key={category.id} id={`category-${category.id}`} className="space-y-4 scroll-mt-20">
+              {/* Category Header - Purple Badge Style */}
+              <div className="bg-gradient-to-r from-purple-700 to-purple-600 text-white px-4 py-2 rounded-full inline-block shadow-md">
+                <h2 className="text-sm md:text-base font-bold uppercase tracking-wide">
+                  {category.name}
+                </h2>
+              </div>
 
-              {/* Enhanced Category Items */}
-              <div className="grid gap-4">
+              {/* Category Items - Clean Cards */}
+              <div className="space-y-3">
                 {category.items.map((item) => {
                   const quantity = getItemQuantity(item.id);
                   const hasImageError = imageErrors.has(item.id);
@@ -268,11 +317,11 @@ const Menu = () => {
                   return (
                     <div 
                       key={item.id} 
-                      className="bg-white rounded-lg p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow flex items-center gap-3 border border-gray-100"
+                      className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4"
                     >
                       {/* Image */}
                       <div 
-                        className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
+                        className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
                         onClick={() => setSelectedItem(item)}
                       >
                         {item.image_url && !hasImageError ? (
@@ -285,7 +334,7 @@ const Menu = () => {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-purple-50">
-                            <ShoppingCart className="w-6 h-6 text-purple-400" />
+                            <ShoppingCart className="w-8 h-8 text-purple-400" />
                           </div>
                         )}
                       </div>
@@ -295,49 +344,64 @@ const Menu = () => {
                         className="flex-1 min-w-0 cursor-pointer"
                         onClick={() => setSelectedItem(item)}
                       >
-                        <h3 className="font-semibold text-gray-900 text-sm md:text-base truncate">
+                        <h3 className="font-bold text-gray-900 text-base md:text-lg">
                           {item.name}
                         </h3>
                         {item.description && (
-                          <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">
+                          <p className="text-xs md:text-sm text-gray-600 line-clamp-2 mt-1">
                             {item.description}
                           </p>
                         )}
-                        <p className="text-purple-600 font-bold text-base md:text-lg mt-1">
+                        <p className="text-purple-600 font-bold text-lg md:text-xl mt-2">
                           R$ {item.price.toFixed(2)}
                         </p>
                       </div>
 
-                      {/* Add Button */}
+                      {/* Add/Quantity Controls */}
                       <div className="flex-shrink-0">
                         {quantity > 0 ? (
-                          <div className="flex items-center gap-2 bg-purple-50 rounded-lg p-1.5">
+                          <div className="flex flex-col gap-2">
+                            {/* Quantity Controls */}
+                            <div className="flex items-center gap-2 bg-purple-50 rounded-xl p-2">
+                              <button
+                                onClick={() => removeItem(item.id)}
+                                className="w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
+                                aria-label="Remover um"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <span className="font-bold text-purple-900 text-lg min-w-[24px] text-center">
+                                {quantity}
+                              </span>
+                              <button
+                                onClick={() => handleAddToCart(item)}
+                                className="w-8 h-8 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
+                                aria-label="Adicionar mais"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+                            {/* Remove All Button */}
                             <button
-                              onClick={() => removeItem(item.id)}
-                              className="w-8 h-8 rounded-md bg-red-500 hover:bg-red-600 text-white flex items-center justify-center"
-                              aria-label="Remover"
+                              onClick={() => {
+                                // Remove all items of this type
+                                for (let i = 0; i < quantity; i++) {
+                                  removeItem(item.id);
+                                }
+                                toast.success(`${item.name} removido do carrinho`);
+                              }}
+                              className="w-full px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition-all flex items-center justify-center gap-1"
                             >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <span className="font-bold text-purple-900 text-sm min-w-[20px] text-center">
-                              {quantity}
-                            </span>
-                            <button
-                              onClick={() => handleAddToCart(item)}
-                              className="w-8 h-8 rounded-md bg-green-500 hover:bg-green-600 text-white flex items-center justify-center"
-                              aria-label="Adicionar"
-                            >
-                              <Plus className="w-4 h-4" />
+                              <span className="text-base">×</span>
+                              <span>Remover</span>
                             </button>
                           </div>
                         ) : (
                           <Button
                             onClick={() => handleAddToCart(item)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium"
-                            size="sm"
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl text-sm md:text-base font-semibold shadow-md hover:shadow-lg transition-all"
                           >
-                            <Plus className="w-3 h-3 md:w-4 md:h-4 md:mr-1" />
-                            <span className="hidden md:inline">Adicionar</span>
+                            Adicionar
                           </Button>
                         )}
                       </div>
@@ -350,20 +414,20 @@ const Menu = () => {
         )}
       </div>
 
-      {/* Cart Button */}
+      {/* Cart Button - No Background */}
       {cartState.items.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-lg z-50">
-          <div className="max-w-6xl mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 p-4 z-50">
+          <div className="max-w-2xl mx-auto">
             <Button
               onClick={goToCheckout}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 md:py-4 rounded-lg font-semibold text-sm md:text-base"
+              className="w-full bg-gradient-to-r from-purple-700 to-purple-600 hover:from-purple-800 hover:to-purple-700 text-white py-4 rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all"
             >
               <div className="flex items-center justify-between w-full px-2">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
-                  <span>Ver Carrinho ({getTotalItems()})</span>
+                <div className="flex items-center gap-3">
+                  <ShoppingCart className="h-6 w-6" />
+                  <span>Ver Carrinho ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'itens'})</span>
                 </div>
-                <span className="font-bold">R$ {getTotalPrice().toFixed(2)}</span>
+                <span className="font-bold text-lg">R$ {getTotalPrice().toFixed(2)}</span>
               </div>
             </Button>
           </div>
