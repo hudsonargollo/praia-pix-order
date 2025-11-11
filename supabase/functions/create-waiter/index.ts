@@ -78,11 +78,7 @@ serve(async (req) => {
 
     // Validate required fields
     if (!email || !password || !full_name) {
-      console.warn('[create-waiter] Missing required fields:', {
-        hasEmail: !!email,
-        hasPassword: !!password,
-        hasFullName: !!full_name,
-      })
+      console.warn('[create-waiter] Missing required fields')
       return new Response(
         JSON.stringify({ error: 'Missing required fields: email, password, and full_name are required' }),
         {
@@ -95,7 +91,7 @@ serve(async (req) => {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      console.warn('[create-waiter] Invalid email format:', email)
+      console.warn('[create-waiter] Invalid email format')
       return new Response(
         JSON.stringify({ error: 'Invalid email format' }),
         {
@@ -117,41 +113,21 @@ serve(async (req) => {
       )
     }
 
-    // Create admin client with service role
-    // These env vars are automatically available in Supabase Edge Functions
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    console.log('[create-waiter] Calling database function to create waiter')
 
-    console.log('[create-waiter] Creating waiter user with admin client')
-
-    // Create the waiter user
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name,
-        role: 'waiter',
-      },
-      app_metadata: {
-        role: 'waiter',
-      },
-    })
-
-    if (createError) {
-      console.error('[create-waiter] Error creating user:', {
-        error: createError,
-        message: createError.message,
-        status: createError.status,
+    // Use database function instead of Auth Admin API
+    const { data, error: createError } = await supabaseClient
+      .rpc('create_waiter_user', {
+        p_email: email,
+        p_password: password,
+        p_full_name: full_name
       })
 
-      // Handle duplicate email error specifically
-      if (createError.message.includes('already registered') || 
-          createError.message.includes('duplicate') ||
-          createError.message.includes('already exists')) {
-        console.warn('[create-waiter] Duplicate email detected:', email)
+    if (createError) {
+      console.error('[create-waiter] Error creating user:', createError)
+
+      // Handle duplicate email error
+      if (createError.message.includes('already exists')) {
         return new Response(
           JSON.stringify({ error: 'Este email já está cadastrado' }),
           {
@@ -170,15 +146,12 @@ serve(async (req) => {
       )
     }
 
-    console.log('[create-waiter] Waiter created successfully:', {
-      userId: newUser.user.id,
-      email: newUser.user.email,
-    })
+    console.log('[create-waiter] Waiter created successfully:', data)
 
     return new Response(
       JSON.stringify({
         message: 'Waiter created successfully',
-        userId: newUser.user.id,
+        userId: data.user_id,
       }),
       {
         status: 201,
