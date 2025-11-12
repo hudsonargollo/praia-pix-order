@@ -1,2 +1,15 @@
+# Serve static assets directly
+/*.webp   200
+/*.png    200
+/*.jpg    200
+/*.jpeg   200
+/*.gif    200
+/*.svg    200
+/*.ico    200
+/*.css    200
+/*.js     200
+/*.json   200
+/*.txt    200
+
 # SPA fallback for React Router
 /*    /index.html   200
