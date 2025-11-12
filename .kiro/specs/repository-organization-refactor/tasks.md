@@ -75,7 +75,7 @@
     - Document archival date and reason
     - _Requirements: 8.1, 8.2_
 
-- [-] 6. Verify archive phase completion
+- [x] 6. Verify archive phase completion
   - Count files in root directory (should be ≤20 excluding _archive/)
   - Run full validation: TypeScript compile, Vite build, dev server start
   - Manually test all critical user flows
@@ -83,7 +83,7 @@
   - Create git tag "archive-complete"
   - _Requirements: 1.6, 7.1, 7.2, 7.3_
 
-- [ ] 7. Create role-based page directories
+- [x] 7. Create role-based page directories
   - Create src/pages/customer/ directory
   - Create src/pages/admin/ directory
   - Create src/pages/staff/ directory
@@ -93,8 +93,8 @@
   - Git commit directory structure
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.11_
 
-- [ ] 8. Migrate customer pages
-  - [ ] 8.1 Copy customer pages to new location
+- [-] 8. Migrate customer pages
+  - [x] 8.1 Copy customer pages to new location
     - Copy (don't move yet) Menu.tsx to src/pages/customer/
     - Copy Checkout.tsx to src/pages/customer/
     - Copy Payment.tsx to src/pages/customer/
@@ -103,7 +103,7 @@
     - Copy QRLanding.tsx to src/pages/customer/
     - _Requirements: 2.6_
   
-  - [ ] 8.2 Update imports in App.tsx for customer pages
+  - [x] 8.2 Update imports in App.tsx for customer pages
     - Change Menu import to './pages/customer/Menu'
     - Change Checkout import to './pages/customer/Checkout'
     - Change Payment import to './pages/customer/Payment'
@@ -114,7 +114,7 @@
     - Run Vite build - must succeed
     - _Requirements: 3.1, 3.4_
   
-  - [ ] 8.3 Delete original customer page files
+  - [x] 8.3 Delete original customer page files
     - Delete src/pages/Menu.tsx
     - Delete src/pages/Checkout.tsx
     - Delete src/pages/Payment.tsx
@@ -124,7 +124,7 @@
     - Run TypeScript compiler - must pass
     - _Requirements: 2.6, 3.4_
   
-  - [ ] 8.4 Test customer routes
+  - [x] 8.4 Test customer routes
     - Start dev server
     - Navigate to /menu - verify page loads
     - Navigate to /checkout - verify page loads
@@ -135,7 +135,7 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [ ] 8.5 Git commit customer page migration
+  - [-] 8.5 Git commit customer page migration
     - Commit with message "Migrate customer pages to role-based structure"
     - _Requirements: 7.1_
 
