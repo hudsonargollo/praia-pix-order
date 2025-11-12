@@ -1,15 +1,16 @@
-# Serve static assets directly
+# Cloudflare Pages _redirects file
+# Static assets should be served directly
 /*.webp   200
-/*.png    200
+/*.png    200  
 /*.jpg    200
 /*.jpeg   200
 /*.gif    200
 /*.svg    200
 /*.ico    200
-/*.css    200
-/*.js     200
-/*.json   200
-/*.txt    200
+/*.woff   200
+/*.woff2  200
+/*.ttf    200
+/*.eot    200
 
-# SPA fallback for React Router
+# SPA fallback - must be last
 /*    /index.html   200

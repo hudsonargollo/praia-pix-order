@@ -3,5 +3,21 @@
   "include": [
     "/api/*"
   ],
-  "exclude": []
+  "exclude": [
+    "/*.webp",
+    "/*.png",
+    "/*.jpg",
+    "/*.jpeg",
+    "/*.gif",
+    "/*.svg",
+    "/*.ico",
+    "/*.css",
+    "/*.js",
+    "/*.json",
+    "/*.txt",
+    "/*.woff",
+    "/*.woff2",
+    "/*.ttf",
+    "/*.eot"
+  ]
 }
