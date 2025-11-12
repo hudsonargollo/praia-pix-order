@@ -1,10 +1,10 @@
 # Coco Loko Açaiteria - Digital Ordering System
 
-A complete digital ordering and payment system for an açaí shop by the beach. This application provides a seamless experience for customers to order via QR codes at tables, make payments through PIX, and receive WhatsApp notifications.
+A complete digital ordering and payment system for an açaí shop. This application provides a seamless experience for customers to order via QR codes at tables, make payments through PIX, and receive WhatsApp notifications.
 
 ## 🌴 Product Overview
 
-Coco Loko Açaiteria streamlines operations for a beachside açaí shop while providing a modern, mobile-first customer experience. The system handles the complete order lifecycle from menu browsing to payment confirmation and kitchen preparation.
+Coco Loko Açaiteria streamlines operations for a açaí shop while providing a modern, mobile-first customer experience. The system handles the complete order lifecycle from menu browsing to payment confirmation and kitchen preparation.
 
 ### Key Features
 
@@ -17,7 +17,7 @@ Coco Loko Açaiteria streamlines operations for a beachside açaí shop while pr
 
 ### Target Users
 
-- **Customers**: Beach-goers ordering açaí and refreshments
+- **Customers**: People ordering açaí and refreshments
 - **Kitchen Staff**: Food preparation team managing order queue
 - **Cashier Staff**: Front-of-house team handling customer service and notifications
 - **Admin Staff**: Management team overseeing products, staff, and reports
