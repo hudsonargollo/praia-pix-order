@@ -27,9 +27,13 @@ const WhatsAppAdmin = lazy(() => import("./pages/admin/WhatsAppAdmin"));
 // Lazy load staff pages
 const Cashier = lazy(() => import("./pages/staff/Cashier"));
 
+// Lazy load waiter pages
+const Waiter = lazy(() => import("./pages/waiter/Waiter"));
+const WaiterDashboard = lazy(() => import("./pages/waiter/WaiterDashboard"));
+const WaiterManagement = lazy(() => import("./pages/waiter/WaiterManagement"));
+const WaiterDiagnostic = lazy(() => import("./pages/waiter/WaiterDiagnostic"));
+
 import OrderLookup from "./pages/debug/OrderLookup";
-import Waiter from "./pages/waiter/Waiter";
-import WaiterDashboard from "./pages/waiter/WaiterDashboard";
 import Auth from "./pages/public/Auth";
 import NotFound from "./pages/public/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -38,9 +42,7 @@ import MenuDebug from "./pages/debug/MenuDebug";
 import PaymentDebug from "./pages/debug/PaymentDebug";
 import PaymentTest from "./pages/debug/PaymentTest";
 import Monitoring from "./pages/debug/Monitoring";
-import WaiterManagement from "./pages/waiter/WaiterManagement";
 import SystemDiagnostic from "./pages/debug/SystemDiagnostic";
-import WaiterDiagnostic from "./pages/waiter/WaiterDiagnostic";
 
 const queryClient = new QueryClient();
 
@@ -100,12 +102,18 @@ const App = () => {
           } />
           <Route path="/order-lookup" element={<OrderLookup />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/waiter" element={<Waiter />} />
+          <Route path="/waiter" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Waiter />
+            </Suspense>
+          } />
           <Route
             path="/waiter-dashboard"
             element={
               <ProtectedRoute requiredRole="waiter">
-                <WaiterDashboard />
+                <Suspense fallback={<LoadingFallback />}>
+                  <WaiterDashboard />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -181,7 +189,9 @@ const App = () => {
             path="/waiter-management"
             element={
               <ProtectedRoute requiredRole="admin">
-                <WaiterManagement />
+                <Suspense fallback={<LoadingFallback />}>
+                  <WaiterManagement />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -227,7 +237,9 @@ const App = () => {
             path="/waiter-diagnostic"
             element={
               <ProtectedRoute requiredRole="waiter">
-                <WaiterDiagnostic />
+                <Suspense fallback={<LoadingFallback />}>
+                  <WaiterDiagnostic />
+                </Suspense>
               </ProtectedRoute>
             }
           />
