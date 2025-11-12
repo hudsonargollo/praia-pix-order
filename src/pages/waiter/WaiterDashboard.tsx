@@ -122,7 +122,11 @@ const WaiterDashboard = () => {
            order.customer_phone;
   };
 
-  const totalSales = orders.reduce((sum, order) => sum + order.total_amount, 0);
+  // Only count orders that are paid or in progress (exclude cancelled, expired, and pending payment)
+  const validOrders = orders.filter(order => 
+    !['cancelled', 'expired', 'pending_payment'].includes(order.status)
+  );
+  const totalSales = validOrders.reduce((sum, order) => sum + order.total_amount, 0);
   const totalCommissions = totalSales * 0.1; // 10% commission
 
   const getStatusVariant = (status: string) => {
@@ -285,7 +289,7 @@ const WaiterDashboard = () => {
               </div>
               <p className="text-sm text-gray-500 group-hover:text-white/90 transition-colors flex items-center">
                 <TrendingUp className="w-4 h-4 mr-2" />
-                {orders.length} pedidos realizados
+                {validOrders.length} pedidos realizados
               </p>
             </CardContent>
           </Card>
@@ -377,8 +381,15 @@ const WaiterDashboard = () => {
                       <TableCell className="text-right font-semibold text-gray-900">
                         {order.total_amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                       </TableCell>
-                      <TableCell className="text-right font-semibold text-green-600">
-                        {(order.total_amount * 0.1).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      <TableCell className={`text-right font-semibold ${
+                        ['cancelled', 'expired', 'pending_payment'].includes(order.status) 
+                          ? 'text-gray-400 line-through' 
+                          : 'text-green-600'
+                      }`}>
+                        {['cancelled', 'expired', 'pending_payment'].includes(order.status)
+                          ? 'R$ 0,00'
+                          : (order.total_amount * 0.1).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                        }
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(order.status)} className="font-medium">
