@@ -14,34 +14,34 @@
   - Git commit archive structure
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [-] 3. Archive historical markdown files
+- [x] 3. Archive historical markdown files
   - [x] 3.1 Identify all .md files in root directory (exclude README.md, CONTRIBUTING.md)
     - Scan root directory for .md files
     - Filter out essential documentation files
     - Verify no .md file is imported by source code
     - _Requirements: 1.2_
   
-  - [-] 3.2 Move markdown files to _archive/dev_notes/ in batches
+  - [x] 3.2 Move markdown files to _archive/dev_notes/ in batches
     - Move files in batches of 50
     - After each batch: run TypeScript compiler, run Vite build, test dev server
     - Git commit each successful batch
     - If any validation fails, rollback batch and stop
     - _Requirements: 1.2, 7.1, 7.2_
   
-  - [ ] 3.3 Create _archive/dev_notes/README.md documenting archived files
+  - [x] 3.3 Create _archive/dev_notes/README.md documenting archived files
     - List all archived markdown files with brief descriptions
     - Categorize by topic (planning, fixes, deployment, testing)
     - Document archival date and reason
     - _Requirements: 8.1, 8.2, 8.5_
 
-- [ ] 4. Archive historical SQL files
-  - [ ] 4.1 Identify all .sql files in root directory (exclude supabase/migrations/)
+- [-] 4. Archive historical SQL files
+  - [x] 4.1 Identify all .sql files in root directory (exclude supabase/migrations/)
     - Scan root directory for .sql files
     - Verify no .sql file is referenced by source code
     - Identify which files contain essential schema changes
     - _Requirements: 1.2, 5.1, 5.2_
   
-  - [ ] 4.2 Move SQL files to _archive/sql_fixes/ in batches
+  - [-] 4.2 Move SQL files to _archive/sql_fixes/ in batches
     - Move files in batches of 50
     - After each batch: run TypeScript compiler, run Vite build, test dev server
     - Git commit each successful batch
