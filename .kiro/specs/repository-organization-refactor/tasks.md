@@ -34,35 +34,35 @@
     - Document archival date and reason
     - _Requirements: 8.1, 8.2, 8.5_
 
-- [-] 4. Archive historical SQL files
+- [x] 4. Archive historical SQL files
   - [x] 4.1 Identify all .sql files in root directory (exclude supabase/migrations/)
     - Scan root directory for .sql files
     - Verify no .sql file is referenced by source code
     - Identify which files contain essential schema changes
     - _Requirements: 1.2, 5.1, 5.2_
   
-  - [-] 4.2 Move SQL files to _archive/sql_fixes/ in batches
+  - [x] 4.2 Move SQL files to _archive/sql_fixes/ in batches
     - Move files in batches of 50
     - After each batch: run TypeScript compiler, run Vite build, test dev server
     - Git commit each successful batch
     - If any validation fails, rollback batch and stop
     - _Requirements: 1.2, 7.1, 7.2_
   
-  - [ ] 4.3 Create _archive/sql_fixes/README.md documenting archived files
+  - [x] 4.3 Create _archive/sql_fixes/README.md documenting archived files
     - List all archived SQL files with descriptions
     - Mark which files contain essential schema changes
     - Mark which files are historical/obsolete
     - Document archival date and reason
     - _Requirements: 5.5, 8.1, 8.4_
 
-- [ ] 5. Archive shell scripts and test files
-  - [ ] 5.1 Identify all .sh and root-level .ts test files
+- [-] 5. Archive shell scripts and test files
+  - [x] 5.1 Identify all .sh and root-level .ts test files
     - Scan root directory for .sh files
     - Scan root directory for .ts files (exclude essential configs)
     - Verify no file is imported by source code
     - _Requirements: 1.2_
   
-  - [ ] 5.2 Move shell scripts to _archive/test_scripts/
+  - [-] 5.2 Move shell scripts to _archive/test_scripts/
     - Move all .sh files
     - Move root-level test .ts files
     - After moving: run TypeScript compiler, run Vite build, test dev server
