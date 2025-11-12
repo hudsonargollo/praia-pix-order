@@ -15,11 +15,19 @@ const Menu = lazy(() => import("./pages/customer/Menu"));
 const Checkout = lazy(() => import("./pages/customer/Checkout"));
 const Payment = lazy(() => import("./pages/customer/Payment"));
 const OrderStatus = lazy(() => import("./pages/customer/OrderStatus"));
+
+// Lazy load admin pages
+const Admin = lazy(() => import("./pages/admin/Admin"));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminWaiters = lazy(() => import("./pages/admin/AdminWaiters"));
+const AdminWaiterReportsPage = lazy(() => import("./pages/admin/AdminWaiterReportsPage"));
+const Reports = lazy(() => import("./pages/admin/Reports"));
+const WhatsAppAdmin = lazy(() => import("./pages/admin/WhatsAppAdmin"));
+
 import OrderLookup from "./pages/debug/OrderLookup";
 import Cashier from "./pages/staff/Cashier";
 import Waiter from "./pages/waiter/Waiter";
 import WaiterDashboard from "./pages/waiter/WaiterDashboard";
-import Admin from "./pages/admin/Admin";
 import Auth from "./pages/public/Auth";
 import NotFound from "./pages/public/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -27,12 +35,7 @@ import QRRedirect from "./pages/debug/QRRedirect";
 import MenuDebug from "./pages/debug/MenuDebug";
 import PaymentDebug from "./pages/debug/PaymentDebug";
 import PaymentTest from "./pages/debug/PaymentTest";
-import WhatsAppAdmin from "./pages/admin/WhatsAppAdmin";
 import Monitoring from "./pages/debug/Monitoring";
-import AdminProducts from "./pages/admin/AdminProducts";
-import AdminWaiters from "./pages/admin/AdminWaiters";
-import AdminWaiterReportsPage from "./pages/admin/AdminWaiterReportsPage";
-import Reports from "./pages/admin/Reports";
 import WaiterManagement from "./pages/waiter/WaiterManagement";
 import SystemDiagnostic from "./pages/debug/SystemDiagnostic";
 import WaiterDiagnostic from "./pages/waiter/WaiterDiagnostic";
@@ -108,7 +111,9 @@ const App = () => {
             path="/admin"
             element={
               <ProtectedRoute requiredRole="admin">
-                <Admin />
+                <Suspense fallback={<LoadingFallback />}>
+                  <Admin />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -132,7 +137,9 @@ const App = () => {
             path="/reports"
             element={
               <ProtectedRoute requiredRole="admin">
-                <Reports />
+                <Suspense fallback={<LoadingFallback />}>
+                  <Reports />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -140,7 +147,9 @@ const App = () => {
             path="/whatsapp-admin"
             element={
               <ProtectedRoute requiredRole="admin">
-                <WhatsAppAdmin />
+                <Suspense fallback={<LoadingFallback />}>
+                  <WhatsAppAdmin />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -156,7 +165,9 @@ const App = () => {
             path="/admin/products"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminProducts />
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminProducts />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -172,7 +183,9 @@ const App = () => {
             path="/admin/waiters"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminWaiters />
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminWaiters />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -180,7 +193,9 @@ const App = () => {
             path="/admin/waiter-reports"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminWaiterReportsPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminWaiterReportsPage />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -188,7 +203,9 @@ const App = () => {
             path="/admin-waiters"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminWaiters />
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminWaiters />
+                </Suspense>
               </ProtectedRoute>
             }
           />
