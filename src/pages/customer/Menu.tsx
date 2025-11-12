@@ -211,6 +211,16 @@ const Menu = () => {
           }}
         >
           <div className="max-w-6xl mx-auto px-4 pt-32 pb-2">
+            {/* Cart Badge - Top Right */}
+            {getTotalItems() > 0 && (
+              <div className="absolute right-16 top-4">
+                <div className="bg-purple-600 text-white border-2 border-purple-300 shadow-lg animate-pulse-badge px-3 py-1.5 rounded-full font-bold text-sm flex items-center gap-1.5">
+                  <ShoppingCart className="w-4 h-4" />
+                  <span>{getTotalItems()}</span>
+                </div>
+              </div>
+            )}
+            
             {/* Logout - Top Right */}
             <button
               onClick={handleLogout}
@@ -259,6 +269,17 @@ const Menu = () => {
                 alt="Coco Loko" 
                 className="h-20 w-auto drop-shadow-lg"
               />
+              
+              {/* Cart Badge - Desktop */}
+              {getTotalItems() > 0 && (
+                <div className="absolute right-12">
+                  <div className="bg-purple-600 text-white border-2 border-purple-300 shadow-lg animate-pulse-badge px-3 py-1.5 rounded-full font-bold text-sm flex items-center gap-1.5">
+                    <ShoppingCart className="w-4 h-4" />
+                    <span>{getTotalItems()}</span>
+                  </div>
+                </div>
+              )}
+              
               <button
                 onClick={handleLogout}
                 className="absolute right-0 p-2 text-white hover:text-white/80 hover:bg-white/20 rounded-full transition-all"

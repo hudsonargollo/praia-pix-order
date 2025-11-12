@@ -171,6 +171,10 @@ All colors MUST be HSL.
     animation: glow 2s ease-in-out infinite alternate;
   }
 
+  .animate-pulse-badge {
+    animation: pulseBadge 2s ease-in-out infinite;
+  }
+
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
@@ -179,6 +183,17 @@ All colors MUST be HSL.
   @keyframes glow {
     from { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
     to { box-shadow: 0 0 30px rgba(168, 85, 247, 0.8); }
+  }
+
+  @keyframes pulseBadge {
+    0%, 100% { 
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+    }
+    50% { 
+      transform: scale(1.05);
+      box-shadow: 0 0 0 8px rgba(168, 85, 247, 0);
+    }
   }
 
   /* Glass morphism effect */
