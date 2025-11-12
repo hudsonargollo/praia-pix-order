@@ -442,7 +442,7 @@
     - Commit with message "Implement lazy loading for staff pages"
     - _Requirements: 4.1, 4.2_
 
-- [-] 19. Implement lazy loading for waiter pages
+- [x] 19. Implement lazy loading for waiter pages
   - [x] 19.1 Convert waiter page imports to lazy loading
     - Change Waiter import to lazy(() => import('./pages/waiter/Waiter'))
     - Change WaiterDashboard import to lazy(() => import('./pages/waiter/WaiterDashboard'))
@@ -465,26 +465,26 @@
     - Verify no console errors
     - _Requirements: 4.5, 7.1, 7.2, 7.3_
   
-  - [-] 19.4 Git commit waiter lazy loading
+  - [x] 19.4 Git commit waiter lazy loading
     - Commit with message "Implement lazy loading for waiter pages"
     - _Requirements: 4.1, 4.2_
 
-- [ ] 20. Implement lazy loading for public and debug pages
-  - [ ] 20.1 Convert public and debug page imports to lazy loading
+- [x] 20. Implement lazy loading for public and debug pages
+  - [x] 20.1 Convert public and debug page imports to lazy loading
     - Change Index import to lazy(() => import('./pages/public/Index'))
     - Change Auth import to lazy(() => import('./pages/public/Auth'))
     - Change NotFound import to lazy(() => import('./pages/public/NotFound'))
     - Change all debug page imports to lazy loading
     - _Requirements: 4.1_
   
-  - [ ] 20.2 Wrap public and debug routes with Suspense
+  - [x] 20.2 Wrap public and debug routes with Suspense
     - Wrap all public routes with Suspense and LoadingFallback
     - Wrap all debug routes with Suspense and LoadingFallback
     - Run TypeScript compiler - must pass
     - Run Vite build - must succeed
     - _Requirements: 4.2_
   
-  - [ ] 20.3 Test public and debug routes with lazy loading
+  - [x] 20.3 Test public and debug routes with lazy loading
     - Start dev server
     - Navigate to each public and debug route
     - Verify loading state appears briefly
@@ -493,11 +493,11 @@
     - Verify no console errors
     - _Requirements: 4.5, 7.1, 7.2, 7.3_
   
-  - [ ] 20.4 Git commit public and debug lazy loading
+  - [x] 20.4 Git commit public and debug lazy loading
     - Commit with message "Implement lazy loading for public and debug pages"
     - _Requirements: 4.1, 4.2_
 
-- [ ] 21. Measure performance improvements
+- [x] 21. Measure performance improvements
   - Build production bundle with npm run build
   - Measure initial bundle size
   - Count number of lazy-loaded chunks
@@ -507,49 +507,49 @@
   - Document performance improvements
   - _Requirements: 4.4_
 
-- [ ] 22. Review and consolidate SQL migrations
-  - [ ] 22.1 Review archived SQL files
+    - [x] 22. Review and consolidate SQL migrations
+  - [x] 22.1 Review archived SQL files
     - Read all .sql files in _archive/sql_fixes/
     - Identify files that contain essential schema changes
     - Identify files that are historical/obsolete
     - Document findings in _archive/sql_fixes/README.md
     - _Requirements: 5.1, 5.2_
   
-  - [ ] 22.2 Create new migration files for essential changes
+  - [x] 22.2 Create new migration files for essential changes
     - For each essential schema change not in supabase/migrations/
     - Create new timestamped migration file (YYYYMMDDHHMMSS_description.sql)
     - Copy essential SQL from archived file
     - Clean up and format SQL
     - _Requirements: 5.3, 5.4_
   
-  - [ ] 22.3 Test new migrations on local database
+  - [x] 22.3 Test new migrations on local database
     - Run npx supabase db reset
     - Verify all migrations apply successfully
     - Verify database schema is correct
     - _Requirements: 5.3_
   
-  - [ ] 22.4 Git commit new migrations
+  - [x] 22.4 Git commit new migrations
     - Commit with message "Consolidate essential SQL migrations"
     - _Requirements: 5.3_
 
-- [ ] 23. Update README.md
-  - [ ] 23.1 Add project overview section
+- [x] 23. Update README.md
+  - [x] 23.1 Add project overview section
     - Include product description from .kiro/steering/product.md
     - Describe core features and user flows
     - _Requirements: 6.1_
   
-  - [ ] 23.2 Add technology stack section
+  - [x] 23.2 Add technology stack section
     - List all major technologies (React, Vite, TypeScript, Supabase, Tailwind)
     - Include information from .kiro/steering/tech.md
     - _Requirements: 6.6_
   
-  - [ ] 23.3 Add project structure section
+  - [x] 23.3 Add project structure section
     - Document new role-based page organization
     - Explain directory structure (customer/, admin/, staff/, waiter/, public/, debug/)
     - Document _archive/ directory purpose
     - _Requirements: 6.2_
   
-  - [ ] 23.4 Add getting started section
+  - [x] 23.4 Add getting started section
     - Document prerequisites (Node.js, npm, Supabase CLI)
     - Provide step-by-step setup instructions
     - Include npm install command
@@ -558,16 +558,16 @@
     - Document environment variables required
     - _Requirements: 6.3, 6.4, 6.5_
   
-  - [ ] 23.5 Add development section
+  - [x] 23.5 Add development section
     - Document common commands (dev, build, lint, test)
     - Explain development workflow
     - _Requirements: 6.7_
   
-  - [ ] 23.6 Git commit README.md updates
+  - [x] 23.6 Git commit README.md updates
     - Commit with message "Update README.md with comprehensive documentation"
     - _Requirements: 6.1-6.7_
 
-- [ ] 24. Create CONTRIBUTING.md
+- [x] 24. Create CONTRIBUTING.md
   - Document code organization guidelines
   - Explain where to place new files (which role directory)
   - Document naming conventions
@@ -576,7 +576,7 @@
   - Git commit CONTRIBUTING.md
   - _Requirements: 6.8_
 
-- [ ] 25. Create _archive/README.md
+- [x] 25. Create _archive/README.md
   - Explain purpose of _archive/ directory
   - Document structure (dev_notes/, sql_fixes/, test_scripts/)
   - Document archival date
@@ -584,15 +584,15 @@
   - Git commit _archive/README.md
   - _Requirements: 8.1, 8.2, 8.3_
 
-- [ ] 26. Final validation and testing
-  - [ ] 26.1 Run full validation suite
+- [-] 26. Final validation and testing
+  - [x] 26.1 Run full validation suite
     - Run npx tsc --noEmit - must pass
     - Run npm run lint - must pass
     - Run npm run build - must succeed
     - Run npm run dev - must start without errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [ ] 26.2 Test all user flows end-to-end
+  - [-] 26.2 Test all user flows end-to-end
     - Test customer flow: QR scan → Menu → Checkout → Payment → Order Status
     - Test kitchen flow: Login → View orders → Update status
     - Test cashier flow: Login → Monitor orders → Send notifications
@@ -601,7 +601,7 @@
     - Verify no regressions in functionality
     - _Requirements: 7.4, 7.5_
   
-  - [ ] 26.3 Verify success criteria
+  - [x] 26.3 Verify success criteria
     - Root directory contains ≤20 files/directories (excluding _archive/)
     - All 28 pages successfully migrated to role-based directories
     - Zero broken imports
@@ -611,7 +611,7 @@
     - All tests pass (if tests exist)
     - _Requirements: All requirements_
   
-  - [ ] 26.4 Create final git commit and tag
+  - [-] 26.4 Create final git commit and tag
     - Commit with message "Complete repository organization refactor"
     - Create git tag "refactor-complete-v1.0"
     - _Requirements: 7.1_
