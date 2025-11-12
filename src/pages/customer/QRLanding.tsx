@@ -12,7 +12,7 @@ const QRLanding = () => {
     <div 
       className="min-h-screen flex flex-col justify-end py-8 px-4 bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: 'url(/bck.webp)',
+        backgroundImage: `url(${window.location.origin}/bck.webp)`,
       }}
     >
       {/* Bottom Section - Button */}
