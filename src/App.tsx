@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/lib/cartContext";
 import { queueManager } from "@/integrations/whatsapp/queue-manager";
 import LoadingFallback from "@/components/LoadingFallback";
-import Index from "./pages/public/Index";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Lazy load customer pages
 const QRLanding = lazy(() => import("./pages/customer/QRLanding"));
@@ -33,16 +33,19 @@ const WaiterDashboard = lazy(() => import("./pages/waiter/WaiterDashboard"));
 const WaiterManagement = lazy(() => import("./pages/waiter/WaiterManagement"));
 const WaiterDiagnostic = lazy(() => import("./pages/waiter/WaiterDiagnostic"));
 
-import OrderLookup from "./pages/debug/OrderLookup";
-import Auth from "./pages/public/Auth";
-import NotFound from "./pages/public/NotFound";
-import ProtectedRoute from "./components/ProtectedRoute";
-import QRRedirect from "./pages/debug/QRRedirect";
-import MenuDebug from "./pages/debug/MenuDebug";
-import PaymentDebug from "./pages/debug/PaymentDebug";
-import PaymentTest from "./pages/debug/PaymentTest";
-import Monitoring from "./pages/debug/Monitoring";
-import SystemDiagnostic from "./pages/debug/SystemDiagnostic";
+// Lazy load public pages
+const Index = lazy(() => import("./pages/public/Index"));
+const Auth = lazy(() => import("./pages/public/Auth"));
+const NotFound = lazy(() => import("./pages/public/NotFound"));
+
+// Lazy load debug pages
+const OrderLookup = lazy(() => import("./pages/debug/OrderLookup"));
+const QRRedirect = lazy(() => import("./pages/debug/QRRedirect"));
+const MenuDebug = lazy(() => import("./pages/debug/MenuDebug"));
+const PaymentDebug = lazy(() => import("./pages/debug/PaymentDebug"));
+const PaymentTest = lazy(() => import("./pages/debug/PaymentTest"));
+const Monitoring = lazy(() => import("./pages/debug/Monitoring"));
+const SystemDiagnostic = lazy(() => import("./pages/debug/SystemDiagnostic"));
 
 const queryClient = new QueryClient();
 
@@ -66,7 +69,11 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Index />
+              </Suspense>
+            } />
           <Route path="/qr" element={
             <Suspense fallback={<LoadingFallback />}>
               <QRLanding />
@@ -77,9 +84,21 @@ const App = () => {
               <Menu />
             </Suspense>
           } />
-          <Route path="/menu-debug" element={<MenuDebug />} />
-          <Route path="/payment-debug" element={<PaymentDebug />} />
-          <Route path="/payment-test" element={<PaymentTest />} />
+          <Route path="/menu-debug" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <MenuDebug />
+            </Suspense>
+          } />
+          <Route path="/payment-debug" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PaymentDebug />
+            </Suspense>
+          } />
+          <Route path="/payment-test" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PaymentTest />
+            </Suspense>
+          } />
           <Route path="/checkout" element={
             <Suspense fallback={<LoadingFallback />}>
               <Checkout />
@@ -100,8 +119,16 @@ const App = () => {
               <OrderStatus />
             </Suspense>
           } />
-          <Route path="/order-lookup" element={<OrderLookup />} />
-          <Route path="/auth" element={<Auth />} />
+          <Route path="/order-lookup" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <OrderLookup />
+            </Suspense>
+          } />
+          <Route path="/auth" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Auth />
+            </Suspense>
+          } />
           <Route path="/waiter" element={
             <Suspense fallback={<LoadingFallback />}>
               <Waiter />
@@ -171,7 +198,9 @@ const App = () => {
             path="/monitoring"
             element={
               <ProtectedRoute requiredRole="admin">
-                <Monitoring />
+                <Suspense fallback={<LoadingFallback />}>
+                  <Monitoring />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -229,7 +258,9 @@ const App = () => {
             path="/diagnostic"
             element={
               <ProtectedRoute requiredRole="admin">
-                <SystemDiagnostic />
+                <Suspense fallback={<LoadingFallback />}>
+                  <SystemDiagnostic />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -244,9 +275,17 @@ const App = () => {
             }
           />
           {/* QR Code direct access route - must be last before catch-all */}
-          <Route path="/:tableId" element={<QRRedirect />} />
+          <Route path="/:tableId" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <QRRedirect />
+            </Suspense>
+          } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <NotFound />
+            </Suspense>
+          } />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
