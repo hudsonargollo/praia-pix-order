@@ -185,7 +185,7 @@
     - Commit with message "Migrate admin pages to role-based structure"
     - _Requirements: 7.1_
 
-- [-] 10. Migrate staff pages
+- [x] 10. Migrate staff pages
   - [x] 10.1 Copy staff pages to new location
     - Copy Kitchen.tsx to src/pages/staff/ (note: Kitchen.tsx may not exist, check first)
     - Copy Cashier.tsx to src/pages/staff/
@@ -212,19 +212,19 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [-] 10.5 Git commit staff page migration
+  - [x] 10.5 Git commit staff page migration
     - Commit with message "Migrate staff pages to role-based structure"
     - _Requirements: 7.1_
 
-- [ ] 11. Migrate waiter pages
-  - [ ] 11.1 Copy waiter pages to new location
+- [-] 11. Migrate waiter pages
+  - [x] 11.1 Copy waiter pages to new location
     - Copy Waiter.tsx to src/pages/waiter/
     - Copy WaiterDashboard.tsx to src/pages/waiter/
     - Copy WaiterManagement.tsx to src/pages/waiter/
     - Copy WaiterDiagnostic.tsx to src/pages/waiter/
     - _Requirements: 2.9_
   
-  - [ ] 11.2 Update imports in App.tsx for waiter pages
+  - [x] 11.2 Update imports in App.tsx for waiter pages
     - Change Waiter import to './pages/waiter/Waiter'
     - Change WaiterDashboard import to './pages/waiter/WaiterDashboard'
     - Change WaiterManagement import to './pages/waiter/WaiterManagement'
@@ -233,7 +233,7 @@
     - Run Vite build - must succeed
     - _Requirements: 3.1, 3.4_
   
-  - [ ] 11.3 Delete original waiter page files
+  - [x] 11.3 Delete original waiter page files
     - Delete src/pages/Waiter.tsx
     - Delete src/pages/WaiterDashboard.tsx
     - Delete src/pages/WaiterManagement.tsx
@@ -241,7 +241,7 @@
     - Run TypeScript compiler - must pass
     - _Requirements: 2.9, 3.4_
   
-  - [ ] 11.4 Test waiter routes
+  - [x] 11.4 Test waiter routes
     - Start dev server
     - Navigate to /waiter - verify page loads
     - Navigate to /waiter-dashboard - verify page loads
@@ -250,7 +250,7 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [ ] 11.5 Git commit waiter page migration
+  - [-] 11.5 Git commit waiter page migration
     - Commit with message "Migrate waiter pages to role-based structure"
     - _Requirements: 7.1_
 

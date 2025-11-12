@@ -14,8 +14,8 @@ import Payment from "./pages/customer/Payment";
 import OrderStatus from "./pages/customer/OrderStatus";
 import OrderLookup from "./pages/OrderLookup";
 import Cashier from "./pages/staff/Cashier";
-import Waiter from "./pages/Waiter";
-import WaiterDashboard from "./pages/WaiterDashboard";
+import Waiter from "./pages/waiter/Waiter";
+import WaiterDashboard from "./pages/waiter/WaiterDashboard";
 import Admin from "./pages/admin/Admin";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -30,9 +30,9 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminWaiters from "./pages/admin/AdminWaiters";
 import AdminWaiterReportsPage from "./pages/admin/AdminWaiterReportsPage";
 import Reports from "./pages/admin/Reports";
-import WaiterManagement from "./pages/WaiterManagement";
+import WaiterManagement from "./pages/waiter/WaiterManagement";
 import SystemDiagnostic from "./pages/SystemDiagnostic";
-import WaiterDiagnostic from "./pages/WaiterDiagnostic";
+import WaiterDiagnostic from "./pages/waiter/WaiterDiagnostic";
 
 const queryClient = new QueryClient();
 
