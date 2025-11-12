@@ -189,12 +189,15 @@ const Menu = () => {
   return (
     <div className="min-h-screen relative pb-24">
       {/* Background - Image on mobile, solid yellow on desktop */}
-      <div 
-        className="fixed inset-0 bg-cover bg-top bg-no-repeat md:bg-none md:bg-yellow-400"
-        style={{
-          backgroundImage: `url('/bck-menu.webp')`,
-        }}
-      />
+      <div className="fixed inset-0 md:bg-yellow-400">
+        {/* Mobile background image */}
+        <div 
+          className="md:hidden absolute inset-0 bg-cover bg-top bg-no-repeat"
+          style={{
+            backgroundImage: `url(${window.location.origin}/bck-menu.webp)`,
+          }}
+        />
+      </div>
 
       {/* Header - Desktop: Logo + Categories, Mobile: Background Image */}
       <div className="fixed top-0 left-0 right-0 z-50 shadow-lg">
@@ -202,7 +205,7 @@ const Menu = () => {
         <div 
           className="md:hidden bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('/header.webp')`,
+            backgroundImage: `url(${window.location.origin}/header.webp)`,
           }}
         >
           <div className="max-w-6xl mx-auto px-4 pt-32 pb-2">
