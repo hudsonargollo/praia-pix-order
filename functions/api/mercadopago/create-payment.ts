@@ -19,10 +19,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // Create payment with Mercado Pago
+    // Set expiration to 15 minutes from now
+    const expirationDate = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    
     const paymentPayload = {
       transaction_amount: amount,
       description,
       payment_method_id: 'pix',
+      date_of_expiration: expirationDate,
       payer: {
         email: `${customerPhone.replace(/\D/g, '')}@placeholder.com`,
         first_name: customerName.split(' ')[0] || customerName,
