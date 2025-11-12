@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,12 +6,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/lib/cartContext";
 import { queueManager } from "@/integrations/whatsapp/queue-manager";
+import LoadingFallback from "@/components/LoadingFallback";
 import Index from "./pages/public/Index";
-import QRLanding from "./pages/customer/QRLanding";
-import Menu from "./pages/customer/Menu";
-import Checkout from "./pages/customer/Checkout";
-import Payment from "./pages/customer/Payment";
-import OrderStatus from "./pages/customer/OrderStatus";
+
+// Lazy load customer pages
+const QRLanding = lazy(() => import("./pages/customer/QRLanding"));
+const Menu = lazy(() => import("./pages/customer/Menu"));
+const Checkout = lazy(() => import("./pages/customer/Checkout"));
+const Payment = lazy(() => import("./pages/customer/Payment"));
+const OrderStatus = lazy(() => import("./pages/customer/OrderStatus"));
 import OrderLookup from "./pages/debug/OrderLookup";
 import Cashier from "./pages/staff/Cashier";
 import Waiter from "./pages/waiter/Waiter";
@@ -57,15 +60,39 @@ const App = () => {
           <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-          <Route path="/qr" element={<QRLanding />} />
-          <Route path="/menu" element={<Menu />} />
+          <Route path="/qr" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <QRLanding />
+            </Suspense>
+          } />
+          <Route path="/menu" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Menu />
+            </Suspense>
+          } />
           <Route path="/menu-debug" element={<MenuDebug />} />
           <Route path="/payment-debug" element={<PaymentDebug />} />
           <Route path="/payment-test" element={<PaymentTest />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/payment/:orderId" element={<Payment />} />
-          <Route path="/order-status/:orderId" element={<OrderStatus />} />
-          <Route path="/order/:orderId" element={<OrderStatus />} />
+          <Route path="/checkout" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Checkout />
+            </Suspense>
+          } />
+          <Route path="/payment/:orderId" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Payment />
+            </Suspense>
+          } />
+          <Route path="/order-status/:orderId" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <OrderStatus />
+            </Suspense>
+          } />
+          <Route path="/order/:orderId" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <OrderStatus />
+            </Suspense>
+          } />
           <Route path="/order-lookup" element={<OrderLookup />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/waiter" element={<Waiter />} />

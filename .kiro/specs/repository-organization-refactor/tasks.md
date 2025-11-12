@@ -338,7 +338,7 @@
     - Commit with message "Migrate debug pages to role-based structure"
     - _Requirements: 7.1_
 
-- [-] 14. Verify page migration completion
+- [x] 14. Verify page migration completion
   - Verify src/pages/ root only contains role directories and __tests__/
   - Run full validation: TypeScript compile, Vite build, dev server start
   - Manually test all critical user flows (customer, kitchen, cashier, admin, waiter)
@@ -346,15 +346,15 @@
   - Create git tag "pages-migrated"
   - _Requirements: 2.1-2.11, 3.1-3.5, 7.1-7.3_
 
-- [ ] 15. Create LoadingFallback component
+- [x] 15. Create LoadingFallback component
   - Create src/components/LoadingFallback.tsx with Portuguese loading message
   - Style component to match application design (purple theme)
   - Test component renders correctly
   - Git commit LoadingFallback component
   - _Requirements: 4.3_
 
-- [ ] 16. Implement lazy loading for customer pages
-  - [ ] 16.1 Convert customer page imports to lazy loading
+- [-] 16. Implement lazy loading for customer pages
+  - [x] 16.1 Convert customer page imports to lazy loading
     - Import React.lazy and Suspense in App.tsx
     - Change Menu import to lazy(() => import('./pages/customer/Menu'))
     - Change Checkout import to lazy(() => import('./pages/customer/Checkout'))
@@ -364,7 +364,7 @@
     - Change QRLanding import to lazy(() => import('./pages/customer/QRLanding'))
     - _Requirements: 4.1_
   
-  - [ ] 16.2 Wrap customer routes with Suspense
+  - [x] 16.2 Wrap customer routes with Suspense
     - Wrap /menu route with Suspense and LoadingFallback
     - Wrap /checkout route with Suspense and LoadingFallback
     - Wrap /payment/:orderId route with Suspense and LoadingFallback
@@ -375,7 +375,7 @@
     - Run Vite build - must succeed
     - _Requirements: 4.2_
   
-  - [ ] 16.3 Test customer routes with lazy loading
+  - [x] 16.3 Test customer routes with lazy loading
     - Start dev server
     - Navigate to each customer route
     - Verify loading state appears briefly
@@ -384,7 +384,7 @@
     - Verify no console errors
     - _Requirements: 4.5, 7.1, 7.2, 7.3_
   
-  - [ ] 16.4 Git commit customer lazy loading
+  - [-] 16.4 Git commit customer lazy loading
     - Commit with message "Implement lazy loading for customer pages"
     - _Requirements: 4.1, 4.2_
 
