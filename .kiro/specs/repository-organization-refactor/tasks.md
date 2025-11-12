@@ -93,7 +93,7 @@
   - Git commit directory structure
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.11_
 
-- [-] 8. Migrate customer pages
+- [x] 8. Migrate customer pages
   - [x] 8.1 Copy customer pages to new location
     - Copy (don't move yet) Menu.tsx to src/pages/customer/
     - Copy Checkout.tsx to src/pages/customer/
@@ -135,12 +135,12 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [-] 8.5 Git commit customer page migration
+  - [x] 8.5 Git commit customer page migration
     - Commit with message "Migrate customer pages to role-based structure"
     - _Requirements: 7.1_
 
-- [ ] 9. Migrate admin pages
-  - [ ] 9.1 Copy admin pages to new location
+- [-] 9. Migrate admin pages
+  - [x] 9.1 Copy admin pages to new location
     - Copy Admin.tsx to src/pages/admin/
     - Copy AdminProducts.tsx to src/pages/admin/
     - Copy AdminWaiters.tsx to src/pages/admin/
@@ -149,7 +149,7 @@
     - Copy WhatsAppAdmin.tsx to src/pages/admin/
     - _Requirements: 2.7_
   
-  - [ ] 9.2 Update imports in App.tsx for admin pages
+  - [x] 9.2 Update imports in App.tsx for admin pages
     - Change Admin import to './pages/admin/Admin'
     - Change AdminProducts import to './pages/admin/AdminProducts'
     - Change AdminWaiters import to './pages/admin/AdminWaiters'
@@ -160,7 +160,7 @@
     - Run Vite build - must succeed
     - _Requirements: 3.1, 3.4_
   
-  - [ ] 9.3 Delete original admin page files
+  - [x] 9.3 Delete original admin page files
     - Delete src/pages/Admin.tsx
     - Delete src/pages/AdminProducts.tsx
     - Delete src/pages/AdminWaiters.tsx
@@ -170,7 +170,7 @@
     - Run TypeScript compiler - must pass
     - _Requirements: 2.7, 3.4_
   
-  - [ ] 9.4 Test admin routes
+  - [x] 9.4 Test admin routes
     - Start dev server
     - Navigate to /admin - verify page loads
     - Navigate to /admin/products - verify page loads
@@ -181,7 +181,7 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [ ] 9.5 Git commit admin page migration
+  - [-] 9.5 Git commit admin page migration
     - Commit with message "Migrate admin pages to role-based structure"
     - _Requirements: 7.1_
 
