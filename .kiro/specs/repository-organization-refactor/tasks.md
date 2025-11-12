@@ -507,7 +507,7 @@
   - Document performance improvements
   - _Requirements: 4.4_
 
-    re- [x] 22. Review and consolidate SQL migrations
+    - [x] 22. Review and consolidate SQL migrations
   - [x] 22.1 Review archived SQL files
     - Read all .sql files in _archive/sql_fixes/
     - Identify files that contain essential schema changes
@@ -584,7 +584,7 @@
   - Git commit _archive/README.md
   - _Requirements: 8.1, 8.2, 8.3_
 
-- [x] 26. Final validation and testing
+- [-] 26. Final validation and testing
   - [x] 26.1 Run full validation suite
     - Run npx tsc --noEmit - must pass
     - Run npm run lint - must pass
@@ -592,7 +592,7 @@
     - Run npm run dev - must start without errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [x] 26.2 Test all user flows end-to-end
+  - [-] 26.2 Test all user flows end-to-end
     - Test customer flow: QR scan → Menu → Checkout → Payment → Order Status
     - Test kitchen flow: Login → View orders → Update status
     - Test cashier flow: Login → Monitor orders → Send notifications
@@ -611,12 +611,12 @@
     - All tests pass (if tests exist)
     - _Requirements: All requirements_
   
-  - [x] 26.4 Create final git commit and tag
+  - [ ] 26.4 Create final git commit and tag
     - Commit with message "Complete repository organization refactor"
     - Create git tag "refactor-complete-v1.0"
     - _Requirements: 7.1_
 
-- [x] 27. Document completion
+- [ ] 27. Document completion
   - Create summary document with before/after metrics
   - Document bundle size improvements
   - Document file count reduction
