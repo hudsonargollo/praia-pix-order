@@ -24,8 +24,10 @@ const AdminWaiterReportsPage = lazy(() => import("./pages/admin/AdminWaiterRepor
 const Reports = lazy(() => import("./pages/admin/Reports"));
 const WhatsAppAdmin = lazy(() => import("./pages/admin/WhatsAppAdmin"));
 
+// Lazy load staff pages
+const Cashier = lazy(() => import("./pages/staff/Cashier"));
+
 import OrderLookup from "./pages/debug/OrderLookup";
-import Cashier from "./pages/staff/Cashier";
 import Waiter from "./pages/waiter/Waiter";
 import WaiterDashboard from "./pages/waiter/WaiterDashboard";
 import Auth from "./pages/public/Auth";
@@ -121,7 +123,9 @@ const App = () => {
             path="/kitchen"
             element={
               <ProtectedRoute requiredRole="kitchen">
-                <Cashier />
+                <Suspense fallback={<LoadingFallback />}>
+                  <Cashier />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -129,7 +133,9 @@ const App = () => {
             path="/cashier"
             element={
               <ProtectedRoute requiredRole="cashier">
-                <Cashier />
+                <Suspense fallback={<LoadingFallback />}>
+                  <Cashier />
+                </Suspense>
               </ProtectedRoute>
             }
           />
