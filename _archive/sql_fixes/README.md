@@ -187,6 +187,39 @@ General utility scripts:
 
 **Status:** Historical - This function is now part of the order management system
 
+## Review Findings (November 12, 2025)
+
+After comprehensive review of all 85 archived SQL files, the following essential schema elements were identified:
+
+### ✅ Already in Migrations
+- All table schemas (orders, menu_items, profiles, customers, etc.)
+- All RLS policies
+- WhatsApp integration tables
+- Payment webhooks
+- Waiter management functions
+- Order management functions
+
+### ✅ Migrated (November 12, 2025)
+The following essential schema elements were identified as missing and have been added to migrations:
+
+1. **get_user_role() function** - Used in:
+   - `src/components/ProtectedRoute.tsx`
+   - `src/pages/public/Auth.tsx`
+   - `src/pages/waiter/WaiterDiagnostic.tsx`
+   - **Migration:** `20251112000001_create_get_user_role_function.sql`
+
+2. **product-images storage bucket** - Used in:
+   - `src/pages/admin/AdminProducts.tsx`
+   - `src/pages/debug/SystemDiagnostic.tsx`
+   - **Migration:** `20251112000002_create_product_images_bucket.sql`
+
+### ❌ Not Used (Historical)
+- `mark_order_ready()` function - Not referenced in codebase
+- All admin account creation scripts - Superseded by admin panel
+- All waiter creation scripts - Superseded by waiter management
+- All diagnostic queries - One-off debugging
+- All RLS fix iterations - Final versions in migrations
+
 ## Migration Status
 
 All essential database schema changes from these files have been incorporated into the proper migration files in `supabase/migrations/`. The current migration files cover:
@@ -219,6 +252,8 @@ All essential database schema changes from these files have been incorporated in
 26. **20251111000004** - Create payment webhooks table
 27. **20251111000005** - Fix confirm payment status
 28. **20251111000006** - Update WhatsApp notifications schema
+29. **20251112000001** - Create get_user_role function (consolidated from archived files)
+30. **20251112000002** - Create product-images storage bucket (consolidated from archived files)
 
 ## When to Reference These Files
 
