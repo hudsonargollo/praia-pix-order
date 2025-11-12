@@ -139,7 +139,7 @@
     - Commit with message "Migrate customer pages to role-based structure"
     - _Requirements: 7.1_
 
-- [-] 9. Migrate admin pages
+- [x] 9. Migrate admin pages
   - [x] 9.1 Copy admin pages to new location
     - Copy Admin.tsx to src/pages/admin/
     - Copy AdminProducts.tsx to src/pages/admin/
@@ -181,38 +181,38 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [-] 9.5 Git commit admin page migration
+  - [x] 9.5 Git commit admin page migration
     - Commit with message "Migrate admin pages to role-based structure"
     - _Requirements: 7.1_
 
-- [ ] 10. Migrate staff pages
-  - [ ] 10.1 Copy staff pages to new location
+- [-] 10. Migrate staff pages
+  - [x] 10.1 Copy staff pages to new location
     - Copy Kitchen.tsx to src/pages/staff/ (note: Kitchen.tsx may not exist, check first)
     - Copy Cashier.tsx to src/pages/staff/
     - Copy UnifiedCashier.tsx to src/pages/staff/
     - _Requirements: 2.8_
   
-  - [ ] 10.2 Update imports in App.tsx for staff pages
+  - [x] 10.2 Update imports in App.tsx for staff pages
     - Change Cashier import to './pages/staff/Cashier'
     - Change UnifiedCashier import to './pages/staff/UnifiedCashier' (if exists)
     - Run TypeScript compiler - must pass
     - Run Vite build - must succeed
     - _Requirements: 3.1, 3.4_
   
-  - [ ] 10.3 Delete original staff page files
+  - [x] 10.3 Delete original staff page files
     - Delete src/pages/Cashier.tsx
     - Delete src/pages/UnifiedCashier.tsx (if exists)
     - Run TypeScript compiler - must pass
     - _Requirements: 2.8, 3.4_
   
-  - [ ] 10.4 Test staff routes
+  - [x] 10.4 Test staff routes
     - Start dev server
     - Navigate to /kitchen - verify page loads
     - Navigate to /cashier - verify page loads
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [ ] 10.5 Git commit staff page migration
+  - [-] 10.5 Git commit staff page migration
     - Commit with message "Migrate staff pages to role-based structure"
     - _Requirements: 7.1_
 

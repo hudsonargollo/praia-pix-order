@@ -13,7 +13,7 @@ import Checkout from "./pages/customer/Checkout";
 import Payment from "./pages/customer/Payment";
 import OrderStatus from "./pages/customer/OrderStatus";
 import OrderLookup from "./pages/OrderLookup";
-import Cashier from "./pages/Cashier";
+import Cashier from "./pages/staff/Cashier";
 import Waiter from "./pages/Waiter";
 import WaiterDashboard from "./pages/WaiterDashboard";
 import Admin from "./pages/admin/Admin";
