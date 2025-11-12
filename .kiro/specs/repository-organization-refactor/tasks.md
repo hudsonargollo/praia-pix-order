@@ -55,14 +55,14 @@
     - Document archival date and reason
     - _Requirements: 5.5, 8.1, 8.4_
 
-- [-] 5. Archive shell scripts and test files
+- [x] 5. Archive shell scripts and test files
   - [x] 5.1 Identify all .sh and root-level .ts test files
     - Scan root directory for .sh files
     - Scan root directory for .ts files (exclude essential configs)
     - Verify no file is imported by source code
     - _Requirements: 1.2_
   
-  - [-] 5.2 Move shell scripts to _archive/test_scripts/
+  - [x] 5.2 Move shell scripts to _archive/test_scripts/
     - Move all .sh files
     - Move root-level test .ts files
     - After moving: run TypeScript compiler, run Vite build, test dev server
@@ -70,12 +70,12 @@
     - If any validation fails, rollback and stop
     - _Requirements: 1.2, 7.1, 7.2_
   
-  - [ ] 5.3 Create _archive/test_scripts/README.md
+  - [x] 5.3 Create _archive/test_scripts/README.md
     - List all archived scripts with descriptions
     - Document archival date and reason
     - _Requirements: 8.1, 8.2_
 
-- [ ] 6. Verify archive phase completion
+- [-] 6. Verify archive phase completion
   - Count files in root directory (should be ≤20 excluding _archive/)
   - Run full validation: TypeScript compile, Vite build, dev server start
   - Manually test all critical user flows
