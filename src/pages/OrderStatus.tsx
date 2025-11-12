@@ -67,7 +67,7 @@ const OrderStatus = () => {
       if (orderError) throw orderError;
       if (!orderData) throw new Error('Pedido não encontrado');
 
-      setOrder(orderData);
+      setOrder(orderData as Order);
 
       // Load order items
       const { data: itemsData, error: itemsError } = await supabase
@@ -201,20 +201,22 @@ const OrderStatus = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-gradient-ocean text-white p-6 shadow-medium">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mb-2 text-white hover:bg-white/20"
-          onClick={() => navigate('/')}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-2xl font-bold">Status do Pedido</h1>
-        <p className="text-white/90 mt-1">
-          Pedido #{order.order_number} • {order.customer_phone}
+        <div className="flex items-center gap-3 mb-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/20"
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold">Status do Pedido</h1>
+        </div>
+        <p className="text-white/90 text-lg font-medium">
+          Pedido #{order.order_number}
         </p>
-        <p className="text-white/70 text-sm">
-          Criado {getElapsedTime(order.created_at)}
+        <p className="text-white/70 text-sm mt-1">
+          {order.customer_phone} • {getElapsedTime(order.created_at)}
         </p>
       </div>
 
@@ -292,28 +294,40 @@ const OrderStatus = () => {
               <span className="font-semibold">{order.customer_phone}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Telefone:</span>
-              <span className="font-semibold">{order.customer_phone}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Criado em:</span>
+              <span className="text-muted-foreground">Criado:</span>
               <span className="font-semibold">
-                {new Date(order.created_at).toLocaleString('pt-BR')}
+                {new Date(order.created_at).toLocaleString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
               </span>
             </div>
             {order.payment_confirmed_at && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Pagamento confirmado:</span>
+                <span className="text-muted-foreground">Pagamento:</span>
                 <span className="font-semibold text-green-600">
-                  {new Date(order.payment_confirmed_at).toLocaleString('pt-BR')}
+                  {new Date(order.payment_confirmed_at).toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                 </span>
               </div>
             )}
             {order.ready_at && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Pronto em:</span>
+                <span className="text-muted-foreground">Pronto:</span>
                 <span className="font-semibold text-green-600">
-                  {new Date(order.ready_at).toLocaleString('pt-BR')}
+                  {new Date(order.ready_at).toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                 </span>
               </div>
             )}

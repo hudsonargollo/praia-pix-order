@@ -190,13 +190,9 @@ const Menu = () => {
     <div className="min-h-screen relative pb-24">
       {/* Background - Image on mobile, solid color on desktop */}
       <div 
-        className="fixed inset-0 md:bg-none"
+        className="fixed inset-0 bg-cover bg-top bg-no-repeat md:bg-none md:bg-gray-50"
         style={{
-          backgroundImage: window.innerWidth < 768 ? `url('/bck-menu.webp')` : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'top',
-          backgroundRepeat: 'no-repeat',
-          backgroundColor: window.innerWidth >= 768 ? '#f8f9fa' : 'transparent'
+          backgroundImage: `url('/bck-menu.webp')`,
         }}
       />
 

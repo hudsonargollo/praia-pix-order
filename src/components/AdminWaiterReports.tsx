@@ -106,7 +106,7 @@ const AdminWaiterReports = () => {
         customer_name: order.customer_name,
         customer_phone: order.customer_phone,
         total_amount: order.total_amount,
-        commission_amount: Number(order.total_amount) * 0.1, // Calculate 10% commission
+        commission_amount: order.commission_amount || (Number(order.total_amount) * 0.1), // Use DB value or calculate
         status: order.status,
         created_at: order.created_at,
         order_notes: order.order_notes || "", // Handle missing field gracefully
@@ -114,17 +114,24 @@ const AdminWaiterReports = () => {
       
       setWaiterOrders(waiterOrders);
 
-      // Calculate statistics
+      // Calculate statistics - include all orders, not just completed
       const completedOrders = waiterOrders.filter(o => o.status === "completed");
-      const grossSales = completedOrders.reduce((sum, o) => sum + Number(o.total_amount), 0);
-      const totalCommission = completedOrders.reduce((sum, o) => sum + Number(o.commission_amount || 0), 0);
+      const paidOrders = waiterOrders.filter(o => 
+        o.status === "completed" || 
+        o.status === "paid" || 
+        o.status === "ready" || 
+        o.status === "in_preparation"
+      );
+      
+      const grossSales = paidOrders.reduce((sum, o) => sum + Number(o.total_amount), 0);
+      const totalCommission = paidOrders.reduce((sum, o) => sum + Number(o.commission_amount || 0), 0);
 
       setWaiterStats({
         totalOrders: waiterOrders.length,
         completedOrders: completedOrders.length,
         grossSales,
         totalCommission,
-        averageOrderValue: completedOrders.length > 0 ? grossSales / completedOrders.length : 0,
+        averageOrderValue: paidOrders.length > 0 ? grossSales / paidOrders.length : 0,
       });
 
     } catch (error) {

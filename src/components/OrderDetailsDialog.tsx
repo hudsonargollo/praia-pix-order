@@ -213,7 +213,7 @@ export function OrderDetailsDialog({
               {editing ? (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="customer_name">Nome</Label>
+                    <Label htmlFor="customer_name">Cliente</Label>
                     <Input
                       id="customer_name"
                       value={formData.customer_name}
@@ -228,32 +228,20 @@ export function OrderDetailsDialog({
                       onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="table_number">Mesa</Label>
-                    <Input
-                      id="table_number"
-                      value={formData.table_number}
-                      onChange={(e) => setFormData({ ...formData, table_number: e.target.value })}
-                    />
-                  </div>
                 </>
               ) : (
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Nome</p>
-                    <p className="font-medium">{order.customer_name}</p>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-muted-foreground">Cliente:</span>
+                    <span className="font-semibold">{order.customer_name}</span>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Telefone</p>
-                    <p className="font-medium">{order.customer_phone}</p>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-muted-foreground">Telefone:</span>
+                    <span className="font-semibold">{order.customer_phone}</span>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Mesa</p>
-                    <p className="font-medium">{order.table_number}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Status</p>
-                    <p className="font-medium">{getStatusLabel(order.status)}</p>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-muted-foreground">Status:</span>
+                    <span className="font-semibold">{getStatusLabel(order.status)}</span>
                   </div>
                 </div>
               )}
@@ -292,21 +280,21 @@ export function OrderDetailsDialog({
             {/* Timestamps */}
             <div className="space-y-3">
               <h3 className="font-semibold text-lg">Histórico</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Criado em:</span>
-                  <span className="font-medium">{formatTimestamp(order.created_at)}</span>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-muted-foreground">Criado:</span>
+                  <span className="font-medium text-sm">{formatTimestamp(order.created_at)}</span>
                 </div>
                 {order.payment_confirmed_at && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pagamento confirmado:</span>
-                    <span className="font-medium">{formatTimestamp(order.payment_confirmed_at)}</span>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-muted-foreground">Pagamento:</span>
+                    <span className="font-medium text-sm text-green-600">{formatTimestamp(order.payment_confirmed_at)}</span>
                   </div>
                 )}
                 {order.ready_at && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pronto em:</span>
-                    <span className="font-medium">{formatTimestamp(order.ready_at)}</span>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-muted-foreground">Pronto:</span>
+                    <span className="font-medium text-sm text-green-600">{formatTimestamp(order.ready_at)}</span>
                   </div>
                 )}
               </div>

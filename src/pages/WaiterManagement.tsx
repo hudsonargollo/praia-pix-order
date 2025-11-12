@@ -202,46 +202,41 @@ const WaiterManagement = () => {
             <div className="flex items-center space-x-3 sm:space-x-4">
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={handleBack}
-                className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                className="text-white hover:bg-white/20 transition-all duration-300"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Voltar</span>
+                <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="relative">
                 <img 
                   src={logo} 
                   alt="Coco Loko Açaiteria" 
-                  className="h-12 sm:h-16 w-auto drop-shadow-lg"
+                  className="h-12 sm:h-14 w-auto drop-shadow-lg"
                 />
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-2xl font-bold">
                   Gestão de Garçons
                 </h1>
-                <p className="text-blue-100 mt-1 text-xs sm:text-base font-medium">
-                  Gerenciar equipe e relatórios • Sistema Completo
-                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Button
                 onClick={fetchWaiters}
                 variant="ghost"
-                size="sm"
-                className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                size="icon"
+                className="text-white hover:bg-white/20 transition-all duration-300"
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>
               <Button
                 onClick={openCreateDialog}
-                className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                className="bg-white text-purple-600 hover:bg-white/90"
                 size="sm"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Novo Garçom</span>
+                <span className="hidden sm:inline">Novo</span>
               </Button>
             </div>
           </div>
