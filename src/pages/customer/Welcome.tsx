@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { QrCode, MapPin } from "lucide-react";
 import { validateTableId, formatTableDisplay } from "@/lib/tableContext";
 import logo from "@/assets/coco-loko-logo.png";
+import bckMImage from "@/assets/bck-m.webp";
 
 const Welcome = () => {
   const { tableId } = useParams<{ tableId: string }>();
@@ -23,7 +24,7 @@ const Welcome = () => {
     <div 
       className="h-screen flex flex-col items-center justify-center px-4 bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `linear-gradient(rgba(88, 28, 135, 0.7), rgba(59, 130, 246, 0.7)), url(${window.location.origin}/bck-m.webp)`,
+        backgroundImage: `linear-gradient(rgba(88, 28, 135, 0.7), rgba(59, 130, 246, 0.7)), url(${bckMImage})`,
       }}
     >
       <div className="max-w-md w-full text-center">

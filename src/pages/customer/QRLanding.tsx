@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import bckImage from "@/assets/bck.webp";
 
 const QRLanding = () => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const QRLanding = () => {
     <div 
       className="min-h-screen flex flex-col justify-end py-8 px-4 bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `url(${window.location.origin}/bck.webp)`,
+        backgroundImage: `url(${bckImage})`,
       }}
     >
       {/* Bottom Section - Button */}

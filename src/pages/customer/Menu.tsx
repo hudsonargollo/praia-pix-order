@@ -12,6 +12,8 @@ import { ShoppingCart, Plus, Minus, Clock, LogOut, Coffee, Droplets, IceCream, S
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import logo from "@/assets/coco-loko-logo.png";
+import bckMenuImage from "@/assets/bck-menu.webp";
+import headerImage from "@/assets/header.webp";
 
 interface MenuItem {
   id: string;
@@ -194,7 +196,7 @@ const Menu = () => {
         <div 
           className="md:hidden absolute inset-0 bg-cover bg-top bg-no-repeat"
           style={{
-            backgroundImage: `url(${window.location.origin}/bck-menu.webp)`,
+            backgroundImage: `url(${bckMenuImage})`,
           }}
         />
       </div>
@@ -205,7 +207,7 @@ const Menu = () => {
         <div 
           className="md:hidden bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url(${window.location.origin}/header.webp)`,
+            backgroundImage: `url(${headerImage})`,
           }}
         >
           <div className="max-w-6xl mx-auto px-4 pt-32 pb-2">
