@@ -206,16 +206,12 @@ Em breve você receberá uma notificação quando estiver pronto! 🥥🌊`,
 
       ready: `🌴 *Coco Loko Açaiteria* 🌴
 
-🎉 *Pedido Pronto!*
+🎉 *Seu Pedido está pronto para retirada no balcão!*
 
 📋 *Pedido #{{orderNumber}}*
 👤 *Cliente:* {{customerName}}
 
-✨ Seu pedido está pronto para retirada no balcão!
-
-Por favor, apresente este número do pedido: *#{{orderNumber}}*
-
-Aproveite seu açaí! 🥥🌊`,
+✨ Por favor, apresente o número do seu pedido: *#{{orderNumber}}*`,
 
       custom: `🌴 *Coco Loko Açaiteria* 🌴
 

@@ -112,17 +112,12 @@ Obrigado por escolher a Coco Loko! 🥥🌊`;
   private static generateReadyForPickupFallback(orderData: OrderData): string {
     return `🌴 *Coco Loko Açaiteria* 🌴
 
-🎉 *Pedido Pronto!*
+🎉 *Seu Pedido está pronto para retirada no balcão!*
 
 📋 *Pedido #${orderData.orderNumber}*
 👤 *Cliente:* ${orderData.customerName}
-📱 *Telefone:* ${orderData.customerPhone}
 
-✨ Seu pedido está pronto para retirada no balcão!
-
-Por favor, apresente este número do pedido: *#${orderData.orderNumber}*
-
-Aproveite seu açaí! 🥥🌊`;
+✨ Por favor, apresente o número do seu pedido: *#${orderData.orderNumber}*`;
   }
 
   private static generatePreparingFallback(orderData: OrderData): string {
