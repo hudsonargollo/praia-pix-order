@@ -254,7 +254,7 @@
     - Commit with message "Migrate waiter pages to role-based structure"
     - _Requirements: 7.1_
 
-- [-] 12. Migrate public pages
+- [x] 12. Migrate public pages
   - [x] 12.1 Copy public pages to new location
     - Copy Index.tsx to src/pages/public/
     - Copy Auth.tsx to src/pages/public/
@@ -284,12 +284,12 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [-] 12.5 Git commit public page migration
+  - [x] 12.5 Git commit public page migration
     - Commit with message "Migrate public pages to role-based structure"
     - _Requirements: 7.1_
 
-- [ ] 13. Migrate debug pages
-  - [ ] 13.1 Copy debug pages to new location
+- [-] 13. Migrate debug pages
+  - [x] 13.1 Copy debug pages to new location
     - Copy MenuDebug.tsx to src/pages/debug/
     - Copy PaymentDebug.tsx to src/pages/debug/
     - Copy PaymentTest.tsx to src/pages/debug/
@@ -299,7 +299,7 @@
     - Copy QRRedirect.tsx to src/pages/debug/
     - _Requirements: 2.11_
   
-  - [ ] 13.2 Update imports in App.tsx for debug pages
+  - [x] 13.2 Update imports in App.tsx for debug pages
     - Change MenuDebug import to './pages/debug/MenuDebug'
     - Change PaymentDebug import to './pages/debug/PaymentDebug'
     - Change PaymentTest import to './pages/debug/PaymentTest'
@@ -311,7 +311,7 @@
     - Run Vite build - must succeed
     - _Requirements: 3.1, 3.4_
   
-  - [ ] 13.3 Delete original debug page files
+  - [x] 13.3 Delete original debug page files
     - Delete src/pages/MenuDebug.tsx
     - Delete src/pages/PaymentDebug.tsx
     - Delete src/pages/PaymentTest.tsx
@@ -322,7 +322,7 @@
     - Run TypeScript compiler - must pass
     - _Requirements: 2.11, 3.4_
   
-  - [ ] 13.4 Test debug routes
+  - [x] 13.4 Test debug routes
     - Start dev server
     - Navigate to /menu-debug - verify page loads
     - Navigate to /payment-debug - verify page loads
@@ -334,7 +334,7 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [ ] 13.5 Git commit debug page migration
+  - [-] 13.5 Git commit debug page migration
     - Commit with message "Migrate debug pages to role-based structure"
     - _Requirements: 7.1_
 
