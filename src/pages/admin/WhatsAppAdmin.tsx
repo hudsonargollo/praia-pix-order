@@ -333,12 +333,12 @@ export default function WhatsAppAdmin() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-3 sm:py-4">
+          <div className="flex justify-between items-center py-2 sm:py-3">
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <img src={logo} alt="Coco Loko" className="h-8 sm:h-10" />
+              <img src={logo} alt="Coco Loko" className="h-7 sm:h-10" />
               <div>
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">WhatsApp Admin</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Monitoramento e gerenciamento de notificações</p>
+                <h1 className="text-base sm:text-2xl font-bold text-gray-900">WhatsApp Admin</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden md:block">Monitoramento e gerenciamento</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -373,28 +373,29 @@ export default function WhatsAppAdmin() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
         {/* Connection Status Alert */}
         {connectionStatus === 'disconnected' && (
-          <Alert className="mb-6 border-orange-200 bg-orange-50">
+          <Alert className="mb-4 border-orange-200 bg-orange-50 p-3 sm:p-4">
             <AlertTriangle className="h-4 w-4 text-orange-600" />
-            <AlertTitle className="text-orange-800">WhatsApp Desconectado</AlertTitle>
-            <AlertDescription className="text-orange-700">
+            <AlertTitle className="text-orange-800 text-sm sm:text-base">WhatsApp Desconectado</AlertTitle>
+            <AlertDescription className="text-orange-700 text-xs sm:text-sm">
               O WhatsApp não está conectado. Clique em "Conectar" para escanear o QR code e ativar as notificações.
             </AlertDescription>
           </Alert>
         )}
 
         {connectionStatus === 'connected' && connectionInfo && (
-          <Alert className="mb-6 border-green-200 bg-green-50">
+          <Alert className="mb-4 border-green-200 bg-green-50 p-3 sm:p-4">
             <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">WhatsApp Conectado</AlertTitle>
-            <AlertDescription className="text-green-700">
-              <div className="space-y-1">
-                {connectionInfo.profileName && <p>Perfil: {connectionInfo.profileName}</p>}
-                {connectionInfo.phoneNumber && <p>Telefone: {connectionInfo.phoneNumber}</p>}
+            <AlertTitle className="text-green-800 text-sm sm:text-base">WhatsApp Conectado</AlertTitle>
+            <AlertDescription className="text-green-700 text-xs sm:text-sm">
+              <div className="space-y-0.5">
+                {connectionInfo.phoneNumber && <p>Tel: {connectionInfo.phoneNumber}</p>}
                 {connectionInfo.connectedAt && (
-                  <p>Conectado em: {new Date(connectionInfo.connectedAt).toLocaleString('pt-BR')}</p>
+                  <p className="hidden sm:block">
+                    Conectado: {new Date(connectionInfo.connectedAt).toLocaleString('pt-BR')}
+                  </p>
                 )}
               </div>
             </AlertDescription>
@@ -402,27 +403,27 @@ export default function WhatsAppAdmin() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Enviadas</CardTitle>
               <Send className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold">{stats.totalSent}</div>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{stats.totalSent}</div>
               <p className="text-xs text-muted-foreground">
-                Taxa: {stats.deliveryRate.toFixed(1)}%
+                {stats.deliveryRate.toFixed(1)}%
               </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Falhadas</CardTitle>
               <XCircle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold">{stats.totalFailed}</div>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{stats.totalFailed}</div>
               <p className="text-xs text-muted-foreground">
                 Erros de entrega
               </p>
@@ -430,12 +431,12 @@ export default function WhatsAppAdmin() {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Pendentes</CardTitle>
               <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold">{stats.totalPending}</div>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{stats.totalPending}</div>
               <p className="text-xs text-muted-foreground">
                 Aguardando envio
               </p>
@@ -443,12 +444,12 @@ export default function WhatsAppAdmin() {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Tempo Médio</CardTitle>
               <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold">0s</div>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold">0s</div>
               <p className="text-xs text-muted-foreground">
                 Tempo de entrega
               </p>
@@ -457,18 +458,18 @@ export default function WhatsAppAdmin() {
         </div>
 
         {/* Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
+            <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                 Teste de Conexão
               </CardTitle>
-              <CardDescription>
-                Envie uma mensagem de teste para verificar se o WhatsApp está funcionando
+              <CardDescription className="text-xs sm:text-sm">
+                Envie mensagem de teste
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
               <Button
                 onClick={handleTestMessage}
                 disabled={connectionStatus !== 'connected'}
@@ -481,16 +482,16 @@ export default function WhatsAppAdmin() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
+            <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                 Gerenciar Conexão
               </CardTitle>
-              <CardDescription>
-                Conectar, desconectar ou reconectar o WhatsApp
+              <CardDescription className="text-xs sm:text-sm">
+                Conectar ou desconectar
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0 space-y-2">
               {connectionStatus === 'connected' ? (
                 <Button
                   onClick={handleDisconnect}
@@ -525,34 +526,34 @@ export default function WhatsAppAdmin() {
         <Dialog open={showConnectionDialog} onOpenChange={setShowConnectionDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Conectar WhatsApp</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-base sm:text-lg">Conectar WhatsApp</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm">
                 Escaneie o QR code com seu WhatsApp para conectar
               </DialogDescription>
             </DialogHeader>
             
-            <div className="flex flex-col items-center justify-center py-6 space-y-4">
+            <div className="flex flex-col items-center justify-center py-4 sm:py-6 space-y-3 sm:space-y-4">
               {connectionStatus === 'connecting' && qrCode ? (
                 <>
-                  <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+                  <div className="bg-white p-3 sm:p-4 rounded-lg border-2 border-gray-200">
                     <img 
                       src={qrCode} 
                       alt="QR Code" 
-                      className="w-48 h-48 sm:w-64 sm:h-64"
+                      className="w-48 h-48 sm:w-56 sm:h-56"
                     />
                   </div>
                   <div className="text-center space-y-2">
-                    <p className="text-sm font-medium">Como conectar:</p>
-                    <ol className="text-xs text-gray-600 space-y-1 text-left">
+                    <p className="text-xs sm:text-sm font-medium">Como conectar:</p>
+                    <ol className="text-xs text-gray-600 space-y-0.5 sm:space-y-1 text-left">
                       <li>1. Abra o WhatsApp no seu celular</li>
                       <li>2. Vá em <strong>Configurações</strong> → <strong>Aparelhos conectados</strong></li>
-                      <li>3. Toque em <strong>Conectar um aparelho</strong></li>
+                      <li>3. Toque em <strong>Conectar aparelho</strong></li>
                       <li>4. Escaneie este QR code</li>
                     </ol>
                   </div>
                 </>
               ) : connectionStatus === 'connecting' ? (
-                <div className="flex flex-col items-center space-y-4">
+                <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                   <RefreshCw className="h-12 w-12 animate-spin text-green-600" />
                   <p className="text-sm text-gray-600">Gerando QR code...</p>
                   <p className="text-xs text-gray-500 text-center">
@@ -560,7 +561,7 @@ export default function WhatsAppAdmin() {
                   </p>
                 </div>
               ) : connectionStatus === 'connected' ? (
-                <div className="flex flex-col items-center space-y-4">
+                <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                   <div className="bg-green-100 p-4 rounded-full">
                     <Wifi className="h-12 w-12 text-green-600" />
                   </div>
@@ -586,7 +587,7 @@ export default function WhatsAppAdmin() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col items-center space-y-4">
+                <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                   <div className="bg-gray-100 p-4 rounded-full">
                     <WifiOff className="h-12 w-12 text-gray-400" />
                   </div>
