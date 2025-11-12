@@ -288,7 +288,7 @@
     - Commit with message "Migrate public pages to role-based structure"
     - _Requirements: 7.1_
 
-- [-] 13. Migrate debug pages
+- [x] 13. Migrate debug pages
   - [x] 13.1 Copy debug pages to new location
     - Copy MenuDebug.tsx to src/pages/debug/
     - Copy PaymentDebug.tsx to src/pages/debug/
@@ -334,11 +334,11 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [-] 13.5 Git commit debug page migration
+  - [x] 13.5 Git commit debug page migration
     - Commit with message "Migrate debug pages to role-based structure"
     - _Requirements: 7.1_
 
-- [ ] 14. Verify page migration completion
+- [-] 14. Verify page migration completion
   - Verify src/pages/ root only contains role directories and __tests__/
   - Run full validation: TypeScript compile, Vite build, dev server start
   - Manually test all critical user flows (customer, kitchen, cashier, admin, waiter)
