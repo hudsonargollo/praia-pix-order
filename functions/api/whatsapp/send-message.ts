@@ -65,7 +65,27 @@ export async function onRequest(context: { request: Request; env: Env }) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Evolution API error:', data);
+      console.error('Evolution API error:', {
+        status: response.status,
+        data: data,
+        number: body.number
+      });
+      
+      // Check if error is due to number not existing on WhatsApp
+      if (data.response?.message?.[0]?.exists === false) {
+        return new Response(JSON.stringify({
+          error: 'Phone number does not have WhatsApp',
+          details: data,
+          number: body.number
+        }), {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        });
+      }
+      
       return new Response(JSON.stringify(data), {
         status: response.status,
         headers: {
@@ -75,7 +95,10 @@ export async function onRequest(context: { request: Request; env: Env }) {
       });
     }
 
-    console.log('Message sent successfully:', data.key?.id);
+    console.log('Message sent successfully:', {
+      messageId: data.key?.id,
+      number: body.number
+    });
 
     return new Response(JSON.stringify(data), {
       status: 200,

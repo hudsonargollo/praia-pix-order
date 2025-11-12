@@ -198,6 +198,8 @@ export class NotificationQueueManager {
       const decryptedPhone = await decryptPhoneNumberSafe(notification.customer_phone);
 
       // Send the message using Evolution API
+      console.log(`Sending notification ${notificationId} to ${decryptedPhone}`);
+      
       const response = await evolutionClient.sendTextMessage({
         number: decryptedPhone,
         text: notification.message_content,
@@ -216,14 +218,21 @@ export class NotificationQueueManager {
         })
         .eq('id', notificationId);
 
-      console.log(`Notification ${notificationId} sent successfully`);
+      console.log(`Notification ${notificationId} sent successfully to ${decryptedPhone}`, {
+        messageId,
+        type: notification.notification_type
+      });
 
       return {
         notificationId,
         success: true,
       };
     } catch (error) {
-      console.error(`Failed to process notification ${notificationId}:`, error);
+      console.error(`Failed to process notification ${notificationId}:`, {
+        error: error instanceof Error ? error.message : error,
+        phone: notification.customer_phone,
+        type: notification.notification_type
+      });
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const attempts = notification.attempts + 1;
