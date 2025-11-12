@@ -216,7 +216,7 @@
     - Commit with message "Migrate staff pages to role-based structure"
     - _Requirements: 7.1_
 
-- [-] 11. Migrate waiter pages
+- [x] 11. Migrate waiter pages
   - [x] 11.1 Copy waiter pages to new location
     - Copy Waiter.tsx to src/pages/waiter/
     - Copy WaiterDashboard.tsx to src/pages/waiter/
@@ -250,18 +250,18 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [-] 11.5 Git commit waiter page migration
+  - [x] 11.5 Git commit waiter page migration
     - Commit with message "Migrate waiter pages to role-based structure"
     - _Requirements: 7.1_
 
-- [ ] 12. Migrate public pages
-  - [ ] 12.1 Copy public pages to new location
+- [-] 12. Migrate public pages
+  - [x] 12.1 Copy public pages to new location
     - Copy Index.tsx to src/pages/public/
     - Copy Auth.tsx to src/pages/public/
     - Copy NotFound.tsx to src/pages/public/
     - _Requirements: 2.10_
   
-  - [ ] 12.2 Update imports in App.tsx for public pages
+  - [x] 12.2 Update imports in App.tsx for public pages
     - Change Index import to './pages/public/Index'
     - Change Auth import to './pages/public/Auth'
     - Change NotFound import to './pages/public/NotFound'
@@ -269,14 +269,14 @@
     - Run Vite build - must succeed
     - _Requirements: 3.1, 3.4_
   
-  - [ ] 12.3 Delete original public page files
+  - [x] 12.3 Delete original public page files
     - Delete src/pages/Index.tsx
     - Delete src/pages/Auth.tsx
     - Delete src/pages/NotFound.tsx
     - Run TypeScript compiler - must pass
     - _Requirements: 2.10, 3.4_
   
-  - [ ] 12.4 Test public routes
+  - [x] 12.4 Test public routes
     - Start dev server
     - Navigate to / - verify page loads
     - Navigate to /auth - verify page loads
@@ -284,7 +284,7 @@
     - Check browser console for errors
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [ ] 12.5 Git commit public page migration
+  - [-] 12.5 Git commit public page migration
     - Commit with message "Migrate public pages to role-based structure"
     - _Requirements: 7.1_
 
