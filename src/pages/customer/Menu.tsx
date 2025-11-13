@@ -11,6 +11,12 @@ import {
 import { ShoppingCart, Plus, Minus, Clock, LogOut, Coffee, Droplets, IceCream, Sandwich, Pizza, Cake } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useSortingMode } from "@/hooks/useSortingMode";
+import { useMenuSorting } from "@/hooks/useMenuSorting";
+import { SortingToggle } from "@/components/SortingToggle";
+import { SortableProductList } from "@/components/SortableProductList";
+import { DraggableProductCard } from "@/components/DraggableProductCard";
 import logo from "@/assets/coco-loko-logo.png";
 import bckMenuImage from "@/assets/bck-menu.webp";
 import headerImage from "@/assets/header.webp";
@@ -23,6 +29,7 @@ interface MenuItem {
   category_id: string;
   available: boolean;
   image_url: string | null;
+  sort_order: number;
 }
 
 interface Category {
@@ -42,6 +49,11 @@ const Menu = () => {
     getTotalItems,
     getTotalPrice,
   } = useCart();
+  
+  // Admin and sorting hooks
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
+  const { isSortingMode, toggleSortingMode } = useSortingMode();
+  const { updateSortOrder, reorderItems, isSaving } = useMenuSorting();
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -109,6 +121,35 @@ const Menu = () => {
     setImageErrors(prev => new Set([...prev, itemId]));
   }, []);
 
+  // Handle product reordering
+  const handleReorder = useCallback(async (categoryId: string, startIndex: number, endIndex: number) => {
+    const categoryItems = menuItems.filter(item => item.category_id === categoryId);
+    const reordered = reorderItems(categoryItems, startIndex, endIndex);
+    
+    // Update local state optimistically
+    setMenuItems(prevItems => {
+      const otherItems = prevItems.filter(item => item.category_id !== categoryId);
+      return [...otherItems, ...reordered].sort((a, b) => {
+        if (a.category_id !== b.category_id) {
+          return a.category_id.localeCompare(b.category_id);
+        }
+        return a.sort_order - b.sort_order;
+      });
+    });
+    
+    // Save to database
+    const updates = reordered.map((item, index) => ({
+      id: item.id,
+      sort_order: index
+    }));
+    
+    const success = await updateSortOrder(updates);
+    if (!success) {
+      // Revert on failure
+      loadMenu();
+    }
+  }, [menuItems, reorderItems, updateSortOrder]);
+
   // Handle logout
   const handleLogout = useCallback(async () => {
     try {
@@ -140,13 +181,20 @@ const Menu = () => {
       const { data: itemsData, error: itemsError } = await supabase
         .from("menu_items")
         .select("*")
-        .eq("available", true);
+        .eq("available", true)
+        .order("category_id")
+        .order("sort_order");
 
       if (itemsError) throw itemsError;
 
       console.log('✅ Menu loaded:', categoriesData?.length, 'categories,', itemsData?.length, 'items');
       setCategories(categoriesData || []);
-      setMenuItems(itemsData || []);
+      // Ensure sort_order exists on all items
+      const itemsWithSortOrder = (itemsData || []).map(item => ({
+        ...item,
+        sort_order: (item as any).sort_order ?? 0
+      })) as MenuItem[];
+      setMenuItems(itemsWithSortOrder);
     } catch (error) {
       console.error("❌ Error loading menu:", error);
       toast.error("Erro ao carregar cardápio");
@@ -253,6 +301,17 @@ const Menu = () => {
                       </button>
                     );
                   })}
+                  
+                  {/* Sorting Toggle - Mobile */}
+                  {isAdmin && !adminLoading && (
+                    <div className="flex-shrink-0 snap-start">
+                      <SortingToggle
+                        isSortingMode={isSortingMode}
+                        onToggle={toggleSortingMode}
+                        disabled={isSaving}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -311,6 +370,15 @@ const Menu = () => {
                     </button>
                   );
                 })}
+                
+                {/* Sorting Toggle - Desktop */}
+                {isAdmin && !adminLoading && (
+                  <SortingToggle
+                    isSortingMode={isSortingMode}
+                    onToggle={toggleSortingMode}
+                    disabled={isSaving}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -335,16 +403,25 @@ const Menu = () => {
               </div>
 
               {/* Category Items - Clean Cards */}
-              <div className="space-y-3">
-                {category.items.map((item) => {
-                  const quantity = getItemQuantity(item.id);
-                  const hasImageError = imageErrors.has(item.id);
-                  
-                  return (
-                    <div 
-                      key={item.id} 
-                      className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4"
-                    >
+              <SortableProductList
+                items={category.items}
+                categoryId={category.id}
+                onReorder={(startIndex, endIndex) => handleReorder(category.id, startIndex, endIndex)}
+              >
+                <div className="space-y-3">
+                  {category.items.map((item) => {
+                    const quantity = getItemQuantity(item.id);
+                    const hasImageError = imageErrors.has(item.id);
+                    
+                    return (
+                      <DraggableProductCard
+                        key={item.id}
+                        item={item}
+                        isSortingMode={isSortingMode}
+                      >
+                        <div 
+                          className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4"
+                        >
                       {/* Image */}
                       <div 
                         className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
@@ -393,6 +470,7 @@ const Menu = () => {
                                 onClick={() => removeItem(item.id)}
                                 className="w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
                                 aria-label="Remover um"
+                                disabled={isSortingMode}
                               >
                                 <Minus className="w-4 h-4" />
                               </button>
@@ -403,6 +481,7 @@ const Menu = () => {
                                 onClick={() => handleAddToCart(item)}
                                 className="w-8 h-8 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
                                 aria-label="Adicionar mais"
+                                disabled={isSortingMode}
                               >
                                 <Plus className="w-4 h-4" />
                               </button>
@@ -417,6 +496,7 @@ const Menu = () => {
                                 toast.success(`${item.name} removido do carrinho`);
                               }}
                               className="w-full px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition-all flex items-center justify-center gap-1"
+                              disabled={isSortingMode}
                             >
                               <span className="text-base">×</span>
                               <span>Remover</span>
@@ -425,16 +505,19 @@ const Menu = () => {
                         ) : (
                           <Button
                             onClick={() => handleAddToCart(item)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl text-sm md:text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                            className={`bg-purple-600 hover:bg-purple-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl text-sm md:text-base font-semibold shadow-md hover:shadow-lg transition-all ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={isSortingMode}
                           >
                             Adicionar
                           </Button>
                         )}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                      </DraggableProductCard>
+                    );
+                  })}
+                </div>
+              </SortableProductList>
             </div>
           ))
         )}

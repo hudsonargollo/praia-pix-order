@@ -40,6 +40,8 @@ export type Database = {
           image_url: string | null
           name: string
           price: number
+          sort_order: number
+          updated_at: string
         }
         Insert: {
           available?: boolean
@@ -50,6 +52,8 @@ export type Database = {
           image_url?: string | null
           name: string
           price: number
+          sort_order?: number
+          updated_at?: string
         }
         Update: {
           available?: boolean
@@ -60,6 +64,8 @@ export type Database = {
           image_url?: string | null
           name?: string
           price?: number
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -374,6 +380,12 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      update_menu_items_sort_order: {
+        Args: {
+          item_updates: Json
+        }
+        Returns: void
       }
     }
     Enums: {

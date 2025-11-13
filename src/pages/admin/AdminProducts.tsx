@@ -19,9 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Edit, Plus, Upload, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { Edit, Plus, Upload, ArrowLeft, ShoppingBag, ArrowUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { SortingDialog } from '@/components/SortingDialog';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 
 interface MenuItem {
   id: string;
@@ -31,15 +33,18 @@ interface MenuItem {
   category_id: string;
   available: boolean;
   image_url: string | null;
+  sort_order?: number;
 }
 
 interface Category {
   id: string;
   name: string;
+  display_order: number;
 }
 
 const AdminProducts = () => {
   const navigate = useNavigate();
+  const { isAdmin } = useAdminCheck();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +52,10 @@ const AdminProducts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  
+  // Sorting dialog state
+  const [isSortingDialogOpen, setIsSortingDialogOpen] = useState(false);
+  const [selectedCategoryForSorting, setSelectedCategoryForSorting] = useState<Category | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -67,7 +76,7 @@ const AdminProducts = () => {
       setLoading(true);
 
       const [itemsResult, categoriesResult] = await Promise.all([
-        supabase.from('menu_items').select('*').order('name'),
+        supabase.from('menu_items').select('*').order('category_id').order('sort_order'),
         supabase.from('menu_categories').select('*').order('display_order'),
       ]);
 
@@ -82,6 +91,17 @@ const AdminProducts = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenSortingDialog = (category: Category) => {
+    setSelectedCategoryForSorting(category);
+    setIsSortingDialogOpen(true);
+  };
+
+  const handleSortingSave = async () => {
+    // Reload data to reflect the updated sort order
+    await loadData();
+    toast.success('Ordem atualizada no cardápio!');
   };
 
   const handleEdit = (item: MenuItem) => {
@@ -344,77 +364,103 @@ const AdminProducts = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {menuItems.map((item) => (
-            <Card key={item.id} className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-gray-50/50 backdrop-blur-sm overflow-hidden">
-              <div className="p-4 sm:p-6">
-                {/* Image */}
-                <div className="w-full h-32 sm:h-40 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 mb-4 relative">
-                  {item.image_url ? (
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <div className="text-center">
-                        <Upload className="w-8 h-8 mx-auto mb-2" />
-                        <p className="text-xs">Sem foto</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Availability Badge */}
-                  <div className="absolute top-2 right-2">
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
-                      item.available 
-                        ? 'bg-green-500/20 text-green-700 border border-green-500/30' 
-                        : 'bg-red-500/20 text-red-700 border border-red-500/30'
-                    }`}>
-                      {item.available ? '✓ Disponível' : '✗ Indisponível'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-bold text-lg text-gray-900 line-clamp-2 flex-1">
-                      {item.name}
-                    </h3>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-                      {getCategoryName(item.category_id)}
-                    </span>
-                    <span className="text-xl font-bold text-purple-600">
-                      R$ {item.price.toFixed(2)}
-                    </span>
-                  </div>
-
-                  {/* Description */}
-                  {item.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2 mt-2">
-                      {item.description}
-                    </p>
-                  )}
-                </div>
-
-                {/* Edit Button */}
-                <Button
-                  onClick={() => handleEdit(item)}
-                  className="w-full mt-4 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                  size="sm"
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar Produto
-                </Button>
+        {/* Category-based sections with sorting buttons */}
+        {categories.map((category) => {
+          const categoryItems = menuItems.filter(item => item.category_id === category.id);
+          
+          if (categoryItems.length === 0) return null;
+          
+          return (
+            <div key={category.id} className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-800">{category.name}</h3>
+                {isAdmin && (
+                  <Button
+                    onClick={() => handleOpenSortingDialog(category)}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/80 hover:bg-white text-purple-600 border-purple-200 hover:border-purple-300 transition-all duration-300"
+                  >
+                    <ArrowUpDown className="w-4 h-4 mr-2" />
+                    Organizar Ordem no Menu
+                  </Button>
+                )}
               </div>
-            </Card>
-          ))}
-        </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                {categoryItems.map((item) => (
+                  <Card key={item.id} className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-gray-50/50 backdrop-blur-sm overflow-hidden">
+                    <div className="p-4 sm:p-6">
+                      {/* Image */}
+                      <div className="w-full h-32 sm:h-40 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 mb-4 relative">
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <div className="text-center">
+                              <Upload className="w-8 h-8 mx-auto mb-2" />
+                              <p className="text-xs">Sem foto</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Availability Badge */}
+                        <div className="absolute top-2 right-2">
+                          <div className={`px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
+                            item.available 
+                              ? 'bg-green-500/20 text-green-700 border border-green-500/30' 
+                              : 'bg-red-500/20 text-red-700 border border-red-500/30'
+                          }`}>
+                            {item.available ? '✓ Disponível' : '✗ Indisponível'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Info */}
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between">
+                          <h3 className="font-bold text-lg text-gray-900 line-clamp-2 flex-1">
+                            {item.name}
+                          </h3>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                            {getCategoryName(item.category_id)}
+                          </span>
+                          <span className="text-xl font-bold text-purple-600">
+                            R$ {item.price.toFixed(2)}
+                          </span>
+                        </div>
+
+                        {/* Description */}
+                        {item.description && (
+                          <p className="text-sm text-gray-600 line-clamp-2 mt-2">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Edit Button */}
+                      <Button
+                        onClick={() => handleEdit(item)}
+                        className="w-full mt-4 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                        size="sm"
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar Produto
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          );
+        })}
 
         {menuItems.length === 0 && (
           <div className="text-center py-12">
@@ -568,6 +614,17 @@ const AdminProducts = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Sorting Dialog */}
+      {selectedCategoryForSorting && (
+        <SortingDialog
+          open={isSortingDialogOpen}
+          onOpenChange={setIsSortingDialogOpen}
+          category={selectedCategoryForSorting}
+          items={menuItems.filter(item => item.category_id === selectedCategoryForSorting.id)}
+          onSave={handleSortingSave}
+        />
+      )}
     </div>
   );
 };
