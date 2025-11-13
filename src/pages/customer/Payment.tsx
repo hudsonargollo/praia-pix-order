@@ -238,7 +238,7 @@ const Payment = () => {
       case 'error':
         return <Badge variant="destructive" aria-label="Status: Erro no pagamento"><AlertCircle className="w-4 h-4 mr-1" aria-hidden="true" />Erro</Badge>;
       default:
-        return <Badge variant="secondary" aria-label="Status: Aguardando pagamento"><Clock className="w-4 h-4 mr-1" aria-hidden="true" />Aguardando</Badge>;
+        return <Badge className="bg-purple-600 text-white border-2 border-purple-400 shadow-lg animate-pulse-badge" aria-label="Status: Aguardando pagamento"><Clock className="w-4 h-4 mr-1" aria-hidden="true" />Aguardando</Badge>;
     }
   };
 
