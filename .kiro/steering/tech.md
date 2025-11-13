@@ -50,4 +50,4 @@ npx supabase db reset # Reset local database
 - Tailwind configured with custom color system, gradients, and animations
 - Custom CSS variables for colors, shadows, and gradients (ocean, sunset, acai themes)
 - Environment variables required: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`
-- Component tagging enabled in development mode via lovable-tagger
+- Custom purple theme with responsive design patterns
