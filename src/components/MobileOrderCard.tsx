@@ -9,8 +9,10 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, QrCode } from "lucide-react";
+import { CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, QrCode, Edit, Lock } from "lucide-react";
 import { getCommissionStatus } from "@/lib/commissionUtils";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { formatOrderNumber, canEditOrder } from "@/lib/orderUtils";
 import type { Order } from "@/types/commission";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -95,19 +97,48 @@ export function MobileOrderCard({ order, onGeneratePIX, canGeneratePIX = false, 
         {/* Header: Order number and customer name */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="text-sm font-bold text-gray-900">
-                #{order.id.substring(0, 8)}
+                {formatOrderNumber(order, false)}
               </span>
               <Badge variant={getStatusVariant(order.status)} className="text-xs">
                 {getStatusLabel(order.status)}
               </Badge>
+              {canEditOrder(order) ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                        <Edit className="w-3 h-3" />
+                        <span className="text-xs font-medium">Editável</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Toque para editar este pedido</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1 text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+                        <Lock className="w-3 h-3" />
+                        <span className="text-xs font-medium">Bloqueado</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Este pedido não pode ser editado</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
             <h3 className="text-base font-semibold text-gray-900 truncate">
               {order.customer_name || 'Cliente não informado'}
             </h3>
             {order.customer_phone && (
-              <p className="text-sm text-gray-500">{order.customer_phone}</p>
+              <p className="text-sm text-gray-500">{formatPhoneNumber(order.customer_phone)}</p>
             )}
           </div>
           
@@ -117,7 +148,7 @@ export function MobileOrderCard({ order, onGeneratePIX, canGeneratePIX = false, 
               e.stopPropagation();
               setIsExpanded(!isExpanded);
             }}
-            className="ml-2 p-2 hover:bg-gray-100 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="ml-2 p-2 hover:bg-gray-100 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
             aria-label={isExpanded ? "Recolher detalhes" : "Expandir detalhes"}
           >
             {isExpanded ? (

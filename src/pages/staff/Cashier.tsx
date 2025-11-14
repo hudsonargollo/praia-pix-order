@@ -10,6 +10,7 @@ import { OrderDetailsDialog } from "@/components/OrderDetailsDialog";
 import { OrderEditDialog } from "@/components/OrderEditDialog";
 import { OrderCardInfo } from "@/components/OrderCardInfo";
 import { fetchAllWaiters, getWaiterName, type WaiterInfo } from "@/lib/waiterUtils";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -393,7 +394,8 @@ const Cashier = () => {
   }
 
   // Calculate order counts based on orders (already filtered by waiter if selected)
-  const pendingOrders = orders.filter((o) => o.status === "pending_payment");
+  // Include both "pending_payment" (customer orders) and "pending" (waiter orders)
+  const pendingOrders = orders.filter((o) => o.status === "pending_payment" || o.status === "pending");
   const inProgressOrders = orders.filter((o) => o.status === "paid" || o.status === "in_preparation");
   const readyOrders = orders.filter((o) => o.status === "ready");
   const completedOrders = orders.filter((o) => o.status === "completed");
@@ -1248,7 +1250,7 @@ const Cashier = () => {
                       <div className="flex-1">
                         <h3 className="font-bold text-lg">Pedido #{order.order_number}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {order.customer_name} • {order.customer_phone}
+                          {order.customer_name} • {formatPhoneNumber(order.customer_phone)}
                         </p>
                         {order.waiter_id && (
                           <p className="text-sm text-muted-foreground">

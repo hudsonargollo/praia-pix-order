@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutDashboard, ShoppingCart, LogOut, TrendingUp, QrCode, CheckCircle, Clock, XCircle } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, LogOut, TrendingUp, QrCode, CheckCircle, Clock, XCircle, Edit, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,6 +14,8 @@ import { MobileOrderCard } from "@/components/MobileOrderCard";
 import { OrderEditModal } from "@/components/OrderEditModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { calculateConfirmedCommissions, calculateEstimatedCommissions, getCommissionStatus, ORDER_STATUS_CATEGORIES } from "@/lib/commissionUtils";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { formatOrderNumber, canEditOrder } from "@/lib/orderUtils";
 import type { Order } from "@/types/commission";
 import type { Order as RealtimeOrder } from "@/integrations/supabase/realtime";
 import logo from "@/assets/coco-loko-logo.png";
@@ -81,11 +83,11 @@ const WaiterDashboard = () => {
           if (ORDER_STATUS_CATEGORIES.PAID.includes(updatedOrder.status.toLowerCase())) {
             const commission = newTotal * 0.1;
             toast.success('💰 Comissão confirmada! Pedido pago.', {
-              description: `Pedido #${updatedOrder.order_number || updatedOrder.id.substring(0, 8)} - Comissão: ${commission.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
+              description: `${formatOrderNumber(updatedOrder)} - Comissão: ${commission.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
             });
           } else if (ORDER_STATUS_CATEGORIES.EXCLUDED.includes(updatedOrder.status.toLowerCase())) {
             toast.info('Pedido cancelado', {
-              description: `Pedido #${updatedOrder.order_number || updatedOrder.id.substring(0, 8)}`
+              description: formatOrderNumber(updatedOrder)
             });
           }
         } else if (Math.abs(oldTotal - newTotal) > 0.01) {
@@ -321,7 +323,7 @@ const WaiterDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-acai">
       {/* Enhanced Header */}
-      <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 text-white shadow-2xl">
+      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4 sm:py-6">
             <div className="flex items-center space-x-3 sm:space-x-4">
@@ -334,12 +336,17 @@ const WaiterDashboard = () => {
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-lg sm:text-2xl font-bold flex items-center bg-gradient-to-r from-white to-orange-100 bg-clip-text text-transparent">
-                  <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-white" />
+                <h1 className="text-lg sm:text-2xl font-bold flex items-center">
+                  <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
                   Dashboard do Garçom
                 </h1>
-                <p className="text-orange-100 text-xs sm:text-sm font-medium">
-                  Bem-vindo, {waiterName} • Sistema de Vendas
+                <p className="text-purple-100 text-xs sm:text-sm font-medium">
+                  {waiterName} • {new Date().toLocaleDateString("pt-BR", { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
                 </p>
               </div>
             </div>
@@ -370,12 +377,13 @@ const WaiterDashboard = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4 md:p-8">
 
-        {/* Enhanced Action Button */}
-        <div className="mb-8" data-testid="new-order-section">
-          <Card className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 text-white shadow-2xl border-0 overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
-            <CardContent className="p-6 sm:p-8 relative">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Side-by-side layout for Place Order and Total Sales on desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Place Order Card */}
+          <div data-testid="new-order-section">
+            <Card className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 text-white shadow-2xl border-0 overflow-hidden relative h-full">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
+              <CardContent className="p-6 sm:p-8 relative flex flex-col h-full">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -386,7 +394,7 @@ const WaiterDashboard = () => {
                       <p className="text-green-100 text-sm">Comece a atender um novo cliente</p>
                     </div>
                   </div>
-                  <p className="text-white/90 text-sm sm:text-base">
+                  <p className="text-white/90 text-sm sm:text-base mb-4">
                     Abra o cardápio digital para fazer um pedido personalizado para o cliente
                   </p>
                 </div>
@@ -396,20 +404,18 @@ const WaiterDashboard = () => {
                     navigate("/menu");
                   }}
                   size="lg"
-                  className="bg-white text-green-600 hover:bg-gray-100 font-bold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 w-full sm:w-auto"
+                  className="bg-white text-green-600 hover:bg-gray-100 font-bold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 w-full"
                   data-testid="new-order-button"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   Novo Pedido
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Enhanced Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
-          <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-blue-50/50 backdrop-blur-sm overflow-hidden relative">
+          {/* Total Sales Card */}
+          <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-blue-50/50 backdrop-blur-sm overflow-hidden relative h-full">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-600 group-hover:text-white transition-colors">
@@ -498,12 +504,12 @@ const WaiterDashboard = () => {
                         }}
                       >
                         <TableCell className="font-medium text-gray-900">
-                          #{order.id.substring(0, 8)}
+                          {formatOrderNumber(order, false)}
                         </TableCell>
                         <TableCell className="text-gray-600">
                           <div>
                             <div className="font-medium">{order.customer_name || 'N/A'}</div>
-                            <div className="text-sm text-gray-500">{order.customer_phone || 'N/A'}</div>
+                            <div className="text-sm text-gray-500">{formatPhoneNumber(order.customer_phone)}</div>
                           </div>
                         </TableCell>
                         <TableCell className="text-gray-600">
@@ -549,20 +555,51 @@ const WaiterDashboard = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {canGeneratePIX(order) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleGeneratePIX(order);
-                              }}
-                              className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
-                            >
-                              <QrCode className="w-3 h-3" />
-                              Gerar PIX
-                            </Button>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {canGeneratePIX(order) && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleGeneratePIX(order);
+                                }}
+                                className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
+                              >
+                                <QrCode className="w-3 h-3" />
+                                Gerar PIX
+                              </Button>
+                            )}
+                            {canEditOrder(order) ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1 text-blue-600">
+                                      <Edit className="w-4 h-4" />
+                                      <span className="text-xs font-medium">Editável</span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Clique no pedido para editar</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1 text-gray-400">
+                                      <Lock className="w-4 h-4" />
+                                      <span className="text-xs font-medium">Bloqueado</span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Este pedido não pode ser editado</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

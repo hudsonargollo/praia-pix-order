@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, CreditCard, ChefHat, Package, ArrowLeft, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import type { Order } from "@/integrations/supabase/realtime";
 
 interface OrderItem {
@@ -216,7 +217,7 @@ const OrderStatus = () => {
           Pedido #{order.order_number}
         </p>
         <p className="text-white/70 text-sm mt-1">
-          {order.customer_phone} • {getElapsedTime(order.created_at)}
+          {formatPhoneNumber(order.customer_phone)} • {getElapsedTime(order.created_at)}
         </p>
       </div>
 
@@ -291,7 +292,7 @@ const OrderStatus = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Telefone:</span>
-              <span className="font-semibold">{order.customer_phone}</span>
+              <span className="font-semibold">{formatPhoneNumber(order.customer_phone)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Criado:</span>

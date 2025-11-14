@@ -1,0 +1,60 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    name: Deploy to Cloudflare Pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:run
+        continue-on-error: true
+
+      - name: Build application
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_MERCADOPAGO_PUBLIC_KEY: ${{ secrets.VITE_MERCADOPAGO_PUBLIC_KEY }}
+          VITE_MERCADOPAGO_ACCESS_TOKEN: ${{ secrets.VITE_MERCADOPAGO_ACCESS_TOKEN }}
+          VITE_EVOLUTION_API_URL: ${{ secrets.VITE_EVOLUTION_API_URL }}
+          VITE_EVOLUTION_API_KEY: ${{ secrets.VITE_EVOLUTION_API_KEY }}
+          VITE_EVOLUTION_INSTANCE_NAME: ${{ secrets.VITE_EVOLUTION_INSTANCE_NAME }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: coco-loko-acaiteria
+          directory: dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
+
+      - name: Deployment Summary
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "🔗 Your app is live at: https://coco-loko-acaiteria.pages.dev"

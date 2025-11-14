@@ -19,6 +19,7 @@ import {
   getOrdersByCategory,
   ORDER_STATUS_CATEGORIES
 } from "@/lib/commissionUtils";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import type { Order } from "@/types/commission";
 import type { Order as RealtimeOrder } from "@/integrations/supabase/realtime";
 
@@ -317,7 +318,7 @@ const AdminWaiterReports = () => {
       return [
         order.order_number,
         order.customer_name,
-        order.customer_phone,
+        formatPhoneNumber(order.customer_phone),
         `R$ ${Number(order.total_amount).toFixed(2)}`,
         commissionStatus.status === 'confirmed' ? 'Confirmada' : 
         commissionStatus.status === 'pending' ? 'Estimada' : 'Cancelada',
@@ -547,7 +548,7 @@ const AdminWaiterReports = () => {
                         <TableRow key={order.id}>
                           <TableCell className="font-medium">#{order.order_number}</TableCell>
                           <TableCell>{order.customer_name}</TableCell>
-                          <TableCell>{order.customer_phone}</TableCell>
+                          <TableCell>{formatPhoneNumber(order.customer_phone)}</TableCell>
                           <TableCell className="text-right font-semibold">
                             R$ {Number(order.total_amount).toFixed(2)}
                           </TableCell>

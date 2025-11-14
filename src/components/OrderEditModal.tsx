@@ -15,6 +15,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { OrderItemRow, type OrderItem } from "./OrderItemRow";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { formatOrderNumber, canEditOrder } from "@/lib/orderUtils";
 import type { Order } from "@/types/commission";
 
 interface OrderEditModalProps {
@@ -82,10 +84,8 @@ export function OrderEditModal({
       return;
     }
 
-    // Orders cannot be edited if they are paid, completed, or cancelled
-    const nonEditableStatuses = ['paid', 'completed', 'cancelled'];
-    const canEdit = !nonEditableStatuses.includes(order.status.toLowerCase());
-    setIsEditable(canEdit);
+    // Use centralized utility function to determine editability
+    setIsEditable(canEditOrder(order));
   }, [order]);
 
   // Get appropriate message for non-editable orders
@@ -96,12 +96,16 @@ export function OrderEditModal({
       return 'Este pedido foi cancelado e não pode ser editado.';
     }
     
-    if (lowerStatus === 'paid') {
+    if (lowerStatus === 'paid' || lowerStatus === 'completed') {
       return 'Este pedido já foi pago e não pode ser editado.';
     }
     
-    if (lowerStatus === 'completed') {
-      return 'Este pedido já foi concluído e não pode ser editado.';
+    if (lowerStatus === 'pending_payment') {
+      return 'Este pedido está aguardando pagamento e não pode ser editado.';
+    }
+    
+    if (lowerStatus === 'ready') {
+      return 'Este pedido já está pronto e não pode ser editado.';
     }
     
     return 'Este pedido não pode ser editado no momento.';
@@ -276,19 +280,20 @@ export function OrderEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] sm:w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b sticky top-0 bg-white z-10">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg sm:text-xl font-bold pr-2">
-              {isEditable ? 'Editar Pedido' : 'Detalhes do Pedido'} #{order.id.substring(0, 8)}
+            <DialogTitle className="text-base sm:text-lg md:text-xl font-bold pr-2">
+              {isEditable ? 'Editar' : 'Detalhes'} {formatOrderNumber(order)}
             </DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8 flex-shrink-0"
+              className="h-11 w-11 sm:h-9 sm:w-9 flex-shrink-0 touch-manipulation"
+              aria-label="Fechar"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5 sm:h-4 sm:w-4" />
             </Button>
           </div>
         </DialogHeader>
@@ -303,19 +308,21 @@ export function OrderEditModal({
           </Alert>
         )}
 
-        {/* Order Information */}
-        <div className="space-y-3 sm:space-y-4">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+          {/* Order Information */}
+          <div className="space-y-3 sm:space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="text-xs sm:text-sm font-medium text-gray-600">Cliente</label>
-              <p className="text-sm sm:text-base font-semibold text-gray-900 break-words">
+              <label className="text-sm sm:text-sm font-medium text-gray-600 block mb-1">Cliente</label>
+              <p className="text-base sm:text-base font-semibold text-gray-900 break-words">
                 {order.customer_name || 'Não informado'}
               </p>
             </div>
             <div>
-              <label className="text-xs sm:text-sm font-medium text-gray-600">Status</label>
-              <div className="mt-1">
-                <Badge variant={getStatusVariant(order.status)} className="text-xs">
+              <label className="text-sm sm:text-sm font-medium text-gray-600 block mb-1">Status</label>
+              <div>
+                <Badge variant={getStatusVariant(order.status)} className="text-sm sm:text-xs">
                   {getStatusLabel(order.status)}
                 </Badge>
               </div>
@@ -324,14 +331,14 @@ export function OrderEditModal({
 
           {order.customer_phone && (
             <div>
-              <label className="text-xs sm:text-sm font-medium text-gray-600">Telefone</label>
-              <p className="text-sm sm:text-base text-gray-900">{order.customer_phone}</p>
+              <label className="text-sm sm:text-sm font-medium text-gray-600 block mb-1">Telefone</label>
+              <p className="text-base sm:text-base text-gray-900">{formatPhoneNumber(order.customer_phone)}</p>
             </div>
           )}
 
           <div>
-            <label className="text-xs sm:text-sm font-medium text-gray-600">Data do Pedido</label>
-            <p className="text-sm sm:text-base text-gray-900">
+            <label className="text-sm sm:text-sm font-medium text-gray-600 block mb-1">Data do Pedido</label>
+            <p className="text-base sm:text-base text-gray-900">
               {new Date(order.created_at).toLocaleString("pt-BR", {
                 day: "2-digit",
                 month: "2-digit",
@@ -345,28 +352,29 @@ export function OrderEditModal({
           {/* Order Items Section */}
           <div className="border-t pt-3 sm:pt-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-              <h3 className="text-base sm:text-lg font-semibold">Itens do Pedido</h3>
+              <h3 className="text-lg sm:text-lg font-semibold">Itens do Pedido</h3>
               {isEditable && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => toast.info('Adicionar item será implementado em breve')}
-                  className="flex items-center gap-2 w-full sm:w-auto"
+                  className="flex items-center gap-2 w-full sm:w-auto min-h-[44px] touch-manipulation"
+                  aria-label="Adicionar novo item ao pedido"
                 >
                   <Plus className="h-4 w-4" />
-                  <span className="text-sm">Adicionar Item</span>
+                  <span className="text-base sm:text-sm">Adicionar Item</span>
                 </Button>
               )}
             </div>
 
             {isLoading ? (
               <div className="text-center py-8 text-gray-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-                <p className="text-sm">Carregando itens...</p>
+                <div className="animate-spin rounded-full h-10 w-10 sm:h-8 sm:w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                <p className="text-base sm:text-sm">Carregando itens...</p>
               </div>
             ) : items.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <p className="text-sm">Nenhum item encontrado</p>
+                <p className="text-base sm:text-sm">Nenhum item encontrado</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -384,14 +392,14 @@ export function OrderEditModal({
           </div>
 
           {/* Order Totals */}
-          <div className={`border-t pt-3 sm:pt-4 space-y-2 sm:space-y-3 transition-all duration-300 ${
+          <div className={`border-t pt-3 sm:pt-4 space-y-3 sm:space-y-3 transition-all duration-300 ${
             hasValueChanged ? 'bg-purple-50 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 sm:py-4 rounded-lg border-purple-200' : ''
           }`}>
             {/* Total Amount */}
-            <div className="flex justify-between items-center gap-2">
-              <span className="text-sm sm:text-base font-medium text-gray-700">Total do Pedido</span>
+            <div className="flex justify-between items-center gap-3">
+              <span className="text-base sm:text-base font-medium text-gray-700">Total do Pedido</span>
               <div className="flex flex-col items-end gap-1">
-                <span className={`text-xl sm:text-2xl font-bold transition-colors duration-300 ${
+                <span className={`text-2xl sm:text-2xl font-bold transition-colors duration-300 ${
                   hasValueChanged ? 'text-purple-600 animate-pulse' : 'text-gray-900'
                 }`}>
                   {orderTotal.toLocaleString("pt-BR", { 
@@ -400,7 +408,7 @@ export function OrderEditModal({
                   })}
                 </span>
                 {hasValueChanged && (
-                  <span className="text-xs text-gray-500 line-through">
+                  <span className="text-sm sm:text-xs text-gray-500 line-through">
                     {originalTotal.toLocaleString("pt-BR", { 
                       style: "currency", 
                       currency: "BRL" 
@@ -411,10 +419,10 @@ export function OrderEditModal({
             </div>
 
             {/* Commission Amount */}
-            <div className="flex justify-between items-center gap-2">
-              <span className="text-xs sm:text-sm font-medium text-gray-600">Comissão (10%)</span>
+            <div className="flex justify-between items-center gap-3">
+              <span className="text-sm sm:text-sm font-medium text-gray-600">Comissão (10%)</span>
               <div className="flex flex-col items-end gap-1">
-                <span className={`text-base sm:text-lg font-semibold transition-colors duration-300 ${
+                <span className={`text-lg sm:text-lg font-semibold transition-colors duration-300 ${
                   hasValueChanged ? 'text-purple-600 animate-pulse' : 'text-green-600'
                 }`}>
                   {commission.toLocaleString("pt-BR", { 
@@ -423,7 +431,7 @@ export function OrderEditModal({
                   })}
                 </span>
                 {hasValueChanged && (
-                  <span className="text-xs text-gray-500 line-through">
+                  <span className="text-sm sm:text-xs text-gray-500 line-through">
                     {originalCommission.toLocaleString("pt-BR", { 
                       style: "currency", 
                       currency: "BRL" 
@@ -436,10 +444,10 @@ export function OrderEditModal({
             {/* Change Indicator */}
             {hasValueChanged && (
               <div className="pt-2 border-t border-purple-200">
-                <div className="flex items-center justify-between text-xs sm:text-sm gap-2">
+                <div className="flex items-center justify-between text-sm sm:text-sm gap-3">
                   <span className="text-purple-700 font-medium">Diferença:</span>
                   <div className="flex flex-col items-end">
-                    <span className={`text-sm sm:text-base font-semibold ${
+                    <span className={`text-base sm:text-base font-semibold ${
                       orderTotal > originalTotal ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {orderTotal > originalTotal ? '+' : ''}
@@ -448,7 +456,7 @@ export function OrderEditModal({
                         currency: "BRL" 
                       })}
                     </span>
-                    <span className="text-xs text-gray-600">
+                    <span className="text-sm sm:text-xs text-gray-600">
                       Comissão: {orderTotal > originalTotal ? '+' : ''}
                       {(commission - originalCommission).toLocaleString("pt-BR", { 
                         style: "currency", 
@@ -463,21 +471,24 @@ export function OrderEditModal({
             {/* Save Reminder */}
             {isModified && (
               <Alert className="bg-purple-100 border-purple-300 mt-3">
-                <AlertCircle className="h-4 w-4 text-purple-600" />
-                <AlertDescription className="text-purple-800 text-sm">
+                <AlertCircle className="h-5 w-5 sm:h-4 sm:w-4 text-purple-600" />
+                <AlertDescription className="text-purple-800 text-base sm:text-sm">
                   Valores atualizados. Clique em "Salvar Alterações" para confirmar.
                 </AlertDescription>
               </Alert>
             )}
           </div>
         </div>
+        </div>
 
-        <DialogFooter className="mt-4 sm:mt-6 flex-col sm:flex-row gap-2">
+        {/* Sticky Footer */}
+        <DialogFooter className="px-4 sm:px-6 py-3 sm:py-4 border-t bg-white sticky bottom-0 flex-col-reverse sm:flex-row gap-2 sm:gap-2">
           <Button
             variant="outline"
             onClick={onClose}
             disabled={isSaving}
-            className="w-full sm:w-auto order-2 sm:order-1"
+            className="w-full sm:w-auto min-h-[44px] touch-manipulation text-base sm:text-sm"
+            aria-label={isEditable ? 'Cancelar edição' : 'Fechar detalhes'}
           >
             {isEditable ? 'Cancelar' : 'Fechar'}
           </Button>
@@ -485,7 +496,8 @@ export function OrderEditModal({
             <Button
               onClick={handleSave}
               disabled={isSaving || !isModified || items.length === 0}
-              className="w-full sm:w-auto order-1 sm:order-2 min-h-[44px]"
+              className="w-full sm:w-auto min-h-[44px] touch-manipulation text-base sm:text-sm"
+              aria-label="Salvar alterações do pedido"
             >
               {isSaving ? 'Salvando...' : 'Salvar Alterações'}
             </Button>

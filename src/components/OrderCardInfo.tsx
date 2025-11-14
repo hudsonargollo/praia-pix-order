@@ -1,4 +1,5 @@
 import { getWaiterName } from "@/lib/waiterUtils";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { Badge } from "@/components/ui/badge";
 import { User } from "lucide-react";
 
@@ -49,7 +50,7 @@ export function OrderCardInfo({
         </div>
       )}
       <p className="text-sm text-muted-foreground mb-2">
-        📱 {customerPhone}
+        📱 {formatPhoneNumber(customerPhone)}
       </p>
       <div className="mt-2 space-y-1">
         <p className="text-xs sm:text-sm text-muted-foreground">

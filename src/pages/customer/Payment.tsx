@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { mercadoPagoService } from "@/integrations/mercadopago/client";
 import { paymentRecoveryService } from "@/integrations/mercadopago/recovery";
 import { usePaymentPolling } from "@/hooks/usePaymentPolling";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -216,23 +217,6 @@ const Payment = () => {
     const first10 = pixCode.substring(0, 10);
     const last6 = pixCode.substring(pixCode.length - 6);
     return `${first10}...${last6}`;
-  };
-
-  const formatPhoneNumber = (phone: string): string => {
-    // Remove all non-digit characters
-    const digits = phone.replace(/\D/g, '');
-    
-    // Extract last 11 digits (DDD + 9 digits)
-    const last11 = digits.slice(-11);
-    
-    if (last11.length !== 11) return phone; // Return original if invalid
-    
-    // Format as (DDD) 00000-0000
-    const ddd = last11.substring(0, 2);
-    const firstPart = last11.substring(2, 7);
-    const secondPart = last11.substring(7, 11);
-    
-    return `(${ddd}) ${firstPart}-${secondPart}`;
   };
 
   const handleBack = () => {
