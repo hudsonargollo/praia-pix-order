@@ -223,11 +223,6 @@ const Cashier = () => {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      // Apply waiter filter if selected
-      if (selectedWaiterId) {
-        query = query.eq("waiter_id", selectedWaiterId);
-      }
-
       const { data, error } = await query;
 
       if (error) throw error;
@@ -427,26 +422,8 @@ const Cashier = () => {
                 </div>
               </div>
 
-              {/* Center: Action Buttons and Waiter Filter */}
+              {/* Center: Action Buttons */}
               <div className="flex gap-2 items-center">
-                {/* Waiter Filter */}
-                <Select
-                  value={selectedWaiterId || "all"}
-                  onValueChange={(value) => setSelectedWaiterId(value === "all" ? null : value)}
-                >
-                  <SelectTrigger className="w-[200px] bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300">
-                    <SelectValue placeholder="Todos os Garçons" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Garçons</SelectItem>
-                    {waiters.map((waiter) => (
-                      <SelectItem key={waiter.id} value={waiter.id}>
-                        {waiter.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
                 <Button
                   onClick={() => window.location.href = '/reports'}
                   className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
@@ -473,8 +450,17 @@ const Cashier = () => {
                 </Button>
               </div>
 
-              {/* Right: Connection Status & Logout */}
-              <div className="flex items-center gap-3">
+              {/* Right: Diagnostic, Connection Status & Logout */}
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate("/waiter-diagnostic")} 
+                  className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                  size="sm"
+                  title="System Diagnostics"
+                >
+                  🔧
+                </Button>
                 {connectionStatus === 'connected' ? (
                   <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1.5 rounded-full">
                     <Wifi className="h-4 w-4 text-green-200" />
@@ -558,29 +544,18 @@ const Cashier = () => {
                 </div>
               </div>
               
-              {/* Waiter Filter - Full Width on Mobile */}
-              <div className="mb-3">
-                <Select
-                  value={selectedWaiterId || "all"}
-                  onValueChange={(value) => setSelectedWaiterId(value === "all" ? null : value)}
-                >
-                  <SelectTrigger className="w-full bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300">
-                    <SelectValue placeholder="Todos os Garçons" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Garçons</SelectItem>
-                    {waiters.map((waiter) => (
-                      <SelectItem key={waiter.id} value={waiter.id}>
-                        {waiter.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2 justify-between">
+              <div className="flex flex-wrap gap-2 justify-between items-center">
                 <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => navigate("/waiter-diagnostic")} 
+                    className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                    size="sm"
+                    title="System Diagnostics"
+                  >
+                    🔧
+                  </Button>
                   <Button
                     onClick={() => window.location.href = '/reports'}
                     className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"

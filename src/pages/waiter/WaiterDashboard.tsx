@@ -350,26 +350,15 @@ const WaiterDashboard = () => {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate("/waiter-diagnostic")} 
-                className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
-                size="sm"
-                title="System Diagnostics"
-              >
-                🔧
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={handleLogout} 
-                className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
-                size="sm"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Sair</span>
-              </Button>
-            </div>
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout} 
+              className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+              size="sm"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
           </div>
         </div>
       </div>
