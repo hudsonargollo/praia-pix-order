@@ -113,10 +113,10 @@ function getDateRange(filter: DateFilter, customRange?: DateRange): DateRange {
  */
 export function CommissionToggle({ orders, onViewChange }: CommissionToggleProps) {
   const [activeView, setActiveView] = useState<CommissionView>('received');
-  const [dateFilter, setDateFilter] = useState<DateFilter>('thisMonth');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [customDateRange, setCustomDateRange] = useState<DateRange>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date())
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date())
   });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -237,13 +237,8 @@ export function CommissionToggle({ orders, onViewChange }: CommissionToggleProps
           </DropdownMenu>
         </div>
         
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <CalendarIcon className="w-4 h-4" />
-          <span className="font-medium">{dateRangeLabel}</span>
-        </div>
-        
         {/* Toggle Switch */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-2">
           <button
             onClick={() => handleToggle('received')}
             className={`
