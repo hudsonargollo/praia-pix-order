@@ -280,17 +280,17 @@ export function OrderEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] sm:w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b sticky top-0 bg-white z-10">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-base sm:text-lg md:text-xl font-bold pr-2">
+      <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[96vh] sm:max-h-[90vh] flex flex-col p-0 gap-0 rounded-2xl">
+        <DialogHeader className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b sticky top-0 bg-white z-10 rounded-t-2xl">
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900">
               {isEditable ? 'Editar' : 'Detalhes'} {formatOrderNumber(order)}
             </DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-11 w-11 sm:h-9 sm:w-9 flex-shrink-0 touch-manipulation"
+              className="h-10 w-10 sm:h-9 sm:w-9 flex-shrink-0 touch-manipulation hover:bg-gray-100 rounded-full"
               aria-label="Fechar"
             >
               <X className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -300,19 +300,21 @@ export function OrderEditModal({
 
         {/* Non-editable warning */}
         {!isEditable && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {getNonEditableMessage(order.status)}
-            </AlertDescription>
-          </Alert>
+          <div className="px-5 sm:px-6 pt-4">
+            <Alert variant="destructive" className="border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                {getNonEditableMessage(order.status)}
+              </AlertDescription>
+            </Alert>
+          </div>
         )}
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5">
           {/* Order Information */}
-          <div className="space-y-3 sm:space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="space-y-4 sm:space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm sm:text-sm font-medium text-gray-600 block mb-1">Cliente</label>
               <p className="text-base sm:text-base font-semibold text-gray-900 break-words">
@@ -350,19 +352,19 @@ export function OrderEditModal({
           </div>
 
           {/* Order Items Section */}
-          <div className="border-t pt-3 sm:pt-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-              <h3 className="text-lg sm:text-lg font-semibold">Itens do Pedido</h3>
+          <div className="border-t pt-4 sm:pt-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Itens do Pedido</h3>
               {isEditable && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => toast.info('Adicionar item será implementado em breve')}
-                  className="flex items-center gap-2 w-full sm:w-auto min-h-[44px] touch-manipulation"
+                  className="flex items-center gap-2 w-full sm:w-auto min-h-[44px] sm:min-h-[36px] touch-manipulation hover:bg-gray-50 border-gray-300"
                   aria-label="Adicionar novo item ao pedido"
                 >
                   <Plus className="h-4 w-4" />
-                  <span className="text-base sm:text-sm">Adicionar Item</span>
+                  <span className="text-base sm:text-sm font-medium">Adicionar Item</span>
                 </Button>
               )}
             </div>
@@ -392,8 +394,8 @@ export function OrderEditModal({
           </div>
 
           {/* Order Totals */}
-          <div className={`border-t pt-3 sm:pt-4 space-y-3 sm:space-y-3 transition-all duration-300 ${
-            hasValueChanged ? 'bg-purple-50 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 sm:py-4 rounded-lg border-purple-200' : ''
+          <div className={`border-t pt-4 sm:pt-5 space-y-3 transition-all duration-300 ${
+            hasValueChanged ? 'bg-purple-50 -mx-5 sm:-mx-6 px-5 sm:px-6 py-4 rounded-xl border-purple-200' : ''
           }`}>
             {/* Total Amount */}
             <div className="flex justify-between items-center gap-3">
@@ -482,12 +484,12 @@ export function OrderEditModal({
         </div>
 
         {/* Sticky Footer */}
-        <DialogFooter className="px-4 sm:px-6 py-3 sm:py-4 border-t bg-white sticky bottom-0 flex-col-reverse sm:flex-row gap-2 sm:gap-2">
+        <DialogFooter className="px-5 sm:px-6 py-4 border-t bg-gray-50 sticky bottom-0 flex-col-reverse sm:flex-row gap-3 rounded-b-2xl">
           <Button
             variant="outline"
             onClick={onClose}
             disabled={isSaving}
-            className="w-full sm:w-auto min-h-[44px] touch-manipulation text-base sm:text-sm"
+            className="w-full sm:w-auto min-h-[48px] sm:min-h-[40px] touch-manipulation text-base sm:text-sm font-medium hover:bg-white border-gray-300"
             aria-label={isEditable ? 'Cancelar edição' : 'Fechar detalhes'}
           >
             {isEditable ? 'Cancelar' : 'Fechar'}
@@ -496,7 +498,7 @@ export function OrderEditModal({
             <Button
               onClick={handleSave}
               disabled={isSaving || !isModified || items.length === 0}
-              className="w-full sm:w-auto min-h-[44px] touch-manipulation text-base sm:text-sm"
+              className="w-full sm:w-auto min-h-[48px] sm:min-h-[40px] touch-manipulation text-base sm:text-sm font-semibold bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300"
               aria-label="Salvar alterações do pedido"
             >
               {isSaving ? 'Salvando...' : 'Salvar Alterações'}

@@ -356,26 +356,37 @@ const AdminWaiterReports = () => {
   return (
     <div className="space-y-6">
       {/* Header and Controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+              <User className="h-5 w-5 text-white" />
+            </div>
             Relatórios por Garçom
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+        <CardContent className="pt-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-end">
             {/* Waiter Selection */}
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">Selecionar Garçom</label>
+            <div className="flex-1 w-full lg:min-w-[250px]">
+              <label className="text-sm font-semibold text-gray-700 mb-2 block">Selecionar Garçom</label>
               <Select value={selectedWaiterId} onValueChange={setSelectedWaiterId}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 border-gray-300 hover:border-purple-400 focus:border-purple-500 focus:ring-purple-500 transition-colors">
                   <SelectValue placeholder="Escolha um garçom..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[300px]">
                   {waiters.map((waiter) => (
-                    <SelectItem key={waiter.id} value={waiter.id}>
-                      {waiter.full_name}
+                    <SelectItem 
+                      key={waiter.id} 
+                      value={waiter.id}
+                      className="cursor-pointer hover:bg-purple-50"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                          <User className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <span className="font-medium">{waiter.full_name}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -383,16 +394,25 @@ const AdminWaiterReports = () => {
             </div>
 
             {/* Date Range Selector */}
-            <div>
-              <label className="text-sm font-medium mb-2 block">Período</label>
+            <div className="w-full lg:w-auto">
+              <label className="text-sm font-semibold text-gray-700 mb-2 block">Período</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(dateRange.from, "dd/MM", { locale: ptBR })} - {format(dateRange.to, "dd/MM", { locale: ptBR })}
+                  <Button 
+                    variant="outline" 
+                    className="w-full lg:w-auto h-11 border-gray-300 hover:border-purple-400 hover:bg-purple-50 transition-colors font-medium"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 text-purple-600" />
+                    <span className="text-sm">
+                      {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                    </span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
+                <PopoverContent className="w-auto p-0 shadow-xl border-gray-200" align="end">
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 border-b">
+                    <h4 className="font-semibold text-gray-900">Selecione o período</h4>
+                    <p className="text-sm text-gray-600 mt-1">Escolha as datas de início e fim</p>
+                  </div>
                   <Calendar
                     mode="range"
                     selected={{ from: dateRange.from, to: dateRange.to }}
@@ -402,6 +422,7 @@ const AdminWaiterReports = () => {
                       }
                     }}
                     locale={ptBR}
+                    className="rounded-b-lg"
                   />
                 </PopoverContent>
               </Popover>
@@ -412,9 +433,10 @@ const AdminWaiterReports = () => {
               onClick={exportToCSV} 
               variant="outline"
               disabled={!selectedWaiterId || waiterOrders.length === 0}
+              className="w-full lg:w-auto h-11 border-green-300 hover:bg-green-50 hover:border-green-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              <Download className="mr-2 h-4 w-4" />
-              Exportar
+              <Download className="mr-2 h-4 w-4 text-green-600" />
+              <span>Exportar CSV</span>
             </Button>
           </div>
         </CardContent>
