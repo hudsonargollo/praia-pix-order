@@ -1,38 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutDashboard, DollarSign, ShoppingCart, LogOut, Users, TrendingUp, QrCode } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, LogOut, TrendingUp, QrCode, CheckCircle, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PIXQRGenerator } from "@/components";
+import { CommissionToggle } from "@/components/CommissionToggle";
+import { MobileOrderCard } from "@/components/MobileOrderCard";
+import { OrderEditModal } from "@/components/OrderEditModal";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { calculateConfirmedCommissions, calculateEstimatedCommissions, getCommissionStatus, ORDER_STATUS_CATEGORIES } from "@/lib/commissionUtils";
+import type { Order } from "@/types/commission";
+import type { Order as RealtimeOrder } from "@/integrations/supabase/realtime";
 import logo from "@/assets/coco-loko-logo.png";
-
-interface Order {
-  id: string;
-  created_at: string;
-  total_amount: number;
-  status: string;
-  customer_name?: string;
-  customer_phone?: string;
-}
 
 const WaiterDashboard = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [waiterName, setWaiterName] = useState("Garçom");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showPIXGenerator, setShowPIXGenerator] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log('🚀 WaiterDashboard mounted');
-    fetchWaiterData();
-  }, []);
-
-  const fetchWaiterData = async () => {
+  const fetchWaiterData = useCallback(async () => {
     setLoading(true);
     console.log('📊 Fetching waiter data...');
     const { data: { user } } = await supabase.auth.getUser();
@@ -46,18 +43,12 @@ const WaiterDashboard = () => {
 
     console.log('✅ User found:', user.email, 'Role:', user.user_metadata?.role);
     setWaiterName(user.user_metadata?.full_name || user.email || "Garçom");
+    setCurrentUserId(user.id);
 
     // Fetch orders placed by the current waiter
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("orders")
-      .select(`
-        id, 
-        created_at, 
-        total_amount, 
-        status, 
-        customer_name, 
-        customer_phone
-      `)
+      .select("*")
       .eq("waiter_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -67,7 +58,120 @@ const WaiterDashboard = () => {
       setOrders(data || []);
     }
     setLoading(false);
-  };
+  }, [navigate]);
+
+  // Handle real-time order updates
+  const handleOrderUpdate = useCallback((updatedOrder: RealtimeOrder) => {
+    console.log('📡 Real-time order update received:', updatedOrder.id, 'Status:', updatedOrder.status);
+    
+    setOrders(prevOrders => {
+      const existingIndex = prevOrders.findIndex(o => o.id === updatedOrder.id);
+      
+      if (existingIndex >= 0) {
+        const oldOrder = prevOrders[existingIndex];
+        const newOrders = [...prevOrders];
+        newOrders[existingIndex] = updatedOrder as Order;
+        
+        // Show toast notification for status changes that affect commissions
+        const oldStatus = oldOrder.status;
+        const oldTotal = oldOrder.total_amount;
+        const newTotal = updatedOrder.total_amount;
+        
+        if (oldStatus !== updatedOrder.status) {
+          if (ORDER_STATUS_CATEGORIES.PAID.includes(updatedOrder.status.toLowerCase())) {
+            const commission = newTotal * 0.1;
+            toast.success('💰 Comissão confirmada! Pedido pago.', {
+              description: `Pedido #${updatedOrder.order_number || updatedOrder.id.substring(0, 8)} - Comissão: ${commission.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
+            });
+          } else if (ORDER_STATUS_CATEGORIES.EXCLUDED.includes(updatedOrder.status.toLowerCase())) {
+            toast.info('Pedido cancelado', {
+              description: `Pedido #${updatedOrder.order_number || updatedOrder.id.substring(0, 8)}`
+            });
+          }
+        } else if (Math.abs(oldTotal - newTotal) > 0.01) {
+          // Order total changed (from edit)
+          const oldCommission = oldTotal * 0.1;
+          const newCommission = newTotal * 0.1;
+          const commissionDiff = newCommission - oldCommission;
+          
+          toast.info('Pedido atualizado', {
+            description: `Comissão ${commissionDiff > 0 ? 'aumentou' : 'diminuiu'}: ${Math.abs(commissionDiff).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
+          });
+        }
+        
+        console.log('✅ Order updated in local state, commission cards will auto-refresh');
+        return newOrders;
+      }
+      
+      return prevOrders;
+    });
+  }, []);
+
+  // Handle new orders (in case waiter creates order from another device)
+  const handleOrderInsert = useCallback((newOrder: RealtimeOrder) => {
+    console.log('📡 Real-time new order received:', newOrder.id);
+    
+    setOrders(prevOrders => {
+      // Check if order already exists
+      if (prevOrders.some(o => o.id === newOrder.id)) {
+        return prevOrders;
+      }
+      
+      // Add new order at the beginning
+      return [newOrder as Order, ...prevOrders];
+    });
+  }, []);
+
+  useEffect(() => {
+    console.log('🚀 WaiterDashboard mounted');
+    fetchWaiterData();
+  }, [fetchWaiterData]);
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    if (!currentUserId) {
+      return;
+    }
+
+    console.log('🔔 Setting up real-time subscriptions for waiter:', currentUserId);
+    
+    // Subscribe to new orders and updates
+    const channelName = 'waiter-orders';
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+          filter: `waiter_id=eq.${currentUserId}`,
+        },
+        (payload) => {
+          handleOrderInsert(payload.new as RealtimeOrder);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `waiter_id=eq.${currentUserId}`,
+        },
+        (payload) => {
+          handleOrderUpdate(payload.new as RealtimeOrder);
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Waiter orders subscription status: ${status}`);
+      });
+
+    return () => {
+      console.log('🔕 Cleaning up real-time subscriptions');
+      supabase.removeChannel(channel);
+    };
+  }, [currentUserId, handleOrderUpdate, handleOrderInsert]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -114,20 +218,52 @@ const WaiterDashboard = () => {
     setSelectedOrder(null);
   };
 
-  const canGeneratePIX = (order: Order) => {
+  const handleOrderClick = (order: Order) => {
+    setSelectedOrder(order);
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setSelectedOrder(null);
+  };
+
+  const handleSaveOrder = async (updatedOrder: Order) => {
+    console.log('💾 Order saved, refreshing dashboard data...');
+    
+    // Immediately update the local state with the updated order
+    setOrders(prevOrders => {
+      const updatedOrders = prevOrders.map(order => 
+        order.id === updatedOrder.id ? updatedOrder : order
+      );
+      return updatedOrders;
+    });
+    
+    // Fetch fresh data from the database to ensure consistency
+    await fetchWaiterData();
+    
+    // Show success notification with commission update
+    const commissionStatus = getCommissionStatus(updatedOrder);
+    toast.success('Pedido atualizado!', {
+      description: `Nova comissão: ${commissionStatus.displayAmount}`
+    });
+    
+    console.log('✅ Dashboard refreshed with updated order data');
+  };
+
+  const canGeneratePIX = (order: Order): boolean => {
     // Allow PIX generation for orders that haven't been paid yet
     const unpaidStatuses = ['pending', 'in_preparation', 'ready'];
     return unpaidStatuses.includes(order.status.toLowerCase()) && 
-           order.customer_name && 
-           order.customer_phone;
+           !!order.customer_name && 
+           !!order.customer_phone;
   };
 
-  // Only count orders that are paid or in progress (exclude cancelled, expired, and pending payment)
+  // Only count paid orders for total sales
   const validOrders = orders.filter(order => 
-    !['cancelled', 'expired', 'pending_payment'].includes(order.status)
+    ORDER_STATUS_CATEGORIES.PAID.includes(order.status.toLowerCase())
   );
   const totalSales = validOrders.reduce((sum, order) => sum + order.total_amount, 0);
-  const totalCommissions = totalSales * 0.1; // 10% commission
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -272,7 +408,7 @@ const WaiterDashboard = () => {
         </div>
 
         {/* Enhanced Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
           <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-blue-50/50 backdrop-blur-sm overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
@@ -289,50 +425,15 @@ const WaiterDashboard = () => {
               </div>
               <p className="text-sm text-gray-500 group-hover:text-white/90 transition-colors flex items-center">
                 <TrendingUp className="w-4 h-4 mr-2" />
-                {validOrders.length} pedidos realizados
+                {validOrders.length} pedidos pagos
               </p>
             </CardContent>
           </Card>
+        </div>
 
-          <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-orange-50/50 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-              <CardTitle className="text-sm font-medium text-gray-600 group-hover:text-white transition-colors">
-                Suas Comissões (10%)
-              </CardTitle>
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 group-hover:shadow-xl transition-all duration-300">
-                <DollarSign className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-2xl sm:text-3xl font-bold text-green-600 group-hover:text-white transition-colors mb-2">
-                {totalCommissions.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-              </div>
-              <p className="text-sm text-gray-500 group-hover:text-white/90 transition-colors">
-                10% de comissão sobre vendas
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-purple-50/50 backdrop-blur-sm overflow-hidden relative sm:col-span-2 lg:col-span-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-              <CardTitle className="text-sm font-medium text-gray-600 group-hover:text-white transition-colors">
-                Performance
-              </CardTitle>
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 group-hover:shadow-xl transition-all duration-300">
-                <Users className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600 group-hover:text-white transition-colors mb-2">
-                {orders.length > 0 ? (totalSales / orders.length).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "R$ 0,00"}
-              </div>
-              <p className="text-sm text-gray-500 group-hover:text-white/90 transition-colors">
-                Ticket médio por pedido
-              </p>
-            </CardContent>
-          </Card>
+        {/* Commission Toggle */}
+        <div className="mb-8">
+          <CommissionToggle orders={orders} />
         </div>
 
         {/* Orders History */}
@@ -344,87 +445,142 @@ const WaiterDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-gray-200">
-                    <TableHead className="text-gray-600">ID do Pedido</TableHead>
-                    <TableHead className="text-gray-600">Cliente</TableHead>
-                    <TableHead className="text-gray-600">Data</TableHead>
-                    <TableHead className="text-right text-gray-600">Total</TableHead>
-                    <TableHead className="text-right text-gray-600">Sua Comissão</TableHead>
-                    <TableHead className="text-gray-600">Status</TableHead>
-                    <TableHead className="text-gray-600">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id} className="border-gray-100 hover:bg-gray-50/50">
-                      <TableCell className="font-medium text-gray-900">
-                        #{order.id.substring(0, 8)}
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        <div>
-                          <div className="font-medium">{order.customer_name || 'N/A'}</div>
-                          <div className="text-sm text-gray-500">{order.customer_phone || 'N/A'}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        {new Date(order.created_at).toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit"
-                        })}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-gray-900">
-                        {order.total_amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </TableCell>
-                      <TableCell className={`text-right font-semibold ${
-                        ['cancelled', 'expired', 'pending_payment'].includes(order.status) 
-                          ? 'text-gray-400 line-through' 
-                          : 'text-green-600'
-                      }`}>
-                        {['cancelled', 'expired', 'pending_payment'].includes(order.status)
-                          ? 'R$ 0,00'
-                          : (order.total_amount * 0.1).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(order.status)} className="font-medium">
-                          {getStatusLabel(order.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {canGeneratePIX(order) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleGeneratePIX(order)}
-                            className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
-                          >
-                            <QrCode className="w-3 h-3" />
-                            Gerar PIX
-                          </Button>
-                        )}
-                      </TableCell>
+            {/* Mobile Card Layout */}
+            {isMobile ? (
+              <div className="space-y-3">
+                {orders.map((order) => (
+                  <MobileOrderCard
+                    key={order.id}
+                    order={order}
+                    onGeneratePIX={handleGeneratePIX}
+                    canGeneratePIX={canGeneratePIX(order)}
+                    onClick={handleOrderClick}
+                  />
+                ))}
+                {orders.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="flex flex-col items-center">
+                      <ShoppingCart className="w-12 h-12 text-gray-300 mb-2" />
+                      <p>Nenhum pedido encontrado</p>
+                      <p className="text-sm">Clique em "Novo Pedido" para começar a atender clientes</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Desktop Table Layout */
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-gray-200">
+                      <TableHead className="text-gray-600">ID do Pedido</TableHead>
+                      <TableHead className="text-gray-600">Cliente</TableHead>
+                      <TableHead className="text-gray-600">Data</TableHead>
+                      <TableHead className="text-right text-gray-600">Total</TableHead>
+                      <TableHead className="text-right text-gray-600">Sua Comissão</TableHead>
+                      <TableHead className="text-gray-600">Status</TableHead>
+                      <TableHead className="text-gray-600">Ações</TableHead>
                     </TableRow>
-                  ))}
-                  {orders.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        <div className="flex flex-col items-center">
-                          <ShoppingCart className="w-12 h-12 text-gray-300 mb-2" />
-                          <p>Nenhum pedido encontrado</p>
-                          <p className="text-sm">Clique em "Novo Pedido" para começar a atender clientes</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.map((order) => (
+                      <TableRow 
+                        key={order.id} 
+                        className="border-gray-100 hover:bg-purple-50/50 cursor-pointer transition-colors duration-150"
+                        onClick={() => handleOrderClick(order)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleOrderClick(order);
+                          }
+                        }}
+                      >
+                        <TableCell className="font-medium text-gray-900">
+                          #{order.id.substring(0, 8)}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          <div>
+                            <div className="font-medium">{order.customer_name || 'N/A'}</div>
+                            <div className="text-sm text-gray-500">{order.customer_phone || 'N/A'}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {new Date(order.created_at).toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-gray-900">
+                          {order.total_amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {(() => {
+                            const commissionStatus = getCommissionStatus(order);
+                            const IconComponent = commissionStatus.icon === 'CheckCircle' ? CheckCircle : 
+                                                 commissionStatus.icon === 'Clock' ? Clock : XCircle;
+                            
+                            return (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center justify-end gap-2">
+                                      <IconComponent className="w-4 h-4" />
+                                      <span className={commissionStatus.className}>
+                                        {commissionStatus.displayAmount}
+                                      </span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{commissionStatus.tooltip}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            );
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusVariant(order.status)} className="font-medium">
+                            {getStatusLabel(order.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {canGeneratePIX(order) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleGeneratePIX(order);
+                              }}
+                              className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
+                            >
+                              <QrCode className="w-3 h-3" />
+                              Gerar PIX
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {orders.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                          <div className="flex flex-col items-center">
+                            <ShoppingCart className="w-12 h-12 text-gray-300 mb-2" />
+                            <p>Nenhum pedido encontrado</p>
+                            <p className="text-sm">Clique em "Novo Pedido" para começar a atender clientes</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -443,6 +599,14 @@ const WaiterDashboard = () => {
           onClose={handleClosePIXGenerator}
         />
       )}
+
+      {/* Order Edit Modal */}
+      <OrderEditModal
+        order={selectedOrder}
+        isOpen={showEditModal}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveOrder}
+      />
     </div>
   );
 };

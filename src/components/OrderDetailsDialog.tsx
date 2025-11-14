@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchWaiterInfo, type WaiterInfo } from '@/lib/waiterUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,6 +42,7 @@ interface Order {
   created_at: string;
   payment_confirmed_at: string | null;
   ready_at: string | null;
+  waiter_id: string | null;
 }
 
 interface OrderDetailsDialogProps {
@@ -62,6 +64,7 @@ export function OrderDetailsDialog({
   const [saving, setSaving] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [waiterInfo, setWaiterInfo] = useState<WaiterInfo | null>(null);
 
   // Form state for editing
   const [formData, setFormData] = useState({
@@ -79,6 +82,13 @@ export function OrderDetailsDialog({
         table_number: order.table_number,
       });
       setEditing(false);
+      
+      // Load waiter info if order has a waiter
+      if (order.waiter_id) {
+        fetchWaiterInfo(order.waiter_id).then(setWaiterInfo);
+      } else {
+        setWaiterInfo(null);
+      }
     }
   }, [order, open]);
 
@@ -239,6 +249,12 @@ export function OrderDetailsDialog({
                     <span className="text-muted-foreground">Telefone:</span>
                     <span className="font-semibold">{order.customer_phone}</span>
                   </div>
+                  {waiterInfo && (
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-muted-foreground">Garçom:</span>
+                      <span className="font-semibold">{waiterInfo.full_name}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center py-2 border-b">
                     <span className="text-muted-foreground">Status:</span>
                     <span className="font-semibold">{getStatusLabel(order.status)}</span>

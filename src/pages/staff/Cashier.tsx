@@ -8,10 +8,19 @@ import { ConnectionMonitor, useConnectionMonitor } from "@/components/Connection
 import { NotificationControls } from "@/components/NotificationControls";
 import { OrderDetailsDialog } from "@/components/OrderDetailsDialog";
 import { OrderEditDialog } from "@/components/OrderEditDialog";
+import { OrderCardInfo } from "@/components/OrderCardInfo";
+import { fetchAllWaiters, getWaiterName, type WaiterInfo } from "@/lib/waiterUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +39,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Wifi, WifiOff, Eye, Edit, BarChart3, X, LogOut } from "lucide-react";
+import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Wifi, WifiOff, Eye, Edit, BarChart3, X, LogOut, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { Order } from "@/integrations/supabase/realtime";
@@ -47,10 +56,25 @@ const Cashier = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("pending");
+  const [selectedWaiterId, setSelectedWaiterId] = useState<string | null>(() => {
+    // Restore filter from localStorage on mount
+    const saved = localStorage.getItem('cashier_waiter_filter');
+    return saved || null;
+  });
+  const [waiters, setWaiters] = useState<WaiterInfo[]>([]);
   
   // Load notification history for all orders
   const orderIds = orders.map(o => o.id);
   const { history: notificationHistory, refresh: refreshNotifications } = useNotificationHistory(orderIds);
+
+  // Persist waiter filter selection to localStorage
+  useEffect(() => {
+    if (selectedWaiterId) {
+      localStorage.setItem('cashier_waiter_filter', selectedWaiterId);
+    } else {
+      localStorage.removeItem('cashier_waiter_filter');
+    }
+  }, [selectedWaiterId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -72,15 +96,37 @@ const Cashier = () => {
   // Real-time order updates
   const handleOrderCreated = useCallback((order: Order) => {
     console.log('New order created:', order);
+    
+    // Apply waiter filter to real-time updates
+    if (selectedWaiterId && order.waiter_id !== selectedWaiterId) {
+      console.log('Order filtered out by waiter filter:', order.id);
+      return;
+    }
+    
     setOrders(prevOrders => [order, ...prevOrders]);
     notificationUtils.newOrder(order.order_number, order.customer_phone);
-  }, []);
+  }, [selectedWaiterId]);
 
   const handleOrderUpdate = useCallback((order: Order) => {
     console.log('Order updated:', order);
-    setOrders(prevOrders => 
-      prevOrders.map(o => o.id === order.id ? order : o)
-    );
+    
+    // Apply waiter filter to real-time updates
+    if (selectedWaiterId && order.waiter_id !== selectedWaiterId) {
+      // If order was previously in the list but now doesn't match filter, remove it
+      setOrders(prevOrders => prevOrders.filter(o => o.id !== order.id));
+      return;
+    }
+    
+    setOrders(prevOrders => {
+      const existingIndex = prevOrders.findIndex(o => o.id === order.id);
+      if (existingIndex >= 0) {
+        // Update existing order
+        return prevOrders.map(o => o.id === order.id ? order : o);
+      } else {
+        // Add new order if it matches the filter
+        return [order, ...prevOrders];
+      }
+    });
     
     // Show appropriate notification based on status change
     switch (order.status) {
@@ -94,12 +140,18 @@ const Cashier = () => {
         notificationUtils.orderCompleted(order.order_number, order.customer_phone);
         break;
     }
-  }, []);
+  }, [selectedWaiterId]);
 
   const handlePaymentConfirmed = useCallback((order: Order) => {
     console.log('Payment confirmed for order:', order);
+    
+    // Apply waiter filter to real-time updates
+    if (selectedWaiterId && order.waiter_id !== selectedWaiterId) {
+      return;
+    }
+    
     notificationUtils.paymentConfirmed(order.order_number, order.customer_phone);
-  }, []);
+  }, [selectedWaiterId]);
 
   const { connectionStatus, reconnect } = useConnectionMonitor();
   
@@ -152,16 +204,30 @@ const Cashier = () => {
 
   useEffect(() => {
     loadOrders();
-  }, []);
+    // Fetch all waiters to populate cache and dropdown
+    loadWaiters();
+  }, [selectedWaiterId]); // Re-load orders when waiter filter changes
+
+  const loadWaiters = async () => {
+    const waitersList = await fetchAllWaiters();
+    setWaiters(waitersList);
+  };
 
   const loadOrders = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("orders")
         .select("*")
         .is("deleted_at", null) // Only load non-deleted orders
         .order("created_at", { ascending: false })
         .limit(50);
+
+      // Apply waiter filter if selected
+      if (selectedWaiterId) {
+        query = query.eq("waiter_id", selectedWaiterId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setOrders((data || []) as Order[]);
@@ -326,6 +392,7 @@ const Cashier = () => {
     );
   }
 
+  // Calculate order counts based on orders (already filtered by waiter if selected)
   const pendingOrders = orders.filter((o) => o.status === "pending_payment");
   const inProgressOrders = orders.filter((o) => o.status === "paid" || o.status === "in_preparation");
   const readyOrders = orders.filter((o) => o.status === "ready");
@@ -358,8 +425,26 @@ const Cashier = () => {
                 </div>
               </div>
 
-              {/* Center: Action Buttons */}
-              <div className="flex gap-2">
+              {/* Center: Action Buttons and Waiter Filter */}
+              <div className="flex gap-2 items-center">
+                {/* Waiter Filter */}
+                <Select
+                  value={selectedWaiterId || "all"}
+                  onValueChange={(value) => setSelectedWaiterId(value === "all" ? null : value)}
+                >
+                  <SelectTrigger className="w-[200px] bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300">
+                    <SelectValue placeholder="Todos os Garçons" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Garçons</SelectItem>
+                    {waiters.map((waiter) => (
+                      <SelectItem key={waiter.id} value={waiter.id}>
+                        {waiter.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
                 <Button
                   onClick={() => window.location.href = '/reports'}
                   className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
@@ -471,6 +556,26 @@ const Cashier = () => {
                 </div>
               </div>
               
+              {/* Waiter Filter - Full Width on Mobile */}
+              <div className="mb-3">
+                <Select
+                  value={selectedWaiterId || "all"}
+                  onValueChange={(value) => setSelectedWaiterId(value === "all" ? null : value)}
+                >
+                  <SelectTrigger className="w-full bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300">
+                    <SelectValue placeholder="Todos os Garçons" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Garçons</SelectItem>
+                    {waiters.map((waiter) => (
+                      <SelectItem key={waiter.id} value={waiter.id}>
+                        {waiter.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-2 justify-between">
                 <div className="flex flex-wrap gap-2">
@@ -708,7 +813,10 @@ const Cashier = () => {
           <TabsContent value="pending" className="space-y-4">
             {pendingOrders.length === 0 ? (
               <Card className="p-6 text-center text-muted-foreground">
-                Nenhum pedido aguardando pagamento
+                {selectedWaiterId 
+                  ? `Nenhum pedido aguardando pagamento para o garçom selecionado`
+                  : `Nenhum pedido aguardando pagamento`
+                }
               </Card>
             ) : (
               pendingOrders.map((order) => {
@@ -719,18 +827,15 @@ const Cashier = () => {
                   <Card key={order.id} className="p-4 sm:p-6 shadow-soft">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{order.order_number}</h3>
-                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
-                          {order.customer_name}
-                        </p>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          📱 {order.customer_phone}
-                        </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          Criado: {formatTimestamp(order.created_at)}
-                        </p>
+                        <OrderCardInfo
+                          orderNumber={order.order_number}
+                          customerName={order.customer_name}
+                          customerPhone={order.customer_phone}
+                          waiterId={order.waiter_id}
+                          createdAt={order.created_at}
+                        />
                         {order.mercadopago_payment_id && (
-                          <p className="text-xs sm:text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                             ID: {order.mercadopago_payment_id.substring(0, 20)}...
                           </p>
                         )}
@@ -821,7 +926,10 @@ const Cashier = () => {
           <TabsContent value="progress" className="space-y-4">
             {inProgressOrders.length === 0 ? (
               <Card className="p-6 text-center text-muted-foreground">
-                Nenhum pedido em preparo
+                {selectedWaiterId 
+                  ? `Nenhum pedido em preparo para o garçom selecionado`
+                  : `Nenhum pedido em preparo`
+                }
               </Card>
             ) : (
               inProgressOrders.map((order) => {
@@ -832,30 +940,15 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-4 sm:p-6 shadow-soft">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{order.order_number}</h3>
-                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
-                          {order.customer_name}
-                        </p>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          📱 {order.customer_phone}
-                        </p>
-                        <div className="mt-2 space-y-1">
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            Criado: {formatTimestamp(order.created_at)}
-                          </p>
-                          {order.payment_confirmed_at && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Pago: {formatTimestamp(order.payment_confirmed_at)}
-                            </p>
-                          )}
-                          {order.kitchen_notified_at && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Cozinha notificada: {formatTimestamp(order.kitchen_notified_at)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                      <OrderCardInfo
+                        orderNumber={order.order_number}
+                        customerName={order.customer_name}
+                        customerPhone={order.customer_phone}
+                        waiterId={order.waiter_id}
+                        createdAt={order.created_at}
+                        paymentConfirmedAt={order.payment_confirmed_at}
+                        kitchenNotifiedAt={order.kitchen_notified_at}
+                      />
                       <div className="flex sm:flex-col gap-2 sm:text-right">
                         <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
                           <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
@@ -954,7 +1047,10 @@ const Cashier = () => {
           <TabsContent value="ready" className="space-y-4">
             {readyOrders.length === 0 ? (
               <Card className="p-6 text-center text-muted-foreground">
-                Nenhum pedido pronto
+                {selectedWaiterId 
+                  ? `Nenhum pedido pronto para o garçom selecionado`
+                  : `Nenhum pedido pronto`
+                }
               </Card>
             ) : (
               readyOrders.map((order) => {
@@ -965,30 +1061,15 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-4 sm:p-6 shadow-soft border-l-4 border-l-success">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{order.order_number}</h3>
-                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
-                          {order.customer_name}
-                        </p>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          📱 {order.customer_phone}
-                        </p>
-                        <div className="mt-2 space-y-1">
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            Criado: {formatTimestamp(order.created_at)}
-                          </p>
-                          {order.payment_confirmed_at && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Pago: {formatTimestamp(order.payment_confirmed_at)}
-                            </p>
-                          )}
-                          {order.ready_at && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Pronto: {formatTimestamp(order.ready_at)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                      <OrderCardInfo
+                        orderNumber={order.order_number}
+                        customerName={order.customer_name}
+                        customerPhone={order.customer_phone}
+                        waiterId={order.waiter_id}
+                        createdAt={order.created_at}
+                        paymentConfirmedAt={order.payment_confirmed_at}
+                        readyAt={order.ready_at}
+                      />
                       <div className="flex sm:flex-col gap-2 sm:text-right">
                         <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
                           <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
@@ -1101,7 +1182,10 @@ const Cashier = () => {
           <TabsContent value="completed" className="space-y-4">
             {completedOrders.length === 0 ? (
               <Card className="p-6 text-center text-muted-foreground">
-                Nenhum pedido concluído
+                {selectedWaiterId 
+                  ? `Nenhum pedido concluído para o garçom selecionado`
+                  : `Nenhum pedido concluído`
+                }
               </Card>
             ) : (
               completedOrders.map((order) => {
@@ -1112,33 +1196,20 @@ const Cashier = () => {
                   <Card key={order.id} className="p-4 sm:p-6 shadow-soft border-l-4 border-l-muted">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{order.order_number}</h3>
-                        <p className="text-sm sm:text-base text-muted-foreground mb-2">
-                          {order.customer_name}
-                        </p>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          📱 {order.customer_phone}
-                        </p>
-                        <div className="mt-2 space-y-1">
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            Criado: {formatTimestamp(order.created_at)}
+                        <OrderCardInfo
+                          orderNumber={order.order_number}
+                          customerName={order.customer_name}
+                          customerPhone={order.customer_phone}
+                          waiterId={order.waiter_id}
+                          createdAt={order.created_at}
+                          paymentConfirmedAt={order.payment_confirmed_at}
+                          readyAt={order.ready_at}
+                        />
+                        {order.notified_at && (
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+                            Cliente notificado: {formatTimestamp(order.notified_at)}
                           </p>
-                          {order.payment_confirmed_at && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Pago: {formatTimestamp(order.payment_confirmed_at)}
-                            </p>
-                          )}
-                          {order.ready_at && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Pronto: {formatTimestamp(order.ready_at)}
-                            </p>
-                          )}
-                          {order.notified_at && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Cliente notificado: {formatTimestamp(order.notified_at)}
-                            </p>
-                          )}
-                        </div>
+                        )}
                       </div>
                       <div className="flex sm:flex-col gap-2 sm:text-right">
                         <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
@@ -1161,7 +1232,10 @@ const Cashier = () => {
           <TabsContent value="cancelled" className="space-y-4">
             {cancelledOrders.length === 0 ? (
               <Card className="p-6 text-center text-muted-foreground">
-                Nenhum pedido cancelado
+                {selectedWaiterId 
+                  ? `Nenhum pedido cancelado para o garçom selecionado`
+                  : `Nenhum pedido cancelado`
+                }
               </Card>
             ) : (
               cancelledOrders.map((order) => {
@@ -1176,6 +1250,11 @@ const Cashier = () => {
                         <p className="text-sm text-muted-foreground">
                           {order.customer_name} • {order.customer_phone}
                         </p>
+                        {order.waiter_id && (
+                          <p className="text-sm text-muted-foreground">
+                            👤 Garçom: <span className="font-medium">{getWaiterName(order.waiter_id)}</span>
+                          </p>
+                        )}
                         <div className="mt-2 space-y-1">
                           <p className="text-xs text-muted-foreground">
                             Criado: {formatTimestamp(order.created_at)}

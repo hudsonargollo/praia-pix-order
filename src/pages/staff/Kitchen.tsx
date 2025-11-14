@@ -4,6 +4,7 @@ import { notificationTriggers } from "@/integrations/whatsapp";
 import { useKitchenOrders } from "@/hooks/useRealtimeOrders";
 import { RealtimeNotifications, notificationUtils } from "@/components/RealtimeNotifications";
 import { ConnectionMonitor, useConnectionMonitor } from "@/components/ConnectionMonitor";
+import { fetchAllWaiters, getWaiterName } from "@/lib/waiterUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,18 +39,6 @@ interface OrderWithWaiter extends Order {
     };
   } | null;
 }
-
-// Helper function to get waiter name from order
-const getWaiterName = (order: OrderWithWaiter): string | null => {
-  if (!order.waiter_id || !order.created_by_waiter) return null;
-  
-  // Try to get waiter name from the joined data
-  if (order.waiter?.raw_user_meta_data?.full_name) {
-    return order.waiter.raw_user_meta_data.full_name;
-  }
-  
-  return 'Garçom';
-};
 
 const Kitchen = () => {
   const [orders, setOrders] = useState<OrderWithWaiter[]>([]);
@@ -113,6 +102,8 @@ const Kitchen = () => {
 
   useEffect(() => {
     loadOrders();
+    // Fetch all waiters to populate cache
+    fetchAllWaiters();
   }, []);
 
   const loadOrders = async () => {
@@ -361,7 +352,7 @@ const Kitchen = () => {
                 </Card>
               ) : (
                 newOrders.map((order) => {
-                  const waiterName = getWaiterName(order);
+                  const waiterName = order.waiter_id ? getWaiterName(order.waiter_id) : null;
                   return (
                     <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-blue-500">
                       <div className="flex justify-between items-start mb-3">
@@ -372,7 +363,7 @@ const Kitchen = () => {
                           <p className="text-xs lg:text-sm text-muted-foreground">
                             {order.customer_name}
                           </p>
-                          {waiterName && (
+                          {waiterName && waiterName !== 'Cliente' && (
                             <p className="text-xs text-blue-600 font-medium">
                               Atendido por: {waiterName}
                             </p>
@@ -433,7 +424,7 @@ const Kitchen = () => {
                 </Card>
               ) : (
                 inProgressOrders.map((order) => {
-                  const waiterName = getWaiterName(order);
+                  const waiterName = order.waiter_id ? getWaiterName(order.waiter_id) : null;
                   return (
                     <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-primary">
                       <div className="flex justify-between items-start mb-3">
@@ -444,7 +435,7 @@ const Kitchen = () => {
                           <p className="text-xs lg:text-sm text-muted-foreground">
                             {order.customer_name}
                           </p>
-                          {waiterName && (
+                          {waiterName && waiterName !== 'Cliente' && (
                             <p className="text-xs text-primary font-medium">
                               Atendido por: {waiterName}
                             </p>
@@ -503,7 +494,7 @@ const Kitchen = () => {
                 </Card>
               ) : (
                 readyOrders.map((order) => {
-                  const waiterName = getWaiterName(order);
+                  const waiterName = order.waiter_id ? getWaiterName(order.waiter_id) : null;
                   return (
                     <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-success bg-success/5">
                       <div className="flex justify-between items-start mb-3">
@@ -514,7 +505,7 @@ const Kitchen = () => {
                           <p className="text-xs lg:text-sm text-muted-foreground">
                             {order.customer_name}
                           </p>
-                          {waiterName && (
+                          {waiterName && waiterName !== 'Cliente' && (
                             <p className="text-xs text-success font-medium">
                               Atendido por: {waiterName}
                             </p>

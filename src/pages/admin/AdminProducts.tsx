@@ -75,18 +75,40 @@ const AdminProducts = () => {
     try {
       setLoading(true);
 
+      // Debug: Check auth status
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('🔍 Current user:', user?.email, 'ID:', user?.id);
+      
+      if (!user) {
+        console.error('❌ No user logged in!');
+        toast.error('Você precisa estar logado como admin');
+        setLoading(false);
+        return;
+      }
+
       const [itemsResult, categoriesResult] = await Promise.all([
         supabase.from('menu_items').select('*').order('category_id').order('sort_order'),
         supabase.from('menu_categories').select('*').order('display_order'),
       ]);
 
-      if (itemsResult.error) throw itemsResult.error;
-      if (categoriesResult.error) throw categoriesResult.error;
+      console.log('📊 Items result:', itemsResult.data?.length, 'items', 'Error:', itemsResult.error);
+      console.log('📊 Categories result:', categoriesResult.data?.length, 'categories', 'Error:', categoriesResult.error);
+
+      if (itemsResult.error) {
+        console.error('❌ Items error:', itemsResult.error);
+        throw itemsResult.error;
+      }
+      if (categoriesResult.error) {
+        console.error('❌ Categories error:', categoriesResult.error);
+        throw categoriesResult.error;
+      }
 
       setMenuItems(itemsResult.data || []);
       setCategories(categoriesResult.data || []);
+      
+      console.log('✅ Data loaded successfully');
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Error loading data:', error);
       toast.error('Erro ao carregar dados');
     } finally {
       setLoading(false);

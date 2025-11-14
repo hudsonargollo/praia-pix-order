@@ -115,8 +115,34 @@ serve(async (req) => {
 
     console.log('[create-waiter] Calling database function to create waiter')
 
-    // Use database function instead of Auth Admin API
-    const { data, error: createError } = await supabaseClient
+    // Create Supabase client with service role for admin operations
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    console.log('[create-waiter] Environment check:', {
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!serviceRoleKey,
+      urlLength: supabaseUrl?.length,
+      keyLength: serviceRoleKey?.length,
+    })
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('[create-waiter] Missing environment variables')
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error: missing credentials' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey)
+
+    console.log('[create-waiter] Using service role client for RPC call')
+
+    // Use database function with service role client
+    const { data, error: createError } = await supabaseAdmin
       .rpc('create_waiter_user', {
         p_email: email,
         p_password: password,
@@ -124,7 +150,13 @@ serve(async (req) => {
       })
 
     if (createError) {
-      console.error('[create-waiter] Error creating user:', createError)
+      console.error('[create-waiter] Error creating user:', {
+        error: createError,
+        message: createError.message,
+        details: createError.details,
+        hint: createError.hint,
+        code: createError.code,
+      })
 
       // Handle duplicate email error
       if (createError.message.includes('already exists')) {
@@ -138,7 +170,11 @@ serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ error: createError.message }),
+        JSON.stringify({ 
+          error: createError.message,
+          details: createError.details,
+          hint: createError.hint,
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

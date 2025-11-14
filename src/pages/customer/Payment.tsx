@@ -211,12 +211,46 @@ const Payment = () => {
     setIsRecovering(false);
   };
 
+  const formatPixSnippet = (pixCode: string): string => {
+    if (!pixCode || pixCode.length < 16) return pixCode;
+    const first10 = pixCode.substring(0, 10);
+    const last6 = pixCode.substring(pixCode.length - 6);
+    return `${first10}...${last6}`;
+  };
+
+  const formatPhoneNumber = (phone: string): string => {
+    // Remove all non-digit characters
+    const digits = phone.replace(/\D/g, '');
+    
+    // Extract last 11 digits (DDD + 9 digits)
+    const last11 = digits.slice(-11);
+    
+    if (last11.length !== 11) return phone; // Return original if invalid
+    
+    // Format as (DDD) 00000-0000
+    const ddd = last11.substring(0, 2);
+    const firstPart = last11.substring(2, 7);
+    const secondPart = last11.substring(7, 11);
+    
+    return `(${ddd}) ${firstPart}-${secondPart}`;
+  };
+
+  const handleBack = () => {
+    // First attempt: use browser history
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      // Fallback: navigate to menu
+      navigate('/menu');
+    }
+  };
+
   const copyPixCode = async () => {
     if (!paymentData?.pixCopyPaste) return;
 
     try {
       await navigator.clipboard.writeText(paymentData.pixCopyPaste);
-      toast.success('Código Pix copiado!');
+      toast.success('Copiado!');
     } catch (error) {
       console.error('Error copying to clipboard:', error);
       toast.error('Erro ao copiar código');
@@ -274,21 +308,21 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-gradient-ocean text-white p-3 shadow-medium" role="banner">
-        <div className="flex items-center justify-between">
+      <header className="bg-gradient-ocean text-white p-4 shadow-medium" role="banner">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
             className="text-white hover:bg-white/20 min-h-[44px] min-w-[44px]"
-            onClick={() => navigate(`/checkout/${order.table_number}`)}
-            aria-label="Voltar para o checkout"
+            onClick={handleBack}
+            aria-label="Voltar"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Button>
-          <div className="flex-1 ml-3">
-            <h1 className="text-xl font-bold">Pagamento</h1>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold">Detalhes do pagamento PIX</h1>
             <p className="text-sm text-white/90">
-              Pedido #{order.order_number} - {order.customer_phone}
+              Use o código PIX abaixo para concluir o pagamento
             </p>
           </div>
         </div>
@@ -401,33 +435,23 @@ const Payment = () => {
         {/* QR Code and Pix */}
         {paymentStatus === 'pending' && paymentData && (
           <>
-            {/* QR Code */}
-            <Card className="p-6 shadow-soft text-center">
-              <h3 className="font-bold text-lg mb-4">Escaneie o QR Code</h3>
-              {paymentData.qrCodeBase64 ? (
-                <div className="flex justify-center mb-4" role="img" aria-label="QR Code para pagamento PIX">
-                  <img
-                    src={`data:image/png;base64,${paymentData.qrCodeBase64}`}
-                    alt="QR Code para pagamento PIX - Escaneie com o aplicativo do seu banco"
-                    className="w-64 h-64 border rounded-lg"
-                    width="256"
-                    height="256"
-                  />
-                </div>
-              ) : (
-                <div 
-                  className="w-64 h-64 bg-gray-100 border rounded-lg mx-auto mb-4 flex items-center justify-center"
-                  role="alert"
-                  aria-live="polite"
-                >
-                  <p className="text-muted-foreground text-sm">QR Code não disponível</p>
-                </div>
-              )}
-              <p className="text-sm text-muted-foreground mb-4">
-                Abra o app do seu banco e escaneie o código
+            {/* Primary PIX Code Section */}
+            <Card className="p-6 shadow-soft border-2 border-primary/20">
+              <h3 className="font-bold text-lg mb-3">Código PIX</h3>
+              
+              {/* PIX Code Snippet */}
+              <div className="bg-gray-50 p-4 rounded-lg mb-2">
+                <p className="text-base font-mono text-center text-gray-700 select-all">
+                  {formatPixSnippet(paymentData.pixCopyPaste)}
+                </p>
+              </div>
+              
+              {/* Helper Text */}
+              <p className="text-sm text-muted-foreground text-center mb-4">
+                Clique em "Copiar Código PIX" para colar no app do seu banco
               </p>
               
-              {/* Prominent Copy Button */}
+              {/* Primary Copy Button */}
               <Button 
                 onClick={copyPixCode} 
                 className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-6 text-lg min-h-[48px]"
@@ -435,28 +459,39 @@ const Payment = () => {
                 aria-label="Copiar código PIX para área de transferência"
               >
                 <Copy className="w-5 h-5 mr-2" aria-hidden="true" />
-                Copiar Código Pix
+                Copiar Código PIX
               </Button>
             </Card>
 
-            {/* Pix Copy/Paste */}
-            <Card className="p-6 shadow-soft">
-              <h3 className="font-bold text-lg mb-4">Ou copie o código Pix</h3>
-              <div className="bg-gray-50 p-4 rounded-lg mb-4" role="region" aria-label="Código PIX para cópia">
-                <p className="text-sm font-mono break-all text-gray-700" aria-label="Código PIX">
-                  {paymentData.pixCopyPaste}
-                </p>
-              </div>
-              <Button 
-                onClick={copyPixCode} 
-                className="w-full min-h-[44px]" 
-                variant="outline"
-                aria-label="Copiar código PIX para área de transferência"
-              >
-                <Copy className="w-4 h-4 mr-2" aria-hidden="true" />
-                Copiar Código Pix
-              </Button>
+            {/* Secondary QR Code Section */}
+            <Card className="p-4 shadow-soft">
+              <h3 className="font-semibold text-base mb-2">Pagar com QR Code (opcional)</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                Se preferir, aponte a câmera do app do seu banco para o QR Code
+              </p>
+              
+              {/* Smaller QR Code */}
+              {paymentData.qrCodeBase64 ? (
+                <div className="flex justify-center" role="img" aria-label="QR Code para pagamento PIX">
+                  <img
+                    src={`data:image/png;base64,${paymentData.qrCodeBase64}`}
+                    alt="QR Code para pagamento PIX - Escaneie com o aplicativo do seu banco"
+                    className="w-48 h-48 border rounded-lg"
+                    width="192"
+                    height="192"
+                  />
+                </div>
+              ) : (
+                <div 
+                  className="w-48 h-48 bg-gray-100 border rounded-lg mx-auto flex items-center justify-center"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  <p className="text-muted-foreground text-sm">QR Code não disponível</p>
+                </div>
+              )}
             </Card>
+
           </>
         )}
 
@@ -470,7 +505,7 @@ const Payment = () => {
             </div>
             <div className="flex justify-between">
               <span>Telefone:</span>
-              <span className="font-semibold">{order.customer_phone}</span>
+              <span className="font-semibold">{formatPhoneNumber(order.customer_phone)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold border-t pt-2">
               <span>Total:</span>

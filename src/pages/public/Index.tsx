@@ -130,7 +130,7 @@ const Index = () => {
             </Button>
             <Button
               size="lg"
-              onClick={() => navigate("/waiter")}
+              onClick={() => navigate("/auth")}
               className="h-auto py-6 sm:py-8 flex flex-col bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl transition-all rounded-2xl min-h-[120px] sm:min-h-[140px]"
             >
               <UserCheck className="h-8 w-8 sm:h-10 sm:w-10 mb-2 sm:mb-3" />

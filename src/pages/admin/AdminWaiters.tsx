@@ -8,8 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash2, Loader2, ArrowLeft, Users } from "lucide-react";
+import { Plus, Trash2, Loader2, Users, RefreshCw } from "lucide-react";
 import { z } from "zod";
+import { AppHeader, type HeaderAction } from "@/components/AppHeader";
 
 interface Waiter {
   id: string;
@@ -236,106 +237,146 @@ const AdminWaiters = () => {
   // Edit functionality (e.g., password reset) is complex and also requires a secure backend.
   // We will skip the implementation for the edit dialog for now, focusing on the core requirement (Create, View, Delete).
 
+  const pageActions: HeaderAction[] = [
+    {
+      label: "Atualizar",
+      icon: RefreshCw,
+      onClick: fetchWaiters,
+    },
+    {
+      label: "Novo Garçom",
+      icon: Plus,
+      onClick: openCreateDialog,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
-      {/* Enhanced Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4 sm:py-6">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.history.back()}
-                className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Voltar</span>
-              </Button>
-              <div className="relative">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                  Gerenciar Garçons
-                </h1>
-                <p className="text-blue-100 mt-1 text-xs sm:text-base font-medium">
-                  Adicione e gerencie a equipe • Gestão de Garçons
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={openCreateDialog}
-              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-              size="sm"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Novo Garçom</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <AppHeader 
+        pageName="Gestão de Garçons"
+        actions={pageActions}
+        showConnectionStatus={false}
+      />
 
-      <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-              <Users className="w-5 h-5 mr-2 text-purple-600" />
-              Equipe de Garçons ({waiters.length})
-            </CardTitle>
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        {/* Page Title */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Users className="w-8 h-8 text-purple-600" />
+            Gestão de Garçons
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Gerencie sua equipe de garçons
+          </p>
+        </div>
+        {/* Content Card */}
+        <Card className="shadow-xl border-0 bg-white rounded-3xl">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-600" />
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  Equipe de Garçons
+                </CardTitle>
+              </div>
+              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                {waiters.length} garçom{waiters.length !== 1 ? 's' : ''}
+              </span>
+            </div>
           </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-              Carregando lista de garçons...
+            <div className="text-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-purple-600" />
+              <p className="text-gray-500">Carregando lista de garçons...</p>
+            </div>
+          ) : waiters.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <p className="text-gray-500 mb-4">Nenhum garçom cadastrado</p>
+              <Button onClick={openCreateDialog} className="bg-purple-600 hover:bg-purple-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Primeiro Garçom
+              </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome Completo</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Criado em</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {waiters.map((waiter) => (
-                    <TableRow key={waiter.id}>
-                      <TableCell className="font-medium">{waiter.full_name}</TableCell>
-                      <TableCell>{waiter.email}</TableCell>
-                      <TableCell>{new Date(waiter.created_at).toLocaleDateString("pt-BR")}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        {/* <Button variant="outline" size="sm" onClick={() => { /* Open edit dialog */ /* }}>
-                          <Edit className="w-4 h-4" />
-                        </Button> */}
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          onClick={() => handleDeleteWaiter(waiter.id)}
-                          disabled={deletingId === waiter.id}
-                        >
-                          {deletingId === waiter.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {waiters.length === 0 && (
+            <>
+              {/* Mobile Card Layout */}
+              <div className="block md:hidden space-y-4">
+                {waiters.map((waiter) => (
+                  <div key={waiter.id} className="bg-gray-50 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 text-lg mb-1">{waiter.full_name}</h3>
+                        <p className="text-sm text-gray-600 break-all">{waiter.email}</p>
+                      </div>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        className="ml-2 rounded-full w-10 h-10 p-0"
+                        onClick={() => handleDeleteWaiter(waiter.id)}
+                        disabled={deletingId === waiter.id}
+                      >
+                        {deletingId === waiter.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                      <span className="text-xs text-gray-500">Criado em</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        {new Date(waiter.created_at).toLocaleDateString("pt-BR")}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Status</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                        Ativo
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table Layout */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">Nenhum garçom cadastrado.</TableCell>
+                      <TableHead>Nome Completo</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Criado em</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {waiters.map((waiter) => (
+                      <TableRow key={waiter.id}>
+                        <TableCell className="font-medium">{waiter.full_name}</TableCell>
+                        <TableCell>{waiter.email}</TableCell>
+                        <TableCell>{new Date(waiter.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => handleDeleteWaiter(waiter.id)}
+                            disabled={deletingId === waiter.id}
+                          >
+                            {deletingId === waiter.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

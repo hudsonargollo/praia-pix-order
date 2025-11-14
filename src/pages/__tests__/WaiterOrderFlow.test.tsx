@@ -226,39 +226,55 @@ describe('Waiter Order Flow Integration Tests', () => {
   });
 
   describe('Waiter Performance Reporting', () => {
-    it('calculates waiter sales and commission totals correctly', () => {
+    it('calculates confirmed commissions from paid orders only', () => {
       const orders = [
         {
           id: 'order-1',
           total_amount: 25.50,
-          commission_amount: 2.55,
           status: 'completed',
+          created_at: '2024-01-01',
         },
         {
           id: 'order-2',
           total_amount: 18.00,
-          commission_amount: 1.80,
           status: 'paid',
+          created_at: '2024-01-01',
         },
         {
           id: 'order-3',
+          total_amount: 30.00,
+          status: 'pending',
+          created_at: '2024-01-01',
+        },
+        {
+          id: 'order-4',
           total_amount: 12.00,
-          commission_amount: 1.20,
-          status: 'cancelled', // Should not be included
+          status: 'cancelled',
+          created_at: '2024-01-01',
         },
       ];
 
-      // Filter out cancelled orders
-      const validOrders = orders.filter(order => order.status !== 'cancelled');
-      
-      const totalSales = validOrders.reduce((sum, order) => sum + order.total_amount, 0);
-      const totalCommissions = validOrders.reduce((sum, order) => sum + order.commission_amount, 0);
-      const averageTicket = validOrders.length > 0 ? totalSales / validOrders.length : 0;
+      // Calculate confirmed commissions (paid + completed only)
+      const confirmedOrders = orders.filter(order => 
+        order.status === 'paid' || order.status === 'completed'
+      );
+      const confirmedCommission = confirmedOrders.reduce((sum, order) => 
+        sum + (order.total_amount * 0.1), 0
+      );
 
-      expect(totalSales).toBe(43.50);
-      expect(totalCommissions).toBe(4.35);
-      expect(averageTicket).toBe(21.75);
-      expect(validOrders.length).toBe(2);
+      // Calculate estimated commissions (pending orders)
+      const pendingOrders = orders.filter(order => 
+        order.status === 'pending' || order.status === 'pending_payment' ||
+        order.status === 'in_preparation' || order.status === 'ready'
+      );
+      const estimatedCommission = pendingOrders.reduce((sum, order) => 
+        sum + (order.total_amount * 0.1), 0
+      );
+
+      expect(Number(confirmedCommission.toFixed(2))).toBe(4.35); // (25.50 + 18.00) * 0.1
+      expect(Number(estimatedCommission.toFixed(2))).toBe(3.00); // 30.00 * 0.1
+      expect(confirmedOrders.length).toBe(2);
+      expect(pendingOrders.length).toBe(1);
     });
 
     it('fetches waiter orders with correct filtering', async () => {

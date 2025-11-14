@@ -289,44 +289,81 @@ const WaiterManagement = () => {
                     </Button>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nome Completo</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Criado em</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {waiters.map((waiter) => (
-                          <TableRow key={waiter.id} className="hover:bg-purple-50/50">
-                            <TableCell className="font-medium">{waiter.full_name}</TableCell>
-                            <TableCell>{waiter.email}</TableCell>
-                            <TableCell>{new Date(waiter.created_at).toLocaleDateString("pt-BR")}</TableCell>
-                            <TableCell>
-                              <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-200">
-                                <UserCheck className="w-3 h-3 mr-1" />
-                                Ativo
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right space-x-2">
-                              <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                onClick={() => handleDeleteWaiter(waiter.id, waiter.full_name)}
-                                className="hover:bg-red-600"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </TableCell>
+                  <>
+                    {/* Mobile Card Layout */}
+                    <div className="block md:hidden space-y-4">
+                      {waiters.map((waiter) => (
+                        <div key={waiter.id} className="bg-gray-50 rounded-2xl p-4 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-gray-900 text-lg mb-1">{waiter.full_name}</h3>
+                              <p className="text-sm text-gray-600 break-all">{waiter.email}</p>
+                            </div>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              className="ml-2 rounded-full w-10 h-10 p-0"
+                              onClick={() => handleDeleteWaiter(waiter.id, waiter.full_name)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                            <span className="text-xs text-gray-500">Criado em</span>
+                            <span className="text-sm font-medium text-gray-700">
+                              {new Date(waiter.created_at).toLocaleDateString("pt-BR")}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500">Status</span>
+                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                              Ativo
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Desktop Table Layout */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Nome Completo</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Criado em</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {waiters.map((waiter) => (
+                            <TableRow key={waiter.id} className="hover:bg-purple-50/50">
+                              <TableCell className="font-medium">{waiter.full_name}</TableCell>
+                              <TableCell>{waiter.email}</TableCell>
+                              <TableCell>{new Date(waiter.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                              <TableCell>
+                                <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-200">
+                                  <UserCheck className="w-3 h-3 mr-1" />
+                                  Ativo
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right space-x-2">
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm" 
+                                  onClick={() => handleDeleteWaiter(waiter.id, waiter.full_name)}
+                                  className="hover:bg-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>

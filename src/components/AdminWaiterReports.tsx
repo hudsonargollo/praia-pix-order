@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,20 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Download, DollarSign, ShoppingCart, TrendingUp, User } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CalendarIcon, Download, DollarSign, ShoppingCart, TrendingUp, User, CheckCircle, Clock, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { 
+  calculateConfirmedCommissions, 
+  calculateEstimatedCommissions, 
+  getCommissionStatus,
+  getOrdersByCategory,
+  ORDER_STATUS_CATEGORIES
+} from "@/lib/commissionUtils";
+import type { Order } from "@/types/commission";
+import type { Order as RealtimeOrder } from "@/integrations/supabase/realtime";
 
 interface Waiter {
   id: string;
@@ -34,7 +44,10 @@ interface WaiterStats {
   totalOrders: number;
   completedOrders: number;
   grossSales: number;
-  totalCommission: number;
+  confirmedCommission: number;
+  estimatedCommission: number;
+  paidOrdersCount: number;
+  pendingOrdersCount: number;
   averageOrderValue: number;
 }
 
@@ -46,7 +59,10 @@ const AdminWaiterReports = () => {
     totalOrders: 0,
     completedOrders: 0,
     grossSales: 0,
-    totalCommission: 0,
+    confirmedCommission: 0,
+    estimatedCommission: 0,
+    paidOrdersCount: 0,
+    pendingOrdersCount: 0,
     averageOrderValue: 0,
   });
   const [loading, setLoading] = useState(false);
@@ -63,6 +79,65 @@ const AdminWaiterReports = () => {
     if (selectedWaiterId) {
       loadWaiterData();
     }
+  }, [selectedWaiterId, dateRange]);
+
+  // Set up real-time subscriptions for selected waiter
+  useEffect(() => {
+    if (!selectedWaiterId) {
+      return;
+    }
+
+    console.log('🔔 Setting up real-time subscriptions for waiter reports:', selectedWaiterId);
+    
+    const channelName = `admin-waiter-reports-${selectedWaiterId}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `waiter_id=eq.${selectedWaiterId}`,
+        },
+        (payload) => {
+          const updatedOrder = payload.new as RealtimeOrder;
+          console.log('📡 Real-time order update in admin reports:', updatedOrder.id, 'Status:', updatedOrder.status);
+          
+          // Check if order is within date range
+          const orderDate = new Date(updatedOrder.created_at);
+          if (orderDate >= dateRange.from && orderDate <= dateRange.to) {
+            handleOrderUpdate(updatedOrder);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+          filter: `waiter_id=eq.${selectedWaiterId}`,
+        },
+        (payload) => {
+          const newOrder = payload.new as RealtimeOrder;
+          console.log('📡 Real-time new order in admin reports:', newOrder.id);
+          
+          // Check if order is within date range
+          const orderDate = new Date(newOrder.created_at);
+          if (orderDate >= dateRange.from && orderDate <= dateRange.to) {
+            handleOrderInsert(newOrder);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Admin waiter reports subscription status: ${status}`);
+      });
+
+    return () => {
+      console.log('🔕 Cleaning up admin reports real-time subscriptions');
+      supabase.removeChannel(channel);
+    };
   }, [selectedWaiterId, dateRange]);
 
   const loadWaiters = async () => {
@@ -84,7 +159,29 @@ const AdminWaiterReports = () => {
     }
   };
 
-  const loadWaiterData = async () => {
+  const calculateStats = useCallback((orders: WaiterOrder[]) => {
+    const ordersForCalc = orders as any[];
+    const completedOrders = orders.filter(o => o.status === "completed");
+    const paidOrders = getOrdersByCategory(ordersForCalc, 'PAID');
+    const pendingOrders = getOrdersByCategory(ordersForCalc, 'PENDING');
+    
+    const grossSales = paidOrders.reduce((sum, o) => sum + Number(o.total_amount), 0);
+    const confirmedCommission = calculateConfirmedCommissions(ordersForCalc);
+    const estimatedCommission = calculateEstimatedCommissions(ordersForCalc);
+
+    return {
+      totalOrders: orders.length,
+      completedOrders: completedOrders.length,
+      grossSales,
+      confirmedCommission,
+      estimatedCommission,
+      paidOrdersCount: paidOrders.length,
+      pendingOrdersCount: pendingOrders.length,
+      averageOrderValue: paidOrders.length > 0 ? grossSales / paidOrders.length : 0,
+    };
+  }, []);
+
+  const loadWaiterData = useCallback(async () => {
     if (!selectedWaiterId) return;
     
     setLoading(true);
@@ -113,26 +210,7 @@ const AdminWaiterReports = () => {
       }));
       
       setWaiterOrders(waiterOrders);
-
-      // Calculate statistics - include all orders, not just completed
-      const completedOrders = waiterOrders.filter(o => o.status === "completed");
-      const paidOrders = waiterOrders.filter(o => 
-        o.status === "completed" || 
-        o.status === "paid" || 
-        o.status === "ready" || 
-        o.status === "in_preparation"
-      );
-      
-      const grossSales = paidOrders.reduce((sum, o) => sum + Number(o.total_amount), 0);
-      const totalCommission = paidOrders.reduce((sum, o) => sum + Number(o.commission_amount || 0), 0);
-
-      setWaiterStats({
-        totalOrders: waiterOrders.length,
-        completedOrders: completedOrders.length,
-        grossSales,
-        totalCommission,
-        averageOrderValue: paidOrders.length > 0 ? grossSales / paidOrders.length : 0,
-      });
+      setWaiterStats(calculateStats(waiterOrders));
 
     } catch (error) {
       console.error("Error loading waiter data:", error);
@@ -140,7 +218,76 @@ const AdminWaiterReports = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedWaiterId, dateRange, calculateStats]);
+
+  // Handle real-time order updates
+  const handleOrderUpdate = useCallback((updatedOrder: RealtimeOrder) => {
+    setWaiterOrders(prevOrders => {
+      const existingIndex = prevOrders.findIndex(o => o.id === updatedOrder.id);
+      
+      if (existingIndex >= 0) {
+        const newOrders = [...prevOrders];
+        const oldStatus = newOrders[existingIndex].status;
+        
+        newOrders[existingIndex] = {
+          id: updatedOrder.id,
+          order_number: updatedOrder.order_number,
+          customer_name: updatedOrder.customer_name,
+          customer_phone: updatedOrder.customer_phone,
+          total_amount: updatedOrder.total_amount,
+          commission_amount: updatedOrder.commission_amount || (Number(updatedOrder.total_amount) * 0.1),
+          status: updatedOrder.status,
+          created_at: updatedOrder.created_at,
+          order_notes: updatedOrder.order_notes || "",
+        };
+        
+        // Recalculate stats
+        setWaiterStats(calculateStats(newOrders));
+        
+        // Show notification for commission status changes
+        if (oldStatus !== updatedOrder.status) {
+          if (ORDER_STATUS_CATEGORIES.PAID.includes(updatedOrder.status.toLowerCase())) {
+            toast.success('💰 Comissão confirmada', {
+              description: `Pedido #${updatedOrder.order_number} foi pago`
+            });
+          }
+        }
+        
+        return newOrders;
+      }
+      
+      return prevOrders;
+    });
+  }, [calculateStats]);
+
+  // Handle new orders
+  const handleOrderInsert = useCallback((newOrder: RealtimeOrder) => {
+    setWaiterOrders(prevOrders => {
+      // Check if order already exists
+      if (prevOrders.some(o => o.id === newOrder.id)) {
+        return prevOrders;
+      }
+      
+      const waiterOrder: WaiterOrder = {
+        id: newOrder.id,
+        order_number: newOrder.order_number,
+        customer_name: newOrder.customer_name,
+        customer_phone: newOrder.customer_phone,
+        total_amount: newOrder.total_amount,
+        commission_amount: newOrder.commission_amount || (Number(newOrder.total_amount) * 0.1),
+        status: newOrder.status,
+        created_at: newOrder.created_at,
+        order_notes: newOrder.order_notes || "",
+      };
+      
+      const newOrders = [waiterOrder, ...prevOrders];
+      
+      // Recalculate stats
+      setWaiterStats(calculateStats(newOrders));
+      
+      return newOrders;
+    });
+  }, [calculateStats]);
 
   const exportToCSV = () => {
     if (!selectedWaiterId || waiterOrders.length === 0) {
@@ -154,22 +301,33 @@ const AdminWaiterReports = () => {
       "Cliente",
       "Telefone",
       "Valor Total",
-      "Comissão",
+      "Status da Comissão",
+      "Comissão Confirmada",
+      "Comissão Estimada",
       "Status",
       "Data",
       "Observações"
     ];
     
-    const rows = waiterOrders.map(order => [
-      order.order_number,
-      order.customer_name,
-      order.customer_phone,
-      `R$ ${Number(order.total_amount).toFixed(2)}`,
-      `R$ ${Number(order.commission_amount || 0).toFixed(2)}`,
-      order.status,
-      format(new Date(order.created_at), "dd/MM/yyyy HH:mm"),
-      order.order_notes || ""
-    ]);
+    const rows = waiterOrders.map(order => {
+      const commissionStatus = getCommissionStatus(order as any);
+      const isConfirmed = commissionStatus.status === 'confirmed';
+      const isPending = commissionStatus.status === 'pending';
+      
+      return [
+        order.order_number,
+        order.customer_name,
+        order.customer_phone,
+        `R$ ${Number(order.total_amount).toFixed(2)}`,
+        commissionStatus.status === 'confirmed' ? 'Confirmada' : 
+        commissionStatus.status === 'pending' ? 'Estimada' : 'Cancelada',
+        isConfirmed ? `R$ ${commissionStatus.amount.toFixed(2)}` : 'R$ 0,00',
+        isPending ? `R$ ${commissionStatus.amount.toFixed(2)}` : 'R$ 0,00',
+        order.status,
+        format(new Date(order.created_at), "dd/MM/yyyy HH:mm"),
+        order.order_notes || ""
+      ];
+    });
 
     const csv = [headers, ...rows].map(row => row.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -263,7 +421,7 @@ const AdminWaiterReports = () => {
 
       {/* Statistics Cards */}
       {selectedWaiterId && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
@@ -304,16 +462,34 @@ const AdminWaiterReports = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-green-200 bg-green-50/50">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
-                <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-green-600 font-bold text-lg">%</span>
-                </div>
+                <CheckCircle className="h-8 w-8 text-green-600" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Comissão Total</p>
+                  <p className="text-sm text-green-700 font-medium">Comissões Confirmadas</p>
                   <p className="text-3xl font-bold text-green-600">
-                    R$ {waiterStats.totalCommission.toFixed(2)}
+                    R$ {waiterStats.confirmedCommission.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    De {waiterStats.paidOrdersCount} pedidos pagos
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-yellow-200 bg-yellow-50/50">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <Clock className="h-8 w-8 text-yellow-600" />
+                <div>
+                  <p className="text-sm text-yellow-700 font-medium">Comissões Estimadas</p>
+                  <p className="text-3xl font-bold text-yellow-600">
+                    R$ {waiterStats.estimatedCommission.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    De {waiterStats.pendingOrdersCount} pedidos pendentes
                   </p>
                 </div>
               </div>
@@ -362,26 +538,46 @@ const AdminWaiterReports = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {waiterOrders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">#{order.order_number}</TableCell>
-                        <TableCell>{order.customer_name}</TableCell>
-                        <TableCell>{order.customer_phone}</TableCell>
-                        <TableCell className="text-right font-semibold">
-                          R$ {Number(order.total_amount).toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold text-green-600">
-                          R$ {Number(order.commission_amount || 0).toFixed(2)}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(order.status)}</TableCell>
-                        <TableCell>
-                          {format(new Date(order.created_at), "dd/MM/yyyy HH:mm")}
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {order.order_notes || "-"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {waiterOrders.map((order) => {
+                      const commissionStatus = getCommissionStatus(order as any);
+                      const CommissionIcon = commissionStatus.icon === 'CheckCircle' ? CheckCircle :
+                                            commissionStatus.icon === 'Clock' ? Clock : XCircle;
+                      
+                      return (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">#{order.order_number}</TableCell>
+                          <TableCell>{order.customer_name}</TableCell>
+                          <TableCell>{order.customer_phone}</TableCell>
+                          <TableCell className="text-right font-semibold">
+                            R$ {Number(order.total_amount).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center justify-end gap-2">
+                                    <CommissionIcon className="w-4 h-4" />
+                                    <span className={commissionStatus.className}>
+                                      {commissionStatus.displayAmount}
+                                    </span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{commissionStatus.tooltip}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(order.status)}</TableCell>
+                          <TableCell>
+                            {format(new Date(order.created_at), "dd/MM/yyyy HH:mm")}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {order.order_notes || "-"}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
