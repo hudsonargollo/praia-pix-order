@@ -142,6 +142,11 @@ export function OrderEditModal({
 
   // Handle save
   const handleSave = async () => {
+    if (!order) {
+      toast.error('Pedido não encontrado');
+      return;
+    }
+
     if (items.length === 0) {
       toast.error('O pedido deve ter pelo menos um item');
       return;
@@ -155,7 +160,10 @@ export function OrderEditModal({
         .delete()
         .eq('order_id', order.id);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        throw deleteError;
+      }
 
       // Insert updated items
       const orderItems = items.map(item => ({
@@ -170,7 +178,10 @@ export function OrderEditModal({
         .from('order_items')
         .insert(orderItems);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        throw insertError;
+      }
 
       // Update order total and commission
       const { error: updateError } = await supabase
@@ -182,18 +193,36 @@ export function OrderEditModal({
         })
         .eq('id', order.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw updateError;
+      }
 
       toast.success('Pedido atualizado com sucesso!');
       
       if (onSave) {
+        // The commission_amount will be automatically calculated by the database trigger
         await onSave({ ...order, total_amount: orderTotal });
       }
       
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving order:', error);
-      toast.error('Erro ao atualizar pedido. Tente novamente.');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Erro ao atualizar pedido. Tente novamente.';
+      
+      if (error?.message?.includes('permission') || error?.code === '42501') {
+        errorMessage = 'Você não tem permissão para editar este pedido.';
+      } else if (error?.message?.includes('foreign key') || error?.code === '23503') {
+        errorMessage = 'Erro: Item do menu não encontrado.';
+      } else if (error?.message?.includes('not null') || error?.code === '23502') {
+        errorMessage = 'Erro: Dados obrigatórios estão faltando.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -247,17 +276,17 @@ export function OrderEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold">
+            <DialogTitle className="text-lg sm:text-xl font-bold pr-2">
               {isEditable ? 'Editar Pedido' : 'Detalhes do Pedido'} #{order.id.substring(0, 8)}
             </DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8"
+              className="h-8 w-8 flex-shrink-0"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -275,18 +304,18 @@ export function OrderEditModal({
         )}
 
         {/* Order Information */}
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-600">Cliente</label>
-              <p className="text-base font-semibold text-gray-900">
+              <label className="text-xs sm:text-sm font-medium text-gray-600">Cliente</label>
+              <p className="text-sm sm:text-base font-semibold text-gray-900 break-words">
                 {order.customer_name || 'Não informado'}
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-600">Status</label>
+              <label className="text-xs sm:text-sm font-medium text-gray-600">Status</label>
               <div className="mt-1">
-                <Badge variant={getStatusVariant(order.status)}>
+                <Badge variant={getStatusVariant(order.status)} className="text-xs">
                   {getStatusLabel(order.status)}
                 </Badge>
               </div>
@@ -295,14 +324,14 @@ export function OrderEditModal({
 
           {order.customer_phone && (
             <div>
-              <label className="text-sm font-medium text-gray-600">Telefone</label>
-              <p className="text-base text-gray-900">{order.customer_phone}</p>
+              <label className="text-xs sm:text-sm font-medium text-gray-600">Telefone</label>
+              <p className="text-sm sm:text-base text-gray-900">{order.customer_phone}</p>
             </div>
           )}
 
           <div>
-            <label className="text-sm font-medium text-gray-600">Data do Pedido</label>
-            <p className="text-base text-gray-900">
+            <label className="text-xs sm:text-sm font-medium text-gray-600">Data do Pedido</label>
+            <p className="text-sm sm:text-base text-gray-900">
               {new Date(order.created_at).toLocaleString("pt-BR", {
                 day: "2-digit",
                 month: "2-digit",
@@ -314,18 +343,18 @@ export function OrderEditModal({
           </div>
 
           {/* Order Items Section */}
-          <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">Itens do Pedido</h3>
+          <div className="border-t pt-3 sm:pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+              <h3 className="text-base sm:text-lg font-semibold">Itens do Pedido</h3>
               {isEditable && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => toast.info('Adicionar item será implementado em breve')}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4" />
-                  Adicionar Item
+                  <span className="text-sm">Adicionar Item</span>
                 </Button>
               )}
             </div>
@@ -355,14 +384,14 @@ export function OrderEditModal({
           </div>
 
           {/* Order Totals */}
-          <div className={`border-t pt-4 space-y-3 transition-all duration-300 ${
-            hasValueChanged ? 'bg-purple-50 -mx-6 px-6 py-4 rounded-lg border-purple-200' : ''
+          <div className={`border-t pt-3 sm:pt-4 space-y-2 sm:space-y-3 transition-all duration-300 ${
+            hasValueChanged ? 'bg-purple-50 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 sm:py-4 rounded-lg border-purple-200' : ''
           }`}>
             {/* Total Amount */}
-            <div className="flex justify-between items-center">
-              <span className="text-base font-medium text-gray-700">Total do Pedido</span>
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-sm sm:text-base font-medium text-gray-700">Total do Pedido</span>
               <div className="flex flex-col items-end gap-1">
-                <span className={`text-2xl font-bold transition-colors duration-300 ${
+                <span className={`text-xl sm:text-2xl font-bold transition-colors duration-300 ${
                   hasValueChanged ? 'text-purple-600 animate-pulse' : 'text-gray-900'
                 }`}>
                   {orderTotal.toLocaleString("pt-BR", { 
@@ -382,10 +411,10 @@ export function OrderEditModal({
             </div>
 
             {/* Commission Amount */}
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-600">Comissão (10%)</span>
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-xs sm:text-sm font-medium text-gray-600">Comissão (10%)</span>
               <div className="flex flex-col items-end gap-1">
-                <span className={`text-lg font-semibold transition-colors duration-300 ${
+                <span className={`text-base sm:text-lg font-semibold transition-colors duration-300 ${
                   hasValueChanged ? 'text-purple-600 animate-pulse' : 'text-green-600'
                 }`}>
                   {commission.toLocaleString("pt-BR", { 
@@ -407,10 +436,10 @@ export function OrderEditModal({
             {/* Change Indicator */}
             {hasValueChanged && (
               <div className="pt-2 border-t border-purple-200">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-xs sm:text-sm gap-2">
                   <span className="text-purple-700 font-medium">Diferença:</span>
                   <div className="flex flex-col items-end">
-                    <span className={`font-semibold ${
+                    <span className={`text-sm sm:text-base font-semibold ${
                       orderTotal > originalTotal ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {orderTotal > originalTotal ? '+' : ''}
@@ -443,11 +472,12 @@ export function OrderEditModal({
           </div>
         </div>
 
-        <DialogFooter className="mt-6">
+        <DialogFooter className="mt-4 sm:mt-6 flex-col sm:flex-row gap-2">
           <Button
             variant="outline"
             onClick={onClose}
             disabled={isSaving}
+            className="w-full sm:w-auto order-2 sm:order-1"
           >
             {isEditable ? 'Cancelar' : 'Fechar'}
           </Button>
@@ -455,6 +485,7 @@ export function OrderEditModal({
             <Button
               onClick={handleSave}
               disabled={isSaving || !isModified || items.length === 0}
+              className="w-full sm:w-auto order-1 sm:order-2 min-h-[44px]"
             >
               {isSaving ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
