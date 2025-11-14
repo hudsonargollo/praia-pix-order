@@ -278,22 +278,27 @@ export function OrderEditModal({
     }
   };
 
+  // Capitalize first letter of customer name
+  const capitalizedCustomerName = order.customer_name 
+    ? order.customer_name.charAt(0).toUpperCase() + order.customer_name.slice(1).toLowerCase()
+    : 'Não informado';
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl w-[calc(100vw-0.5rem)] sm:w-full max-h-[98vh] sm:max-h-[90vh] flex flex-col p-0 gap-0 rounded-xl sm:rounded-2xl m-1 sm:m-0">
-        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b sticky top-0 bg-white z-10 rounded-t-xl sm:rounded-t-2xl">
-          <div className="flex items-center justify-between gap-2">
-            <DialogTitle className="text-base sm:text-xl font-bold text-gray-900 leading-tight">
-              {isEditable ? 'Editar' : 'Detalhes'} {formatOrderNumber(order)}
+      <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[96vh] sm:max-h-[90vh] flex flex-col p-0 gap-0 rounded-2xl m-2 sm:m-0">
+        <DialogHeader className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b sticky top-0 bg-white z-10 rounded-t-2xl">
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
+              {formatOrderNumber(order)}
             </DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-9 w-9 flex-shrink-0 touch-manipulation hover:bg-gray-100 rounded-full -mr-1"
+              className="h-9 w-9 flex-shrink-0 touch-manipulation hover:bg-gray-100 rounded-full"
               aria-label="Fechar"
             >
-              <X className="h-5 w-5 sm:h-4 sm:w-4" />
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </DialogHeader>
@@ -311,44 +316,44 @@ export function OrderEditModal({
         )}
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5">
           {/* Order Information */}
-          <div className="space-y-3 sm:space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-1.5">Cliente</label>
-              <p className="text-sm sm:text-base font-semibold text-gray-900 break-words leading-snug">
-                {order.customer_name || 'Não informado'}
+          <div className="space-y-4 sm:space-y-5">
+          {/* Customer Name and Status on same line */}
+          <div className="flex items-start justify-between gap-3 pb-3 border-b">
+            <div className="flex-1 min-w-0">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Cliente</label>
+              <p className="text-base sm:text-lg font-bold text-gray-900 break-words leading-tight">
+                {capitalizedCustomerName}
               </p>
             </div>
-            <div>
-              <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-1.5">Status</label>
-              <div>
-                <Badge variant={getStatusVariant(order.status)} className="text-xs font-medium">
-                  {getStatusLabel(order.status)}
-                </Badge>
-              </div>
+            <div className="flex-shrink-0">
+              <Badge variant={getStatusVariant(order.status)} className="text-xs font-semibold px-3 py-1">
+                {getStatusLabel(order.status)}
+              </Badge>
             </div>
           </div>
 
-          {order.customer_phone && (
+          {/* Phone and Date in grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {order.customer_phone && (
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Telefone</label>
+                <p className="text-sm font-medium text-gray-900">{formatPhoneNumber(order.customer_phone)}</p>
+              </div>
+            )}
             <div>
-              <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-1.5">Telefone</label>
-              <p className="text-sm sm:text-base text-gray-900">{formatPhoneNumber(order.customer_phone)}</p>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Data do Pedido</label>
+              <p className="text-sm font-medium text-gray-900">
+                {new Date(order.created_at).toLocaleString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit"
+                })}
+              </p>
             </div>
-          )}
-
-          <div>
-            <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-1.5">Data do Pedido</label>
-            <p className="text-sm sm:text-base text-gray-900">
-              {new Date(order.created_at).toLocaleString("pt-BR", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit"
-              })}
-            </p>
           </div>
 
           {/* Order Items Section */}
@@ -484,12 +489,12 @@ export function OrderEditModal({
         </div>
 
         {/* Sticky Footer */}
-        <DialogFooter className="px-5 sm:px-6 py-4 border-t bg-gray-50 sticky bottom-0 flex-col-reverse sm:flex-row gap-3 rounded-b-2xl">
+        <DialogFooter className="px-5 sm:px-6 py-4 sm:py-5 border-t bg-white sticky bottom-0 flex-col-reverse sm:flex-row gap-3 rounded-b-2xl shadow-lg">
           <Button
             variant="outline"
             onClick={onClose}
             disabled={isSaving}
-            className="w-full sm:w-auto min-h-[48px] sm:min-h-[40px] touch-manipulation text-base sm:text-sm font-medium hover:bg-white border-gray-300"
+            className="w-full sm:w-auto min-h-[52px] sm:min-h-[44px] touch-manipulation text-base font-semibold hover:bg-gray-50 border-2 border-gray-300 rounded-xl"
             aria-label={isEditable ? 'Cancelar edição' : 'Fechar detalhes'}
           >
             {isEditable ? 'Cancelar' : 'Fechar'}
@@ -498,7 +503,7 @@ export function OrderEditModal({
             <Button
               onClick={handleSave}
               disabled={isSaving || !isModified || items.length === 0}
-              className="w-full sm:w-auto min-h-[48px] sm:min-h-[40px] touch-manipulation text-base sm:text-sm font-semibold bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300"
+              className="w-full sm:w-auto min-h-[52px] sm:min-h-[44px] touch-manipulation text-base font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 shadow-md rounded-xl"
               aria-label="Salvar alterações do pedido"
             >
               {isSaving ? 'Salvando...' : 'Salvar Alterações'}
