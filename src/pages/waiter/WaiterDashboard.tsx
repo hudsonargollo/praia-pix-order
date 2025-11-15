@@ -330,6 +330,52 @@ const WaiterDashboard = () => {
     setSelectedOrder(null);
   };
 
+  const canMarkAsReady = (order: Order): boolean => {
+    // Only show button if:
+    // 1. Order status is in_preparation
+    // 2. Waiter owns the order
+    // 3. Payment status is pending (waiter hasn't confirmed payment yet)
+    
+    if (order.status !== 'in_preparation') {
+      return false;
+    }
+
+    if (order.waiter_id !== currentUserId) {
+      return false;
+    }
+
+    if (order.payment_status !== 'pending') {
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleMarkAsReady = async (order: Order) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          status: 'ready',
+          payment_status: 'confirmed',
+          payment_confirmed_at: new Date().toISOString()
+        })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      toast.success('Pedido pronto para retirada!', {
+        description: `${formatOrderNumber(order)} - Cliente será notificado`
+      });
+
+      // Refresh data
+      await fetchWaiterData();
+    } catch (error) {
+      console.error('Error marking order as ready:', error);
+      toast.error('Erro ao marcar pedido como pronto');
+    }
+  };
+
   // Handle payment status filter change
   const handlePaymentStatusFilterChange = (value: PaymentStatusFilter) => {
     setPaymentStatusFilter(value);
@@ -503,6 +549,8 @@ const WaiterDashboard = () => {
                     canGeneratePIX={canGeneratePIX(order)}
                     onAddItems={handleAddItems}
                     canAddItems={canAddItems(order)}
+                    onMarkAsReady={handleMarkAsReady}
+                    canMarkAsReady={canMarkAsReady(order)}
                     onClick={handleOrderClick}
                   />
                 ))}
@@ -607,6 +655,20 @@ const WaiterDashboard = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2 flex-wrap">
+                            {canMarkAsReady(order) && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMarkAsReady(order);
+                                }}
+                                className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="w-3 h-3" />
+                                Pronto p/ Retirada
+                              </Button>
+                            )}
                             {canAddItems(order) && (
                               <Button
                                 size="sm"

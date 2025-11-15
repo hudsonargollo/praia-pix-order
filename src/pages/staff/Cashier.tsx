@@ -809,27 +809,37 @@ const Cashier = () => {
                         </AlertDialog>
                       </div>
 
-                      {/* Payment Confirmation Button */}
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Button
-                          className="flex-1 min-h-[44px] text-base"
-                          onClick={() => confirmPayment(order.id)}
-                          disabled={paymentStatus.status === 'confirmed'}
-                        >
-                          <DollarSign className="mr-2 h-4 w-4" />
-                          {paymentStatus.status === 'confirmed' ? 'Pagamento Confirmado' : 'Confirmar Pagamento PIX'}
-                        </Button>
-                        {paymentStatus.status === 'confirmed' && (
+                      {/* Payment Confirmation Button - Only for customer orders (no waiter_id) */}
+                      {!order.waiter_id && (
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <Button
-                            variant="outline"
-                            className="min-h-[44px] text-base"
-                            onClick={() => updateOrderStatus(order.id, 'in_preparation')}
+                            className="flex-1 min-h-[44px] text-base"
+                            onClick={() => confirmPayment(order.id)}
+                            disabled={paymentStatus.status === 'confirmed'}
                           >
-                            <ChefHat className="mr-2 h-4 w-4" />
-                            Enviar p/ Cozinha
+                            <DollarSign className="mr-2 h-4 w-4" />
+                            {paymentStatus.status === 'confirmed' ? 'Pagamento Confirmado' : 'Confirmar Pagamento PIX'}
                           </Button>
-                        )}
-                      </div>
+                          {paymentStatus.status === 'confirmed' && (
+                            <Button
+                              variant="outline"
+                              className="min-h-[44px] text-base"
+                              onClick={() => updateOrderStatus(order.id, 'in_preparation')}
+                            >
+                              <ChefHat className="mr-2 h-4 w-4" />
+                              Enviar p/ Cozinha
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      {/* Waiter orders note */}
+                      {order.waiter_id && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <p className="text-sm text-blue-900 font-medium">
+                            📝 Pedido do garçom - Pagamento será confirmado pelo garçom
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </Card>
                 );

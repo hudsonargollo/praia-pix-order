@@ -24,10 +24,12 @@ interface MobileOrderCardProps {
   canGeneratePIX?: boolean;
   onAddItems?: (order: Order) => void;
   canAddItems?: boolean;
+  onMarkAsReady?: (order: Order) => void;
+  canMarkAsReady?: boolean;
   onClick?: (order: Order) => void;
 }
 
-export function MobileOrderCard({ order, onGeneratePIX, canGeneratePIX = false, onAddItems, canAddItems = false, onClick }: MobileOrderCardProps) {
+export function MobileOrderCard({ order, onGeneratePIX, canGeneratePIX = false, onAddItems, canAddItems = false, onMarkAsReady, canMarkAsReady = false, onClick }: MobileOrderCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const commissionStatus = getCommissionStatus(order);
   
@@ -182,6 +184,18 @@ export function MobileOrderCard({ order, onGeneratePIX, canGeneratePIX = false, 
 
             {/* Action buttons */}
             <div className="space-y-2">
+              {canMarkAsReady && onMarkAsReady && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMarkAsReady(order);
+                  }}
+                  className="w-full min-h-[44px] flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Pronto para Retirada
+                </Button>
+              )}
               {canAddItems && onAddItems && (
                 <Button
                   onClick={(e) => {
