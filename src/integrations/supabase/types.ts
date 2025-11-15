@@ -393,6 +393,39 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          id: string
+          email: string | null
+          full_name: string | null
+          role: string
+          display_name: string | null
+          has_set_display_name: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email?: string | null
+          full_name?: string | null
+          role?: string
+          display_name?: string | null
+          has_set_display_name?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string | null
+          full_name?: string | null
+          role?: string
+          display_name?: string | null
+          has_set_display_name?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -404,6 +437,12 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      set_waiter_display_name: {
+        Args: {
+          p_display_name: string
+        }
+        Returns: Json
       }
       update_menu_items_sort_order: {
         Args: {

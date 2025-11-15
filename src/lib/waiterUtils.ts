@@ -4,6 +4,7 @@ export interface WaiterInfo {
   id: string;
   full_name: string;
   email: string;
+  display_name?: string;
 }
 
 // Cache for waiter information to avoid repeated API calls
@@ -101,6 +102,7 @@ export function clearWaiterCache(): void {
 
 /**
  * Get waiter name from cache or return a placeholder
+ * Prefers display_name over full_name for better identification
  */
 export function getWaiterName(waiterId: string | null): string {
   if (!waiterId) {
@@ -108,5 +110,6 @@ export function getWaiterName(waiterId: string | null): string {
   }
 
   const waiter = waiterCache.get(waiterId);
-  return waiter?.full_name || 'Garçom';
+  // Fallback chain: display_name → full_name → 'Garçom'
+  return waiter?.display_name || waiter?.full_name || 'Garçom';
 }

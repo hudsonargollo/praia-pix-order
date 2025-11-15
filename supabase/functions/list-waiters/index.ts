@@ -85,7 +85,7 @@ serve(async (req) => {
     // Get all profiles with waiter role
     const { data: waiters, error: waitersError } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, full_name, created_at')
+      .select('id, email, full_name, display_name, created_at')
       .eq('role', 'waiter')
       .order('created_at', { ascending: false });
 

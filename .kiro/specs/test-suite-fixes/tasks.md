@@ -1,6 +1,6 @@
 # Implementation Plan - Test Suite Fixes
 
-- [ ] 1. Create centralized Supabase mock infrastructure
+- [x] 1. Create centralized Supabase mock infrastructure
   - Create mock factory with complete query builder chain
   - Include all CRUD operations (select, insert, update, delete)
   - Add query modifiers (eq, limit, single, etc.)
@@ -107,7 +107,7 @@
   - Check test execution time is reasonable (< 30s)
   - _Requirements: 5.4, 5.5_
 
-- [ ]* 15. Document test infrastructure improvements
+- [x] 15. Document test infrastructure improvements
   - Create README in `src/test/` directory
   - Document Supabase mock usage
   - Document timeout configuration guidelines

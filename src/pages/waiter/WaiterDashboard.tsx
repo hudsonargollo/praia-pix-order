@@ -56,7 +56,26 @@ const WaiterDashboard = () => {
     }
 
     console.log('✅ User found:', user.email, 'Role:', user.user_metadata?.role);
-    setWaiterName(user.user_metadata?.full_name || user.email || "Garçom");
+    
+    // Check if waiter has set display name
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('display_name, has_set_display_name, full_name')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+    } else if (profile && !profile.has_set_display_name) {
+      // Redirect to setup if display name not set
+      console.log('🔄 Redirecting to setup - display name not set');
+      navigate('/waiter/setup', { replace: true });
+      return;
+    }
+
+    // Use display_name if available, otherwise fall back to full_name or email
+    const displayName = profile?.display_name || profile?.full_name || user.email || "Garçom";
+    setWaiterName(displayName);
     setCurrentUserId(user.id);
 
     // Fetch orders placed by the current waiter

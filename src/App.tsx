@@ -29,6 +29,7 @@ const Cashier = lazy(() => import("./pages/staff/Cashier"));
 // Lazy load waiter pages
 const Waiter = lazy(() => import("./pages/waiter/Waiter"));
 const WaiterDashboard = lazy(() => import("./pages/waiter/WaiterDashboard"));
+const WaiterSetup = lazy(() => import("./pages/waiter/WaiterSetup"));
 const WaiterManagement = lazy(() => import("./pages/waiter/WaiterManagement"));
 const WaiterDiagnostic = lazy(() => import("./pages/waiter/WaiterDiagnostic"));
 
@@ -133,6 +134,26 @@ const App = () => {
               <Waiter />
             </Suspense>
           } />
+          <Route
+            path="/waiter/setup"
+            element={
+              <ProtectedRoute requiredRole="waiter">
+                <Suspense fallback={<LoadingFallback />}>
+                  <WaiterSetup />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/waiter/dashboard"
+            element={
+              <ProtectedRoute requiredRole="waiter">
+                <Suspense fallback={<LoadingFallback />}>
+                  <WaiterDashboard />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/waiter-dashboard"
             element={
