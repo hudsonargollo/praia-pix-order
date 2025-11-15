@@ -14,6 +14,13 @@ export { OrderEditModal } from './OrderEditModal';
 export { OrderItemRow } from './OrderItemRow';
 export type { OrderItem } from './OrderItemRow';
 
+// Status Components
+export { StatusBadge, getOrderStatusLabel, getPaymentStatusLabel } from './StatusBadge';
+export type { OrderStatus, PaymentStatus } from './StatusBadge';
+
+// Header Components
+export { UniformHeader } from './UniformHeader';
+
 // Existing components
 export { default as ProtectedRoute } from './ProtectedRoute';
 export { default as OrderDetailsDialog } from './OrderDetailsDialog';

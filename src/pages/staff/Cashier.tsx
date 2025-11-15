@@ -9,6 +9,9 @@ import { NotificationControls } from "@/components/NotificationControls";
 import { OrderDetailsDialog } from "@/components/OrderDetailsDialog";
 import { OrderEditDialog } from "@/components/OrderEditDialog";
 import { OrderCardInfo } from "@/components/OrderCardInfo";
+import { StatusBadge } from "@/components/StatusBadge";
+import { UniformHeader } from "@/components/UniformHeader";
+import type { OrderStatus, PaymentStatus } from "@/components/StatusBadge";
 import { fetchAllWaiters, getWaiterName, type WaiterInfo } from "@/lib/waiterUtils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { Card } from "@/components/ui/card";
@@ -40,11 +43,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Wifi, WifiOff, Eye, Edit, BarChart3, X, LogOut, Users } from "lucide-react";
+import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Eye, Edit, BarChart3, X, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { Order } from "@/integrations/supabase/realtime";
-import logo from "@/assets/coco-loko-logo.png";
 
 // Order interface is now imported from realtime service
 
@@ -62,6 +64,11 @@ const Cashier = () => {
     const saved = localStorage.getItem('cashier_waiter_filter');
     return saved || null;
   });
+  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string | null>(() => {
+    // Restore payment status filter from localStorage on mount
+    const saved = localStorage.getItem('cashier_payment_status_filter');
+    return saved || null;
+  });
   const [waiters, setWaiters] = useState<WaiterInfo[]>([]);
   
   // Load notification history for all orders
@@ -76,6 +83,15 @@ const Cashier = () => {
       localStorage.removeItem('cashier_waiter_filter');
     }
   }, [selectedWaiterId]);
+
+  // Persist payment status filter selection to localStorage
+  useEffect(() => {
+    if (selectedPaymentStatus) {
+      localStorage.setItem('cashier_payment_status_filter', selectedPaymentStatus);
+    } else {
+      localStorage.removeItem('cashier_payment_status_filter');
+    }
+  }, [selectedPaymentStatus]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -207,7 +223,7 @@ const Cashier = () => {
     loadOrders();
     // Fetch all waiters to populate cache and dropdown
     loadWaiters();
-  }, [selectedWaiterId]); // Re-load orders when waiter filter changes
+  }, [selectedWaiterId, selectedPaymentStatus]); // Re-load orders when filters change
 
   const loadWaiters = async () => {
     const waitersList = await fetchAllWaiters();
@@ -388,13 +404,31 @@ const Cashier = () => {
     );
   }
 
-  // Calculate order counts based on orders (already filtered by waiter if selected)
+  // Apply payment status filter to orders
+  const filteredOrders = selectedPaymentStatus 
+    ? orders.filter(o => o.payment_status === selectedPaymentStatus)
+    : orders;
+
+  // Calculate order counts based on filtered orders
   // Include both "pending_payment" (customer orders) and "pending" (waiter orders)
-  const pendingOrders = orders.filter((o) => o.status === "pending_payment" || o.status === "pending");
-  const inProgressOrders = orders.filter((o) => o.status === "paid" || o.status === "in_preparation");
-  const readyOrders = orders.filter((o) => o.status === "ready");
-  const completedOrders = orders.filter((o) => o.status === "completed");
-  const cancelledOrders = orders.filter((o) => o.status === "cancelled" || o.status === "expired");
+  const pendingOrders = filteredOrders.filter((o) => o.status === "pending_payment" || o.status === "pending");
+  const inProgressOrders = filteredOrders.filter((o) => o.status === "paid" || o.status === "in_preparation");
+  const readyOrders = filteredOrders.filter((o) => o.status === "ready");
+  const completedOrders = filteredOrders.filter((o) => o.status === "completed");
+  const cancelledOrders = filteredOrders.filter((o) => o.status === "cancelled" || o.status === "expired");
+
+  // Calculate payment status breakdown for each order status
+  const getPaymentBreakdown = (ordersList: Order[]) => {
+    const pending = ordersList.filter(o => o.payment_status === 'pending').length;
+    const confirmed = ordersList.filter(o => o.payment_status === 'confirmed').length;
+    const failed = ordersList.filter(o => o.payment_status === 'failed').length;
+    return { pending, confirmed, failed, total: ordersList.length };
+  };
+
+  const pendingPaymentBreakdown = getPaymentBreakdown(pendingOrders);
+  const inProgressPaymentBreakdown = getPaymentBreakdown(inProgressOrders);
+  const readyPaymentBreakdown = getPaymentBreakdown(readyOrders);
+  const completedPaymentBreakdown = getPaymentBreakdown(completedOrders);
 
   return (
     <div className="min-h-screen bg-background">
@@ -404,197 +438,41 @@ const Cashier = () => {
         showToasts={true}
       />
       <ConnectionMonitor />
-      {/* Header - Desktop: Solid color with logo, Mobile: Gradient */}
-      <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 lg:bg-orange-500 text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-4 sm:py-6">
-            {/* Desktop Layout */}
-            <div className="hidden lg:flex items-center justify-between mb-4">
-              {/* Left: Logo */}
-              <div className="flex items-center">
-                <div className="relative">
-                  <img 
-                    src={logo} 
-                    alt="Coco Loko" 
-                    className="h-20 w-auto"
-                  />
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
-                </div>
-              </div>
-
-              {/* Center: Action Buttons */}
-              <div className="flex gap-2 items-center">
-                <Button
-                  onClick={() => window.location.href = '/reports'}
-                  className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                  size="sm"
-                >
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Relatórios
-                </Button>
-                <Button
-                  onClick={() => window.location.href = '/admin/products'}
-                  className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                  size="sm"
-                >
-                  <Package className="mr-2 h-4 w-4" />
-                  Produtos
-                </Button>
-                <Button
-                  onClick={() => window.location.href = '/whatsapp-admin'}
-                  className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                  size="sm"
-                >
-                  <Bell className="mr-2 h-4 w-4" />
-                  WhatsApp
-                </Button>
-              </div>
-
-              {/* Right: Diagnostic, Connection Status & Logout */}
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => navigate("/waiter-diagnostic")} 
-                  className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
-                  size="sm"
-                  title="System Diagnostics"
-                >
-                  🔧
-                </Button>
-                {connectionStatus === 'connected' ? (
-                  <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1.5 rounded-full">
-                    <Wifi className="h-4 w-4 text-green-200" />
-                    <span className="text-sm text-green-200 font-medium">Online</span>
-                  </div>
-                ) : connectionStatus === 'connecting' ? (
-                  <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1.5 rounded-full">
-                    <Wifi className="h-4 w-4 animate-pulse text-yellow-200" />
-                    <span className="text-sm text-yellow-200 font-medium">Conectando...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 bg-red-500/20 px-3 py-1.5 rounded-full">
-                      <WifiOff className="h-4 w-4 text-red-200" />
-                      <span className="text-sm text-red-200 font-medium">Offline</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={reconnect}
-                      className="text-xs text-white border-white/30 hover:bg-white/10"
-                    >
-                      Reconectar
-                    </Button>
-                  </div>
-                )}
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  className="bg-white/10 hover:bg-white/20 text-white border-white/30 transition-all duration-300 hover:scale-105"
-                  size="sm"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </Button>
-              </div>
-            </div>
-
-            {/* Mobile/Tablet Layout */}
-            <div className="lg:hidden">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center space-x-3 sm:space-x-4 flex-1">
-                  <div className="relative">
-                    <img 
-                      src={logo} 
-                      alt="Coco Loko" 
-                      className="h-12 sm:h-16 w-auto drop-shadow-lg"
-                    />
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
-                  </div>
-                </div>
-                
-                {/* Connection Status */}
-                <div className="flex items-center gap-3">
-                  {connectionStatus === 'connected' ? (
-                    <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                      <Wifi className="h-4 w-4 text-green-200" />
-                      <span className="text-xs sm:text-sm text-green-200 font-medium">Online</span>
-                    </div>
-                  ) : connectionStatus === 'connecting' ? (
-                    <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                      <Wifi className="h-4 w-4 animate-pulse text-yellow-200" />
-                      <span className="text-xs sm:text-sm text-yellow-200 font-medium hidden sm:inline">Conectando...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 bg-red-500/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                        <WifiOff className="h-4 w-4 text-red-200" />
-                        <span className="text-xs sm:text-sm text-red-200 font-medium">Offline</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={reconnect}
-                        className="text-xs text-white border-white/30 hover:bg-white/10 backdrop-blur-sm"
-                      >
-                        Reconectar
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2 justify-between items-center">
-                <div className="flex flex-wrap gap-2">
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => navigate("/waiter-diagnostic")} 
-                    className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
-                    size="sm"
-                    title="System Diagnostics"
-                  >
-                    🔧
-                  </Button>
-                  <Button
-                    onClick={() => window.location.href = '/reports'}
-                    className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                    size="sm"
-                  >
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Relatórios</span>
-                  </Button>
-                  <Button
-                    onClick={() => window.location.href = '/admin/products'}
-                    className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                    size="sm"
-                  >
-                    <Package className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Produtos</span>
-                  </Button>
-                  <Button
-                    onClick={() => window.location.href = '/whatsapp-admin'}
-                    className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                    size="sm"
-                  >
-                    <Bell className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">WhatsApp</span>
-                  </Button>
-                </div>
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                  size="sm"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Sair</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Uniform Header */}
+      <UniformHeader
+        title="Caixa"
+        actions={
+          <>
+            <Button
+              onClick={() => window.location.href = '/reports'}
+              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+              size="sm"
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Relatórios</span>
+            </Button>
+            <Button
+              onClick={() => window.location.href = '/admin/products'}
+              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+              size="sm"
+            >
+              <Package className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Produtos</span>
+            </Button>
+            <Button
+              onClick={() => window.location.href = '/whatsapp-admin'}
+              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+              size="sm"
+            >
+              <Bell className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">WhatsApp</span>
+            </Button>
+          </>
+        }
+        showDiagnostic={true}
+        showConnection={true}
+        onLogout={handleLogout}
+      />
 
       <div className="max-w-7xl mx-auto p-3 sm:p-4">
         {/* Enhanced Summary Cards - Now Tab Selectors */}
@@ -785,15 +663,71 @@ const Cashier = () => {
           </Card>
         </div>
 
+        {/* Filters Section */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              Filtrar por Status de Pagamento
+            </label>
+            <Select
+              value={selectedPaymentStatus || "all"}
+              onValueChange={(value) => setSelectedPaymentStatus(value === "all" ? null : value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todos os status de pagamento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="pending">Aguardando Pagamento</SelectItem>
+                <SelectItem value="confirmed">Pagamento Confirmado</SelectItem>
+                <SelectItem value="failed">Pagamento Falhou</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
           <TabsContent value="pending" className="space-y-4">
+            {/* Payment Status Summary */}
+            {pendingOrders.length > 0 && (
+              <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-orange-900">Status de Pagamento</h3>
+                  <div className="flex gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                      <span className="text-orange-900">
+                        Pendente: <strong>{pendingPaymentBreakdown.pending}</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span className="text-orange-900">
+                        Confirmado: <strong>{pendingPaymentBreakdown.confirmed}</strong>
+                      </span>
+                    </div>
+                    {pendingPaymentBreakdown.failed > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span className="text-orange-900">
+                          Falhou: <strong>{pendingPaymentBreakdown.failed}</strong>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
             {pendingOrders.length === 0 ? (
-              <Card className="p-6 text-center text-muted-foreground">
-                {selectedWaiterId 
-                  ? `Nenhum pedido aguardando pagamento para o garçom selecionado`
-                  : `Nenhum pedido aguardando pagamento`
-                }
+              <Card className="p-8 text-center">
+                <div className="flex flex-col items-center">
+                  <Timer className="w-16 h-16 text-gray-300 mb-4" />
+                  <p className="text-lg font-medium text-gray-700 mb-2">Nenhum pedido aguardando pagamento</p>
+                  <p className="text-sm text-gray-500">
+                    Pedidos aparecerão aqui quando clientes fizerem novos pedidos
+                  </p>
+                </div>
               </Card>
             ) : (
               pendingOrders.map((order) => {
@@ -818,9 +752,12 @@ const Cashier = () => {
                         )}
                       </div>
                       <div className="flex sm:flex-col gap-2 sm:text-right">
-                        <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
-                          <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
-                        </Badge>
+                        <StatusBadge 
+                          orderStatus={order.status as OrderStatus}
+                          paymentStatus={order.payment_status as PaymentStatus}
+                          showBoth={true}
+                          compact={false}
+                        />
                         <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
@@ -901,12 +838,45 @@ const Cashier = () => {
           </TabsContent>
 
           <TabsContent value="progress" className="space-y-4">
+            {/* Payment Status Summary */}
+            {inProgressOrders.length > 0 && (
+              <Card className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-blue-900">Status de Pagamento</h3>
+                  <div className="flex gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                      <span className="text-blue-900">
+                        Pendente: <strong>{inProgressPaymentBreakdown.pending}</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span className="text-blue-900">
+                        Confirmado: <strong>{inProgressPaymentBreakdown.confirmed}</strong>
+                      </span>
+                    </div>
+                    {inProgressPaymentBreakdown.failed > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span className="text-blue-900">
+                          Falhou: <strong>{inProgressPaymentBreakdown.failed}</strong>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
             {inProgressOrders.length === 0 ? (
-              <Card className="p-6 text-center text-muted-foreground">
-                {selectedWaiterId 
-                  ? `Nenhum pedido em preparo para o garçom selecionado`
-                  : `Nenhum pedido em preparo`
-                }
+              <Card className="p-8 text-center">
+                <div className="flex flex-col items-center">
+                  <ChefHat className="w-16 h-16 text-gray-300 mb-4" />
+                  <p className="text-lg font-medium text-gray-700 mb-2">Nenhum pedido em preparo</p>
+                  <p className="text-sm text-gray-500">
+                    Pedidos aparecerão aqui quando forem enviados para a cozinha
+                  </p>
+                </div>
               </Card>
             ) : (
               inProgressOrders.map((order) => {
@@ -927,12 +897,12 @@ const Cashier = () => {
                         kitchenNotifiedAt={order.kitchen_notified_at}
                       />
                       <div className="flex sm:flex-col gap-2 sm:text-right">
-                        <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
-                          <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
-                        </Badge>
-                        <Badge className="bg-primary whitespace-nowrap">
-                          <Clock className="mr-1 h-3 w-3" /> {order.status === 'paid' ? 'Pago' : 'Em Preparo'}
-                        </Badge>
+                        <StatusBadge 
+                          orderStatus={order.status as OrderStatus}
+                          paymentStatus={order.payment_status as PaymentStatus}
+                          showBoth={!!order.payment_status}
+                          compact={false}
+                        />
                         <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
@@ -1022,12 +992,45 @@ const Cashier = () => {
           </TabsContent>
 
           <TabsContent value="ready" className="space-y-4">
+            {/* Payment Status Summary */}
+            {readyOrders.length > 0 && (
+              <Card className="p-4 bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-green-900">Status de Pagamento</h3>
+                  <div className="flex gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                      <span className="text-green-900">
+                        Pendente: <strong>{readyPaymentBreakdown.pending}</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span className="text-green-900">
+                        Confirmado: <strong>{readyPaymentBreakdown.confirmed}</strong>
+                      </span>
+                    </div>
+                    {readyPaymentBreakdown.failed > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span className="text-green-900">
+                          Falhou: <strong>{readyPaymentBreakdown.failed}</strong>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
             {readyOrders.length === 0 ? (
-              <Card className="p-6 text-center text-muted-foreground">
-                {selectedWaiterId 
-                  ? `Nenhum pedido pronto para o garçom selecionado`
-                  : `Nenhum pedido pronto`
-                }
+              <Card className="p-8 text-center">
+                <div className="flex flex-col items-center">
+                  <Package className="w-16 h-16 text-gray-300 mb-4" />
+                  <p className="text-lg font-medium text-gray-700 mb-2">Nenhum pedido pronto</p>
+                  <p className="text-sm text-gray-500">
+                    Pedidos aparecerão aqui quando a cozinha marcar como prontos
+                  </p>
+                </div>
               </Card>
             ) : (
               readyOrders.map((order) => {
@@ -1048,12 +1051,12 @@ const Cashier = () => {
                         readyAt={order.ready_at}
                       />
                       <div className="flex sm:flex-col gap-2 sm:text-right">
-                        <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
-                          <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
-                        </Badge>
-                        <Badge className="bg-success whitespace-nowrap">
-                          <CheckCircle className="mr-1 h-3 w-3" /> Pronto
-                        </Badge>
+                        <StatusBadge 
+                          orderStatus={order.status as OrderStatus}
+                          paymentStatus={order.payment_status as PaymentStatus}
+                          showBoth={!!order.payment_status}
+                          compact={false}
+                        />
                         <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
@@ -1157,12 +1160,45 @@ const Cashier = () => {
           </TabsContent>
 
           <TabsContent value="completed" className="space-y-4">
+            {/* Payment Status Summary */}
+            {completedOrders.length > 0 && (
+              <Card className="p-4 bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-purple-900">Status de Pagamento</h3>
+                  <div className="flex gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                      <span className="text-purple-900">
+                        Pendente: <strong>{completedPaymentBreakdown.pending}</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span className="text-purple-900">
+                        Confirmado: <strong>{completedPaymentBreakdown.confirmed}</strong>
+                      </span>
+                    </div>
+                    {completedPaymentBreakdown.failed > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span className="text-purple-900">
+                          Falhou: <strong>{completedPaymentBreakdown.failed}</strong>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
             {completedOrders.length === 0 ? (
-              <Card className="p-6 text-center text-muted-foreground">
-                {selectedWaiterId 
-                  ? `Nenhum pedido concluído para o garçom selecionado`
-                  : `Nenhum pedido concluído`
-                }
+              <Card className="p-8 text-center">
+                <div className="flex flex-col items-center">
+                  <CheckCircle className="w-16 h-16 text-gray-300 mb-4" />
+                  <p className="text-lg font-medium text-gray-700 mb-2">Nenhum pedido concluído</p>
+                  <p className="text-sm text-gray-500">
+                    Pedidos aparecerão aqui quando forem finalizados
+                  </p>
+                </div>
               </Card>
             ) : (
               completedOrders.map((order) => {
@@ -1189,12 +1225,12 @@ const Cashier = () => {
                         )}
                       </div>
                       <div className="flex sm:flex-col gap-2 sm:text-right">
-                        <Badge variant={paymentStatus.variant} className="whitespace-nowrap">
-                          <PaymentIcon className="mr-1 h-3 w-3" /> {paymentStatus.label}
-                        </Badge>
-                        <Badge className="whitespace-nowrap">
-                          <CheckCircle className="mr-1 h-3 w-3" /> Concluído
-                        </Badge>
+                        <StatusBadge 
+                          orderStatus={order.status as OrderStatus}
+                          paymentStatus={order.payment_status as PaymentStatus}
+                          showBoth={!!order.payment_status}
+                          compact={false}
+                        />
                         <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
@@ -1208,11 +1244,14 @@ const Cashier = () => {
 
           <TabsContent value="cancelled" className="space-y-4">
             {cancelledOrders.length === 0 ? (
-              <Card className="p-6 text-center text-muted-foreground">
-                {selectedWaiterId 
-                  ? `Nenhum pedido cancelado para o garçom selecionado`
-                  : `Nenhum pedido cancelado`
-                }
+              <Card className="p-8 text-center">
+                <div className="flex flex-col items-center">
+                  <AlertCircle className="w-16 h-16 text-gray-300 mb-4" />
+                  <p className="text-lg font-medium text-gray-700 mb-2">Nenhum pedido cancelado</p>
+                  <p className="text-sm text-gray-500">
+                    Pedidos cancelados aparecerão aqui
+                  </p>
+                </div>
               </Card>
             ) : (
               cancelledOrders.map((order) => {

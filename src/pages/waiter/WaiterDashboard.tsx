@@ -2,23 +2,29 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutDashboard, ShoppingCart, LogOut, TrendingUp, QrCode, CheckCircle, Clock, XCircle, Edit, Lock } from "lucide-react";
+import { ShoppingCart, TrendingUp, QrCode, CheckCircle, Clock, XCircle, Edit, Lock, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PIXQRGenerator } from "@/components";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PIXQRGenerator, UniformHeader } from "@/components";
 import { CommissionToggle } from "@/components/CommissionToggle";
 import { MobileOrderCard } from "@/components/MobileOrderCard";
 import { OrderEditModal } from "@/components/OrderEditModal";
+import { AddItemsModal } from "@/components/AddItemsModal";
+import { StatusBadge } from "@/components/StatusBadge";
+import type { OrderStatus, PaymentStatus } from "@/components/StatusBadge";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { calculateConfirmedCommissions, calculateEstimatedCommissions, getCommissionStatus, ORDER_STATUS_CATEGORIES } from "@/lib/commissionUtils";
+import { getCommissionStatus, ORDER_STATUS_CATEGORIES } from "@/lib/commissionUtils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { formatOrderNumber, canEditOrder } from "@/lib/orderUtils";
 import type { Order } from "@/types/commission";
 import type { Order as RealtimeOrder } from "@/integrations/supabase/realtime";
-import logo from "@/assets/coco-loko-logo.png";
+
+type PaymentStatusFilter = 'all' | 'pending' | 'confirmed';
 
 const WaiterDashboard = () => {
   const navigate = useNavigate();
@@ -29,7 +35,13 @@ const WaiterDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showPIXGenerator, setShowPIXGenerator] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddItemsModal, setShowAddItemsModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<PaymentStatusFilter>(() => {
+    // Load from localStorage or default to 'all'
+    const saved = localStorage.getItem('waiter-payment-status-filter');
+    return (saved as PaymentStatusFilter) || 'all';
+  });
 
   const fetchWaiterData = useCallback(async () => {
     setLoading(true);
@@ -254,60 +266,109 @@ const WaiterDashboard = () => {
   };
 
   const canGeneratePIX = (order: Order): boolean => {
-    // Allow PIX generation for orders that haven't been paid yet
-    const unpaidStatuses = ['pending', 'in_preparation', 'ready'];
-    return unpaidStatuses.includes(order.status.toLowerCase()) && 
-           !!order.customer_name && 
-           !!order.customer_phone;
+    // Only show button if:
+    // 1. Payment status is pending
+    // 2. No PIX QR code exists OR PIX has expired
+    // 3. Customer info is available
+    
+    if (order.payment_status !== 'pending') {
+      return false;
+    }
+
+    if (!order.customer_name || !order.customer_phone) {
+      return false;
+    }
+
+    // If PIX exists, check if it's expired
+    if (order.pix_qr_code && order.pix_expires_at) {
+      const expiresAt = new Date(order.pix_expires_at);
+      if (expiresAt > new Date()) {
+        // PIX exists and not expired, don't show button
+        return false;
+      }
+    }
+
+    return true;
   };
+
+  const canAddItems = (order: Order): boolean => {
+    // Only show button if:
+    // 1. Order status is in_preparation
+    // 2. Waiter owns the order (checked by currentUserId)
+    
+    if (order.status !== 'in_preparation') {
+      return false;
+    }
+
+    if (order.waiter_id !== currentUserId) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleAddItems = (order: Order) => {
+    setSelectedOrder(order);
+    setShowAddItemsModal(true);
+  };
+
+  const handleAddItemsSuccess = async (newTotal: number) => {
+    console.log('💾 Items added successfully, refreshing dashboard data...');
+    
+    // Fetch fresh data from the database to ensure consistency
+    await fetchWaiterData();
+    
+    toast.success('Itens adicionados com sucesso!', {
+      description: `Novo total: ${newTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
+    });
+    
+    console.log('✅ Dashboard refreshed with updated order data');
+  };
+
+  const handleCloseAddItemsModal = () => {
+    setShowAddItemsModal(false);
+    setSelectedOrder(null);
+  };
+
+  // Handle payment status filter change
+  const handlePaymentStatusFilterChange = (value: PaymentStatusFilter) => {
+    setPaymentStatusFilter(value);
+    localStorage.setItem('waiter-payment-status-filter', value);
+  };
+
+  // Filter orders by payment status
+  const filteredOrders = orders.filter(order => {
+    if (paymentStatusFilter === 'all') return true;
+    
+    const paymentStatus = order.payment_status?.toLowerCase();
+    
+    if (paymentStatusFilter === 'pending') {
+      return paymentStatus === 'pending' || !paymentStatus;
+    }
+    
+    if (paymentStatusFilter === 'confirmed') {
+      return paymentStatus === 'confirmed';
+    }
+    
+    return true;
+  });
+
+  // Calculate counts for each payment status
+  const pendingCount = orders.filter(order => {
+    const paymentStatus = order.payment_status?.toLowerCase();
+    return paymentStatus === 'pending' || !paymentStatus;
+  }).length;
+
+  const confirmedCount = orders.filter(order => {
+    const paymentStatus = order.payment_status?.toLowerCase();
+    return paymentStatus === 'confirmed';
+  }).length;
 
   // Only count paid orders for total sales
   const validOrders = orders.filter(order => 
     ORDER_STATUS_CATEGORIES.PAID.includes(order.status.toLowerCase())
   );
   const totalSales = validOrders.reduce((sum, order) => sum + order.total_amount, 0);
-
-  const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return "secondary"; // Yellow for pending orders
-      case "pending_payment":
-        return "destructive"; // Red for awaiting payment
-      case "paid":
-        return "default"; // Blue for paid orders
-      case "in_preparation":
-        return "secondary"; // Yellow for in preparation
-      case "ready":
-        return "default"; // Blue for ready orders
-      case "completed":
-        return "default"; // Green for completed
-      case "cancelled":
-        return "destructive"; // Red for cancelled
-      default:
-        return "outline";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return "Pendente";
-      case "pending_payment":
-        return "Aguardando Pagamento";
-      case "paid":
-        return "Pago";
-      case "in_preparation":
-        return "Em Preparo";
-      case "ready":
-        return "Pronto";
-      case "completed":
-        return "Concluído";
-      case "cancelled":
-        return "Cancelado";
-      default:
-        return status;
-    }
-  };
 
   if (loading) {
     return (
@@ -322,46 +383,11 @@ const WaiterDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-acai">
-      {/* Enhanced Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4 sm:py-6">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="relative">
-                <img 
-                  src={logo} 
-                  alt="Coco Loko" 
-                  className="h-10 sm:h-14 w-auto drop-shadow-lg"
-                />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-              </div>
-              <div>
-                <h1 className="text-lg sm:text-2xl font-bold flex items-center">
-                  <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
-                  Dashboard do Garçom
-                </h1>
-                <p className="text-purple-100 text-xs sm:text-sm font-medium">
-                  {waiterName} • {new Date().toLocaleDateString("pt-BR", { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
-              </div>
-            </div>
-            <Button 
-              variant="ghost" 
-              onClick={handleLogout} 
-              className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
-              size="sm"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Sair</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Uniform Header */}
+      <UniformHeader
+        title="Dashboard do Garçom"
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4 md:p-8">
@@ -434,32 +460,62 @@ const WaiterDashboard = () => {
         {/* Orders History */}
         <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-0">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-              <ShoppingCart className="w-5 h-5 mr-2 text-purple-600" />
-              Histórico de Pedidos
-            </CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
+                <ShoppingCart className="w-5 h-5 mr-2 text-purple-600" />
+                Histórico de Pedidos
+              </CardTitle>
+              
+              {/* Payment Status Tabs */}
+              <Tabs 
+                value={paymentStatusFilter} 
+                onValueChange={(value) => handlePaymentStatusFilterChange(value as PaymentStatusFilter)}
+                className="w-full sm:w-auto"
+              >
+                <TabsList className="grid w-full grid-cols-3 sm:w-auto">
+                  <TabsTrigger value="all" className="text-xs sm:text-sm">
+                    Todos ({orders.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="pending" className="text-xs sm:text-sm">
+                    <Clock className="w-3 h-3 mr-1" />
+                    Pendente ({pendingCount})
+                  </TabsTrigger>
+                  <TabsTrigger value="confirmed" className="text-xs sm:text-sm">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Confirmado ({confirmedCount})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </CardHeader>
           <CardContent>
             {/* Mobile Card Layout */}
             {isMobile ? (
               <div className="space-y-3">
-                {orders.map((order) => (
+                {filteredOrders.map((order) => (
                   <MobileOrderCard
                     key={order.id}
                     order={order}
                     onGeneratePIX={handleGeneratePIX}
                     canGeneratePIX={canGeneratePIX(order)}
+                    onAddItems={handleAddItems}
+                    canAddItems={canAddItems(order)}
                     onClick={handleOrderClick}
                   />
                 ))}
-                {orders.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                {filteredOrders.length === 0 && (
+                  <Card className="p-8 text-center">
                     <div className="flex flex-col items-center">
-                      <ShoppingCart className="w-12 h-12 text-gray-300 mb-2" />
-                      <p>Nenhum pedido encontrado</p>
-                      <p className="text-sm">Clique em "Novo Pedido" para começar a atender clientes</p>
+                      <ShoppingCart className="w-16 h-16 text-gray-300 mb-4" />
+                      <p className="text-lg font-medium text-gray-700 mb-2">Nenhum pedido encontrado</p>
+                      <p className="text-sm text-gray-500">
+                        {paymentStatusFilter === 'all' 
+                          ? 'Clique em "Novo Pedido" para começar a atender clientes'
+                          : `Nenhum pedido com status de pagamento "${paymentStatusFilter === 'pending' ? 'Pendente' : 'Confirmado'}"`
+                        }
+                      </p>
                     </div>
-                  </div>
+                  </Card>
                 )}
               </div>
             ) : (
@@ -478,7 +534,7 @@ const WaiterDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((order) => (
+                    {filteredOrders.map((order) => (
                       <TableRow 
                         key={order.id} 
                         className="border-gray-100 hover:bg-purple-50/50 cursor-pointer transition-colors duration-150"
@@ -539,12 +595,29 @@ const WaiterDashboard = () => {
                           })()}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusVariant(order.status)} className="font-medium">
-                            {getStatusLabel(order.status)}
-                          </Badge>
+                          <StatusBadge 
+                            orderStatus={order.status as OrderStatus}
+                            paymentStatus={order.payment_status as PaymentStatus}
+                            showBoth={!!order.payment_status}
+                            compact={false}
+                          />
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {canAddItems(order) && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAddItems(order);
+                                }}
+                                className="flex items-center gap-1 text-blue-600 border-blue-600 hover:bg-blue-50"
+                              >
+                                <Plus className="w-3 h-3" />
+                                Adicionar Item
+                              </Button>
+                            )}
                             {canGeneratePIX(order) && (
                               <Button
                                 size="sm"
@@ -592,13 +665,18 @@ const WaiterDashboard = () => {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {orders.length === 0 && (
+                    {filteredOrders.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={7} className="text-center py-12">
                           <div className="flex flex-col items-center">
-                            <ShoppingCart className="w-12 h-12 text-gray-300 mb-2" />
-                            <p>Nenhum pedido encontrado</p>
-                            <p className="text-sm">Clique em "Novo Pedido" para começar a atender clientes</p>
+                            <ShoppingCart className="w-16 h-16 text-gray-300 mb-4" />
+                            <p className="text-lg font-medium text-gray-700 mb-2">Nenhum pedido encontrado</p>
+                            <p className="text-sm text-gray-500">
+                              {paymentStatusFilter === 'all' 
+                                ? 'Clique em "Novo Pedido" para começar a atender clientes'
+                                : `Nenhum pedido com status de pagamento "${paymentStatusFilter === 'pending' ? 'Pendente' : 'Confirmado'}"`
+                              }
+                            </p>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -623,6 +701,7 @@ const WaiterDashboard = () => {
           }}
           onPaymentComplete={handlePIXPaymentComplete}
           onClose={handleClosePIXGenerator}
+          mode="manual"
         />
       )}
 
@@ -633,6 +712,18 @@ const WaiterDashboard = () => {
         onClose={handleCloseEditModal}
         onSave={handleSaveOrder}
       />
+
+      {/* Add Items Modal */}
+      {selectedOrder && (
+        <AddItemsModal
+          isOpen={showAddItemsModal}
+          orderId={selectedOrder.id}
+          currentTotal={selectedOrder.total_amount}
+          hasPIX={!!selectedOrder.pix_qr_code && !!selectedOrder.pix_expires_at && new Date(selectedOrder.pix_expires_at) > new Date()}
+          onClose={handleCloseAddItemsModal}
+          onSuccess={handleAddItemsSuccess}
+        />
+      )}
     </div>
   );
 };

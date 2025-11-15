@@ -21,14 +21,13 @@ import {
   Smartphone,
   Wifi,
   WifiOff,
-  ArrowLeft,
   MessageCircle,
   Users,
   TrendingUp,
   Send
 } from 'lucide-react';
 import { toast } from 'sonner';
-import logo from '@/assets/coco-loko-logo.png';
+import { UniformHeader } from '@/components/UniformHeader';
 
 interface ConnectionInfo {
   phoneNumber?: string;
@@ -330,47 +329,28 @@ export default function WhatsAppAdmin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-2 sm:py-3">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <img src={logo} alt="Coco Loko" className="h-7 sm:h-10" />
-              <div>
-                <h1 className="text-base sm:text-2xl font-bold text-gray-900">WhatsApp Admin</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden md:block">Monitoramento e gerenciamento</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {connectionStatus === 'connected' ? (
-                <Badge variant="default" className="bg-green-600 text-white">
-                  <Wifi className="h-3 w-3 mr-1" />
-                  <span className="hidden sm:inline">Conectado</span>
-                </Badge>
-              ) : (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleConnectWhatsApp}
-                  className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
-                >
-                  <Smartphone className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Conectar</span>
-                </Button>
-              )}
-              <Button
-                onClick={() => navigate('/admin')}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
-              >
-                <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Voltar</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Uniform Header */}
+      <UniformHeader
+        title="WhatsApp Admin"
+        actions={
+          connectionStatus === 'connected' ? (
+            <Badge variant="default" className="bg-green-600 text-white">
+              <Wifi className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Conectado</span>
+            </Badge>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleConnectWhatsApp}
+              className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
+            >
+              <Smartphone className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Conectar</span>
+            </Button>
+          )
+        }
+      />
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">

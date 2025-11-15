@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DollarSign, ShoppingCart, TrendingUp, Calendar as CalendarIcon, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { UniformHeader } from "@/components/UniformHeader";
 
 interface OrderStats {
   totalOrders: number;
@@ -34,13 +34,39 @@ const Reports = () => {
     averageOrderValue: 0,
   });
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: new Date(new Date().setDate(new Date().getDate() - 7)),
-    to: new Date(),
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
+    // Try to restore from localStorage
+    const saved = localStorage.getItem('reports_date_range');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          from: new Date(parsed.from),
+          to: new Date(parsed.to),
+        };
+      } catch (e) {
+        console.error('Failed to parse saved date range:', e);
+      }
+    }
+    // Default to today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return {
+      from: today,
+      to: new Date(),
+    };
   });
 
   useEffect(() => {
     loadStats();
+  }, [dateRange]);
+
+  // Persist date range to localStorage
+  useEffect(() => {
+    localStorage.setItem('reports_date_range', JSON.stringify({
+      from: dateRange.from.toISOString(),
+      to: dateRange.to.toISOString(),
+    }));
   }, [dateRange]);
 
   const loadStats = async () => {
@@ -122,30 +148,17 @@ const Reports = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-ocean text-white p-6 shadow-medium">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Relatórios</h1>
-            <p className="text-white/90 mt-1">Análise de Vendas e Pedidos</p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => (window.location.href = "/cashier")}
-            className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-          >
-            ← Voltar ao Caixa
-          </Button>
-        </div>
-      </div>
+      {/* Uniform Header */}
+      <UniformHeader
+        title="Relatórios"
+        logoLink="/admin"
+      />
 
       <div className="max-w-7xl mx-auto p-4">
         {/* Date Range Selector */}
         <Card className="p-4 mb-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h3 className="font-bold text-lg mb-1">Período</h3>
+          <div className="flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-4">
+            <div className="text-center sm:text-left">
               <p className="text-sm text-muted-foreground">
                 {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
                 {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}

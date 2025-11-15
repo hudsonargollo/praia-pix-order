@@ -124,9 +124,12 @@ export type Database = {
       }
       orders: {
         Row: {
+          cancelled_at: string | null
+          commission_amount: number | null
           created_at: string
           customer_name: string
           customer_phone: string
+          deleted_at: string | null
           id: string
           kitchen_notified_at: string | null
           mercadopago_payment_id: string | null
@@ -134,17 +137,25 @@ export type Database = {
           order_number: number
           payment_confirmed_at: string | null
           payment_expires_at: string | null
+          payment_status: string
           pix_copy_paste: string | null
+          pix_expires_at: string | null
+          pix_generated_at: string | null
+          pix_qr_code: string | null
           qr_code_data: string | null
           ready_at: string | null
           status: string
           table_number: string
           total_amount: number
+          waiter_id: string | null
         }
         Insert: {
+          cancelled_at?: string | null
+          commission_amount?: number | null
           created_at?: string
           customer_name: string
           customer_phone: string
+          deleted_at?: string | null
           id?: string
           kitchen_notified_at?: string | null
           mercadopago_payment_id?: string | null
@@ -152,17 +163,25 @@ export type Database = {
           order_number?: never
           payment_confirmed_at?: string | null
           payment_expires_at?: string | null
+          payment_status?: string
           pix_copy_paste?: string | null
+          pix_expires_at?: string | null
+          pix_generated_at?: string | null
+          pix_qr_code?: string | null
           qr_code_data?: string | null
           ready_at?: string | null
           status?: string
           table_number: string
           total_amount: number
+          waiter_id?: string | null
         }
         Update: {
+          cancelled_at?: string | null
+          commission_amount?: number | null
           created_at?: string
           customer_name?: string
           customer_phone?: string
+          deleted_at?: string | null
           id?: string
           kitchen_notified_at?: string | null
           mercadopago_payment_id?: string | null
@@ -170,12 +189,17 @@ export type Database = {
           order_number?: never
           payment_confirmed_at?: string | null
           payment_expires_at?: string | null
+          payment_status?: string
           pix_copy_paste?: string | null
+          pix_expires_at?: string | null
+          pix_generated_at?: string | null
+          pix_qr_code?: string | null
           qr_code_data?: string | null
           ready_at?: string | null
           status?: string
           table_number?: string
           total_amount?: number
+          waiter_id?: string | null
         }
         Relationships: []
       }

@@ -21,6 +21,7 @@ interface PIXQRGeneratorProps {
   onPaymentComplete?: (paymentId: string) => void;
   onClose?: () => void;
   isOpen?: boolean;
+  mode?: 'auto' | 'manual'; // auto = customer flow, manual = waiter flow
 }
 
 const PIXQRGenerator = ({ 
@@ -29,7 +30,8 @@ const PIXQRGenerator = ({
   customerInfo, 
   onPaymentComplete,
   onClose,
-  isOpen = false
+  isOpen = false,
+  mode = 'auto'
 }: PIXQRGeneratorProps) => {
   const [paymentData, setPaymentData] = useState<MercadoPagoPaymentResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -83,14 +85,45 @@ const PIXQRGenerator = ({
       setLoading(true);
       setPaymentStatus('pending');
 
-      const paymentResponse = await mercadoPagoService.createPayment({
-        orderId: orderId,
-        amount: amount,
-        description: `Pedido Garçom - ${customerInfo.name}`,
-        customerName: customerInfo.name,
-        customerPhone: customerInfo.phone,
-        tableNumber: 'Waiter' // Indicate this is a waiter order
-      });
+      let paymentResponse: MercadoPagoPaymentResponse;
+
+      if (mode === 'manual') {
+        // Manual mode: call the new generate-pix endpoint for waiter orders
+        const response = await fetch('/api/orders/generate-pix', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ orderId })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to generate PIX');
+        }
+
+        const data = await response.json();
+        
+        paymentResponse = {
+          id: data.paymentId,
+          status: 'pending',
+          qrCode: data.qrCode,
+          qrCodeBase64: data.qrCodeBase64,
+          pixCopyPaste: data.qrCode,
+          expirationDate: data.expiresAt,
+          transactionAmount: data.amount
+        };
+      } else {
+        // Auto mode: use existing customer flow
+        paymentResponse = await mercadoPagoService.createPayment({
+          orderId: orderId,
+          amount: amount,
+          description: `Pedido - ${customerInfo.name}`,
+          customerName: customerInfo.name,
+          customerPhone: customerInfo.phone,
+          tableNumber: 'Customer'
+        });
+      }
 
       setPaymentData(paymentResponse);
       
@@ -103,7 +136,7 @@ const PIXQRGenerator = ({
     } catch (error) {
       console.error('Error generating PIX payment:', error);
       setPaymentStatus('error');
-      toast.error('Erro ao gerar PIX. Tente novamente.');
+      toast.error(error instanceof Error ? error.message : 'Erro ao gerar PIX. Tente novamente.');
     } finally {
       setLoading(false);
     }

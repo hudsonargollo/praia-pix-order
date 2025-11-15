@@ -128,8 +128,14 @@ export function CommissionToggle({ orders, onViewChange }: CommissionToggleProps
 
   const confirmedCommission = calculateConfirmedCommissions(filteredOrders);
   const estimatedCommission = calculateEstimatedCommissions(filteredOrders);
-  const paidOrdersCount = getOrdersByCategory(filteredOrders, 'PAID').length;
-  const pendingOrdersCount = getOrdersByCategory(filteredOrders, 'PENDING').length;
+  const paidOrdersCount = filteredOrders.filter(order => {
+    const paymentStatus = order.payment_status?.toLowerCase();
+    return paymentStatus === 'confirmed' || (!paymentStatus && ['paid', 'completed'].includes(order.status.toLowerCase()));
+  }).length;
+  const pendingOrdersCount = filteredOrders.filter(order => {
+    const paymentStatus = order.payment_status?.toLowerCase();
+    return paymentStatus === 'pending' || (!paymentStatus && ['pending', 'pending_payment', 'in_preparation', 'ready'].includes(order.status.toLowerCase()));
+  }).length;
   const totalCommission = confirmedCommission + estimatedCommission;
 
   const handleToggle = (view: CommissionView) => {
@@ -183,7 +189,7 @@ export function CommissionToggle({ orders, onViewChange }: CommissionToggleProps
             <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            Suas Comissões do Período
+            <span>Suas Comissões do Período</span>
           </CardTitle>
           
           {/* Date Filter Dropdown */}
@@ -277,50 +283,100 @@ export function CommissionToggle({ orders, onViewChange }: CommissionToggleProps
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        {/* Selected Commission Detail */}
-        <div 
-          className="transition-all duration-300 ease-in-out bg-white/60 backdrop-blur-sm rounded-xl p-5 border-2"
-          style={{
-            borderColor: activeView === 'received' ? 'rgb(22 163 74)' : 'rgb(202 138 4)'
-          }}
-          key={activeView}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              {activeView === 'received' ? (
+      <CardContent className="space-y-4">
+        {/* Side-by-side Commission Display */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Confirmed Commissions */}
+          <div 
+            className={`
+              transition-all duration-300 ease-in-out bg-white/60 backdrop-blur-sm rounded-xl p-5 border-2
+              ${activeView === 'received' ? 'border-green-600 shadow-lg scale-105' : 'border-green-200'}
+            `}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-600" />
-              ) : (
-                <Clock className="w-5 h-5 text-yellow-600" />
-              )}
-              <span className="text-sm font-semibold text-gray-700">
-                {activeView === 'received' ? 'Comissões Recebidas' : 'Comissões a Receber'}
-              </span>
+                <span className="text-sm font-semibold text-gray-700">
+                  Confirmadas
+                </span>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64">
+                  <p className="text-sm text-gray-600">
+                    Comissões de pedidos com pagamento confirmado. Estes valores já foram recebidos e estão disponíveis.
+                  </p>
+                </PopoverContent>
+              </Popover>
             </div>
-          </div>
-          
-          <div className={`
-            text-4xl font-bold mb-2
-            ${activeView === 'received' ? 'text-green-600' : 'text-yellow-600'}
-          `}>
-            {displayAmount.toLocaleString("pt-BR", { 
-              style: "currency", 
-              currency: "BRL" 
-            })}
-          </div>
-          <p className="text-sm text-gray-600 mb-2">
-            De {displayCount} {displayLabel}
-          </p>
-          {activeView === 'pending' && (
-            <p className="text-xs text-gray-500 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
-              💡 Aguardando confirmação de pagamento
+            
+            <div className="text-3xl font-bold text-green-600 mb-2">
+              {confirmedCommission.toLocaleString("pt-BR", { 
+                style: "currency", 
+                currency: "BRL" 
+              })}
+            </div>
+            <p className="text-sm text-gray-600">
+              De {paidOrdersCount} {paidOrdersCount === 1 ? 'pedido pago' : 'pedidos pagos'}
             </p>
-          )}
-          {activeView === 'received' && paidOrdersCount > 0 && (
-            <p className="text-xs text-gray-500 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
-              ✅ Comissões confirmadas e disponíveis
+            {paidOrdersCount > 0 && (
+              <p className="text-xs text-gray-500 bg-green-50 px-3 py-2 rounded-lg border border-green-200 mt-2">
+                ✅ Disponíveis
+              </p>
+            )}
+          </div>
+
+          {/* Pending Commissions */}
+          <div 
+            className={`
+              transition-all duration-300 ease-in-out bg-white/60 backdrop-blur-sm rounded-xl p-5 border-2
+              ${activeView === 'pending' ? 'border-yellow-600 shadow-lg scale-105' : 'border-yellow-200'}
+            `}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-yellow-600" />
+                <span className="text-sm font-semibold text-gray-700">
+                  A Receber
+                </span>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64">
+                  <p className="text-sm text-gray-600">
+                    Comissões estimadas de pedidos aguardando confirmação de pagamento. Estes valores serão confirmados quando o pagamento for recebido.
+                  </p>
+                </PopoverContent>
+              </Popover>
+            </div>
+            
+            <div className="text-3xl font-bold text-yellow-600 mb-2">
+              {estimatedCommission.toLocaleString("pt-BR", { 
+                style: "currency", 
+                currency: "BRL" 
+              })}
+            </div>
+            <p className="text-sm text-gray-600">
+              De {pendingOrdersCount} {pendingOrdersCount === 1 ? 'pedido pendente' : 'pedidos pendentes'}
             </p>
-          )}
+            {pendingOrdersCount > 0 && (
+              <p className="text-xs text-gray-500 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200 mt-2">
+                💡 Aguardando pagamento
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Overall Total */}

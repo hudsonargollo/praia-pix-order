@@ -4,6 +4,9 @@ import { notificationTriggers } from "@/integrations/whatsapp";
 import { useKitchenOrders } from "@/hooks/useRealtimeOrders";
 import { RealtimeNotifications, notificationUtils } from "@/components/RealtimeNotifications";
 import { ConnectionMonitor, useConnectionMonitor } from "@/components/ConnectionMonitor";
+import { StatusBadge } from "@/components/StatusBadge";
+import { UniformHeader } from "@/components/UniformHeader";
+import type { PaymentStatus } from "@/components/StatusBadge";
 import { fetchAllWaiters, getWaiterName } from "@/lib/waiterUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { CheckCircle, Clock, ChefHat, Package, Bell, Wifi, WifiOff, Loader2, X } from "lucide-react";
+import { CheckCircle, Clock, ChefHat, Package, Bell, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import type { Order } from "@/integrations/supabase/realtime";
 
@@ -108,8 +111,9 @@ const Kitchen = () => {
 
   const loadOrders = async () => {
     try {
-      // Load orders that are paid or in progress (paid, in_preparation, ready, completed)
-      // Also include "pending" status for waiter-created orders (they don't need payment)
+      // Load orders that are in_preparation, ready, or completed
+      // Waiter-created orders go directly to in_preparation status (payment_status can be pending)
+      // Customer orders need payment confirmation before appearing
       // Include waiter information by joining with auth.users
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
@@ -119,7 +123,7 @@ const Kitchen = () => {
             raw_user_meta_data
           )
         `)
-        .or("status.in.(paid,in_preparation,ready,completed),and(status.eq.pending,created_by_waiter.eq.true)")
+        .in("status", ["in_preparation", "ready", "completed"])
         .order("created_at", { ascending: true });
 
       if (ordersError) throw ordersError;
@@ -286,9 +290,9 @@ const Kitchen = () => {
     );
   }
 
-  const newOrders = orders.filter((o) => 
-    o.status === "paid" || (o.status === "pending" && o.created_by_waiter)
-  );
+  // Orders with status 'in_preparation' appear immediately, regardless of payment_status
+  // This includes waiter-created orders that go directly to in_preparation
+  const newOrders: Order[] = []; // Customer orders start as "paid" but waiter orders start as "in_preparation"
   const inProgressOrders = orders.filter((o) => o.status === "in_preparation");
   const readyOrders = orders.filter((o) => o.status === "ready");
 
@@ -300,41 +304,11 @@ const Kitchen = () => {
         showToasts={true}
       />
       <ConnectionMonitor />
-      {/* Header */}
-      <div className="bg-gradient-acai text-white p-6 shadow-medium">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold">Cozinha</h1>
-            <p className="text-white/90 mt-1">Sistema de Gerenciamento de Pedidos</p>
-          </div>
-          <div className="flex items-center gap-2">
-            {connectionStatus === 'connected' ? (
-              <div className="flex items-center gap-1 text-green-200">
-                <Wifi className="h-4 w-4" />
-                <span className="text-sm">Online</span>
-              </div>
-            ) : connectionStatus === 'connecting' ? (
-              <div className="flex items-center gap-1 text-yellow-200">
-                <Wifi className="h-4 w-4 animate-pulse" />
-                <span className="text-sm">Conectando...</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 text-red-200">
-                <WifiOff className="h-4 w-4" />
-                <span className="text-sm">Offline</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={reconnect}
-                  className="ml-2 text-white border-white/20 hover:bg-white/10"
-                >
-                  Reconectar
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Uniform Header */}
+      <UniformHeader
+        title="Cozinha"
+        showConnection={true}
+      />
 
       <div className="max-w-7xl mx-auto p-4">
         <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
@@ -347,8 +321,14 @@ const Kitchen = () => {
             </div>
             <div className="space-y-4">
               {newOrders.length === 0 ? (
-                <Card className="p-6 text-center text-muted-foreground">
-                  Nenhum pedido novo
+                <Card className="p-8 text-center">
+                  <div className="flex flex-col items-center">
+                    <Bell className="w-16 h-16 text-gray-300 mb-4" />
+                    <p className="text-lg font-medium text-gray-700 mb-2">Nenhum pedido novo</p>
+                    <p className="text-sm text-gray-500">
+                      Novos pedidos pagos aparecerão aqui
+                    </p>
+                  </div>
                 </Card>
               ) : (
                 newOrders.map((order) => {
@@ -367,6 +347,15 @@ const Kitchen = () => {
                             <p className="text-xs text-blue-600 font-medium">
                               Atendido por: {waiterName}
                             </p>
+                          )}
+                          {order.payment_status && (
+                            <div className="mt-1">
+                              <StatusBadge 
+                                paymentStatus={order.payment_status as PaymentStatus}
+                                compact={true}
+                                className="opacity-70"
+                              />
+                            </div>
                           )}
                         </div>
                         <Badge className="bg-blue-500">
@@ -419,8 +408,14 @@ const Kitchen = () => {
             </div>
             <div className="space-y-4">
               {inProgressOrders.length === 0 ? (
-                <Card className="p-6 text-center text-muted-foreground">
-                  Nenhum pedido em preparo
+                <Card className="p-8 text-center">
+                  <div className="flex flex-col items-center">
+                    <Clock className="w-16 h-16 text-gray-300 mb-4" />
+                    <p className="text-lg font-medium text-gray-700 mb-2">Nenhum pedido em preparo</p>
+                    <p className="text-sm text-gray-500">
+                      Pedidos aparecerão aqui quando iniciarem o preparo
+                    </p>
+                  </div>
                 </Card>
               ) : (
                 inProgressOrders.map((order) => {
@@ -428,17 +423,34 @@ const Kitchen = () => {
                   return (
                     <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-primary">
                       <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-bold text-base lg:text-lg">
-                            Pedido #{order.order_number}
-                          </h3>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-base lg:text-lg">
+                              Pedido #{order.order_number}
+                            </h3>
+                            {order.waiter_id && waiterName && waiterName !== 'Cliente' && (
+                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300">
+                                <User className="h-3 w-3 mr-1" />
+                                Garçom
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-xs lg:text-sm text-muted-foreground">
                             {order.customer_name}
                           </p>
                           {waiterName && waiterName !== 'Cliente' && (
-                            <p className="text-xs text-primary font-medium">
+                            <p className="text-xs text-primary font-medium mt-1">
                               Atendido por: {waiterName}
                             </p>
+                          )}
+                          {order.payment_status && (
+                            <div className="mt-1">
+                              <StatusBadge 
+                                paymentStatus={order.payment_status as PaymentStatus}
+                                compact={true}
+                                className="opacity-70"
+                              />
+                            </div>
                           )}
                         </div>
                         <Badge className="bg-primary">Em Preparo</Badge>
@@ -489,8 +501,14 @@ const Kitchen = () => {
             </div>
             <div className="space-y-4">
               {readyOrders.length === 0 ? (
-                <Card className="p-6 text-center text-muted-foreground">
-                  Nenhum pedido pronto
+                <Card className="p-8 text-center">
+                  <div className="flex flex-col items-center">
+                    <CheckCircle className="w-16 h-16 text-gray-300 mb-4" />
+                    <p className="text-lg font-medium text-gray-700 mb-2">Nenhum pedido pronto</p>
+                    <p className="text-sm text-gray-500">
+                      Pedidos prontos aparecerão aqui
+                    </p>
+                  </div>
                 </Card>
               ) : (
                 readyOrders.map((order) => {
@@ -498,17 +516,34 @@ const Kitchen = () => {
                   return (
                     <Card key={order.id} className="p-4 shadow-medium border-l-4 border-l-success bg-success/5">
                       <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-bold text-base lg:text-lg">
-                            Pedido #{order.order_number}
-                          </h3>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-base lg:text-lg">
+                              Pedido #{order.order_number}
+                            </h3>
+                            {order.waiter_id && waiterName && waiterName !== 'Cliente' && (
+                              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">
+                                <User className="h-3 w-3 mr-1" />
+                                Garçom
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-xs lg:text-sm text-muted-foreground">
                             {order.customer_name}
                           </p>
                           {waiterName && waiterName !== 'Cliente' && (
-                            <p className="text-xs text-success font-medium">
+                            <p className="text-xs text-success font-medium mt-1">
                               Atendido por: {waiterName}
                             </p>
+                          )}
+                          {order.payment_status && (
+                            <div className="mt-1">
+                              <StatusBadge 
+                                paymentStatus={order.payment_status as PaymentStatus}
+                                compact={true}
+                                className="opacity-70"
+                              />
+                            </div>
                           )}
                         </div>
                         <Badge className="bg-success">Pronto</Badge>

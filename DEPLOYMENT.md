@@ -140,11 +140,20 @@ After deployment:
    - Visit: https://coco-loko-acaiteria.pages.dev
    - Test key features:
      - Customer menu access
-     - Waiter dashboard
+     - Waiter dashboard with payment workflow
      - Kitchen dashboard
      - Admin panel
 
-3. **Test WhatsApp Integration**:
+3. **Test Waiter Payment Workflow** (New Feature):
+   - Login as waiter
+   - Create an order (should go directly to preparation)
+   - Verify order shows `payment_status='pending'`
+   - Generate PIX QR code for the order
+   - Test payment confirmation via webhook
+   - Verify commission calculation updates
+   - Test adding items to existing orders
+
+4. **Test WhatsApp Integration**:
    - Go to: https://coco-loko-acaiteria.pages.dev/whatsapp-admin
    - Scan QR code to connect
    - Test notifications
@@ -204,6 +213,42 @@ The application requires these environment variables:
 - `MERCADOPAGO_ACCESS_TOKEN` - MercadoPago access token
 - `WHATSAPP_SESSION_ID` - WhatsApp session identifier
 
+## Database Schema Changes
+
+### Waiter Payment Workflow (v20251114000004)
+
+The waiter payment workflow introduces independent payment status tracking:
+
+**New Fields in `orders` table:**
+- `payment_status` - Tracks payment state independently from order status
+  - Values: `'pending'`, `'confirmed'`, `'failed'`, `'refunded'`
+  - Default: `'pending'`
+- `payment_confirmed_at` - Timestamp when payment was confirmed
+- `pix_generated_at` - Timestamp when PIX QR code was generated
+- `pix_qr_code` - Stores PIX QR code data
+- `pix_expires_at` - PIX expiration timestamp
+
+**Indexes for Performance:**
+- `idx_orders_payment_status` - Fast payment status queries
+- `idx_orders_waiter_payment` - Waiter-specific payment queries
+- `idx_orders_status_payment` - Combined status filtering
+
+**Migration Path:**
+```sql
+-- Existing completed orders are marked as payment confirmed
+UPDATE orders 
+SET payment_status = 'confirmed',
+    payment_confirmed_at = updated_at
+WHERE status = 'completed';
+```
+
+### Commission Calculation Changes
+
+Commission calculations now filter by `payment_status`:
+- **Confirmed Commission**: Only counts orders with `payment_status='confirmed'`
+- **Pending Commission**: Shows estimated commission for `payment_status='pending'`
+- Real-time updates when payment status changes
+
 ## Troubleshooting
 
 ### Build Fails
@@ -234,6 +279,156 @@ npm run build
 2. Verify API credentials in environment variables
 3. Test API connection manually
 4. Check Cloudflare Functions logs
+
+### Payment Issues
+
+#### PIX Generation Fails
+
+**Symptoms:**
+- "Gerar PIX" button doesn't work
+- QR code doesn't display
+- Error message appears
+
+**Solutions:**
+1. Check MercadoPago credentials in environment variables
+2. Verify order has `payment_status='pending'`
+3. Check Cloudflare Functions logs for API errors
+4. Ensure order belongs to the waiter
+5. Verify MercadoPago API is accessible
+
+**Debug Steps:**
+```bash
+# Check function logs in Cloudflare dashboard
+# Verify environment variables
+echo $VITE_MERCADOPAGO_ACCESS_TOKEN
+
+# Test MercadoPago API manually
+curl -X POST https://api.mercadopago.com/v1/payments \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json"
+```
+
+#### Payment Status Not Updating
+
+**Symptoms:**
+- Payment completed but status still shows "Aguardando Pagamento"
+- Commission not calculated after payment
+- Order stuck in pending payment
+
+**Solutions:**
+1. Check MercadoPago webhook is configured correctly
+2. Verify webhook endpoint is accessible: `/api/mercadopago/webhook`
+3. Check webhook signature validation
+4. Review Cloudflare Functions logs for webhook errors
+5. Verify database connection in webhook handler
+
+**Debug Steps:**
+```sql
+-- Check payment status in database
+SELECT id, payment_status, payment_confirmed_at, pix_generated_at
+FROM orders
+WHERE id = 'ORDER_ID';
+
+-- Check recent webhook activity
+SELECT * FROM payment_webhooks
+ORDER BY created_at DESC
+LIMIT 10;
+```
+
+#### Commission Calculation Issues
+
+**Symptoms:**
+- Commission shows incorrect amount
+- Pending vs confirmed commission mismatch
+- Commission not updating after payment
+
+**Solutions:**
+1. Verify `payment_status` field is set correctly
+2. Check commission calculation logic in `commissionUtils.ts`
+3. Ensure real-time subscriptions include `payment_status`
+4. Verify date filters are applied correctly
+5. Check for duplicate orders in calculation
+
+**Debug Steps:**
+```sql
+-- Verify commission data
+SELECT 
+  waiter_id,
+  payment_status,
+  commission_amount,
+  total_amount,
+  created_at
+FROM orders
+WHERE waiter_id = 'WAITER_ID'
+  AND created_at >= CURRENT_DATE
+ORDER BY created_at DESC;
+
+-- Check commission totals
+SELECT 
+  payment_status,
+  COUNT(*) as order_count,
+  SUM(commission_amount) as total_commission
+FROM orders
+WHERE waiter_id = 'WAITER_ID'
+  AND created_at >= CURRENT_DATE
+GROUP BY payment_status;
+```
+
+#### Add Items Not Working
+
+**Symptoms:**
+- "Adicionar Item" button disabled
+- Items not added to order
+- Total not recalculating
+
+**Solutions:**
+1. Verify order status is `'in_preparation'`
+2. Check waiter owns the order
+3. Ensure payment_status is `'pending'`
+4. Verify menu items are available
+5. Check Cloudflare Functions logs
+
+**Debug Steps:**
+```sql
+-- Check order state
+SELECT 
+  id, 
+  status, 
+  payment_status, 
+  waiter_id,
+  total_amount
+FROM orders
+WHERE id = 'ORDER_ID';
+
+-- Verify order items
+SELECT * FROM order_items
+WHERE order_id = 'ORDER_ID'
+ORDER BY created_at;
+```
+
+#### Real-time Updates Not Working
+
+**Symptoms:**
+- Payment status doesn't update automatically
+- New orders don't appear in dashboard
+- PIX generation doesn't reflect in UI
+
+**Solutions:**
+1. Check Supabase real-time subscriptions are active
+2. Verify `useRealtimeOrders` hook includes `payment_status`
+3. Check browser console for WebSocket errors
+4. Ensure Supabase project has real-time enabled
+5. Verify RLS policies allow real-time access
+
+**Debug Steps:**
+```javascript
+// Check real-time connection in browser console
+// Look for WebSocket connection status
+// Verify subscription channels are active
+
+// Test manual refresh
+window.location.reload();
+```
 
 ## Custom Domain Setup
 

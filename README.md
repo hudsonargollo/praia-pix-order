@@ -16,7 +16,8 @@ Coco Loko Açaiteria is a comprehensive digital ordering platform designed speci
 - **Kitchen Dashboard**: Real-time view of paid orders, order status management
 - **Cashier Panel**: Order monitoring and customer notification system
 - **Admin Panel**: Product management, waiter management, sales reports, WhatsApp administration
-- **Waiter Module**: Table-side order placement and order tracking
+- **Waiter Module**: Table-side order placement, manual PIX generation, commission tracking
+- **Waiter Payment Workflow**: Separate order and payment status, pending vs confirmed commissions
 - **Role-based Access**: Protected routes for kitchen, cashier, admin, and waiter staff
 
 ### Target Users
@@ -332,9 +333,12 @@ npm run test:production  # Test production deployment
 
 **Waiter Flow**
 1. Login with waiter credentials
-2. Place orders for customers at tables
-3. View personal order history and dashboard
-4. Track order status
+2. Place orders for customers at tables (orders go directly to kitchen)
+3. Generate PIX QR code when customer is ready to pay
+4. View personal order history and dashboard
+5. Track order status and payment status separately
+6. Add items to orders in preparation
+7. Monitor pending vs confirmed commissions
 
 ## 🧪 Testing
 
@@ -374,6 +378,15 @@ Ensure the following environment variables are set in your production environmen
 
 ## 🎯 Recent Improvements
 
+### Waiter Payment Workflow (November 2024)
+- ✅ Independent order and payment status tracking
+- ✅ Manual PIX generation for waiter-created orders
+- ✅ Dual status display (order status + payment status)
+- ✅ Pending vs confirmed commission tracking
+- ✅ Add items to orders in preparation
+- ✅ Real-time payment status updates
+- ✅ Comprehensive documentation and troubleshooting guides
+
 ### WhatsApp Admin UX (November 2025)
 - ✅ Responsive mobile layout with 19.5% space savings
 - ✅ 2-column stats grid on mobile devices
@@ -388,7 +401,7 @@ Ensure the following environment variables are set in your production environmen
 - ✅ Full WCAG AA accessibility compliance
 - ✅ Purple pulsing badge for pending payments
 
-See `DEPLOYMENT_SUMMARY.md` for detailed deployment information.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for deployment information and [WAITER_PAYMENT_WORKFLOW_DOCS.md](./WAITER_PAYMENT_WORKFLOW_DOCS.md) for complete feature documentation.
 
 ## 📊 Key Metrics
 
@@ -397,6 +410,37 @@ See `DEPLOYMENT_SUMMARY.md` for detailed deployment information.
 - **Performance**: 3.06s build time, ~200KB gzipped bundle
 - **Test Coverage**: 100% of critical user flows validated
 - **Responsive**: Optimized for devices from 375px to 1920px
+
+## 📚 Documentation
+
+### Core Documentation
+
+- **[README.md](./README.md)** - This file, project overview and getting started
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment guide with troubleshooting
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines
+
+### Feature Documentation
+
+- **[WAITER_PAYMENT_WORKFLOW_DOCS.md](./WAITER_PAYMENT_WORKFLOW_DOCS.md)** - Complete waiter payment workflow documentation index
+- **[DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)** - Database schema and structure
+- **[COMMISSION_CALCULATION.md](./COMMISSION_CALCULATION.md)** - Commission calculation logic and formulas
+- **[TROUBLESHOOTING_PAYMENT.md](./TROUBLESHOOTING_PAYMENT.md)** - Payment system troubleshooting guide
+
+### Specification Documents
+
+Located in `.kiro/specs/`:
+- **waiter-payment-workflow/** - Requirements, design, and implementation tasks
+- **admin-desktop-layout/** - Admin interface specifications
+- **customer-order-flow/** - Customer ordering specifications
+- And more...
+
+### Test Documentation
+
+Located in `src/test/`:
+- E2E test reports and summaries
+- Integration test documentation
+- Real-time verification reports
+- Commission verification reports
 
 ## 📝 Contributing
 
@@ -407,6 +451,7 @@ Contributions are welcome! Please follow these guidelines:
 3. Ensure responsive design (test on mobile first)
 4. Write tests for critical functionality
 5. Update documentation as needed
+6. Review [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines
 
 For major changes, please open an issue first to discuss what you would like to change.
 

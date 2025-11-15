@@ -9,70 +9,31 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, QrCode, Edit, Lock } from "lucide-react";
+import { CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, QrCode, Edit, Lock, Plus } from "lucide-react";
 import { getCommissionStatus } from "@/lib/commissionUtils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { formatOrderNumber, canEditOrder } from "@/lib/orderUtils";
 import type { Order } from "@/types/commission";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { StatusBadge } from "@/components/StatusBadge";
+import type { OrderStatus, PaymentStatus } from "@/components/StatusBadge";
 
 interface MobileOrderCardProps {
   order: Order;
   onGeneratePIX?: (order: Order) => void;
   canGeneratePIX?: boolean;
+  onAddItems?: (order: Order) => void;
+  canAddItems?: boolean;
   onClick?: (order: Order) => void;
 }
 
-export function MobileOrderCard({ order, onGeneratePIX, canGeneratePIX = false, onClick }: MobileOrderCardProps) {
+export function MobileOrderCard({ order, onGeneratePIX, canGeneratePIX = false, onAddItems, canAddItems = false, onClick }: MobileOrderCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const commissionStatus = getCommissionStatus(order);
   
   // Get icon component based on commission status
   const IconComponent = commissionStatus.icon === 'CheckCircle' ? CheckCircle : 
                        commissionStatus.icon === 'Clock' ? Clock : XCircle;
-
-  // Get status variant and label
-  const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return "secondary";
-      case "pending_payment":
-        return "destructive";
-      case "paid":
-        return "default";
-      case "in_preparation":
-        return "secondary";
-      case "ready":
-        return "default";
-      case "completed":
-        return "default";
-      case "cancelled":
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return "Pendente";
-      case "pending_payment":
-        return "Aguardando Pagamento";
-      case "paid":
-        return "Pago";
-      case "in_preparation":
-        return "Em Preparo";
-      case "ready":
-        return "Pronto";
-      case "completed":
-        return "Concluído";
-      case "cancelled":
-        return "Cancelado";
-      default:
-        return status;
-    }
-  };
 
   const handleCardClick = () => {
     if (onClick) {
@@ -101,9 +62,12 @@ export function MobileOrderCard({ order, onGeneratePIX, canGeneratePIX = false, 
               <span className="text-sm font-bold text-gray-900">
                 {formatOrderNumber(order, false)}
               </span>
-              <Badge variant={getStatusVariant(order.status)} className="text-xs">
-                {getStatusLabel(order.status)}
-              </Badge>
+              <StatusBadge 
+                orderStatus={order.status as OrderStatus}
+                paymentStatus={order.payment_status as PaymentStatus}
+                showBoth={!!order.payment_status}
+                compact={true}
+              />
               {canEditOrder(order) ? (
                 <TooltipProvider>
                   <Tooltip>
@@ -216,20 +180,35 @@ export function MobileOrderCard({ order, onGeneratePIX, canGeneratePIX = false, 
               </div>
             </div>
 
-            {/* PIX Generation button */}
-            {canGeneratePIX && onGeneratePIX && (
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGeneratePIX(order);
-                }}
-                className="w-full min-h-[44px] flex items-center justify-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
-                variant="outline"
-              >
-                <QrCode className="w-4 h-4" />
-                Gerar PIX
-              </Button>
-            )}
+            {/* Action buttons */}
+            <div className="space-y-2">
+              {canAddItems && onAddItems && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddItems(order);
+                  }}
+                  className="w-full min-h-[44px] flex items-center justify-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+                  variant="outline"
+                >
+                  <Plus className="w-4 h-4" />
+                  Adicionar Item
+                </Button>
+              )}
+              {canGeneratePIX && onGeneratePIX && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onGeneratePIX(order);
+                  }}
+                  className="w-full min-h-[44px] flex items-center justify-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
+                  variant="outline"
+                >
+                  <QrCode className="w-4 h-4" />
+                  Gerar PIX
+                </Button>
+              )}
+            </div>
           </div>
         )}
 

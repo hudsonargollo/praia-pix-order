@@ -19,11 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Edit, Plus, Upload, ArrowLeft, ShoppingBag, ArrowUpDown } from 'lucide-react';
+import { Edit, Plus, Upload, ArrowUpDown, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { SortingDialog } from '@/components/SortingDialog';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { UniformHeader } from '@/components/UniformHeader';
 
 interface MenuItem {
   id: string;
@@ -326,56 +327,31 @@ const AdminProducts = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
-      {/* Enhanced Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4 sm:py-6">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/admin')}
-                className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Voltar</span>
-              </Button>
-              <div className="relative">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <ShoppingBag className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                  Gerenciar Produtos
-                </h1>
-                <p className="text-blue-100 mt-1 text-xs sm:text-base font-medium">
-                  Edite descrições, fotos e preços • Cardápio Digital
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={() => {
-                setEditingItem(null);
-                setFormData({
-                  name: '',
-                  description: '',
-                  price: '',
-                  category_id: categories[0]?.id || '',
-                  available: true,
-                  image_url: '',
-                });
-                setIsDialogOpen(true);
-              }}
-              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-              size="sm"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Novo Produto</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Uniform Header */}
+      <UniformHeader
+        title="Gerenciar Produtos"
+        actions={
+          <Button
+            onClick={() => {
+              setEditingItem(null);
+              setFormData({
+                name: '',
+                description: '',
+                price: '',
+                category_id: categories[0]?.id || '',
+                available: true,
+                image_url: '',
+              });
+              setIsDialogOpen(true);
+            }}
+            className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+            size="sm"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Novo Produto</span>
+          </Button>
+        }
+      />
 
       {/* Enhanced Products Grid */}
       <div className="max-w-7xl mx-auto p-4 sm:p-6">

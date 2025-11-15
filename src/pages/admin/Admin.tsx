@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { LayoutDashboard, Users, ShoppingBag, BarChart3, MessageSquare, LogOut, ChefHat } from "lucide-react";
+import { Users, ShoppingBag, BarChart3, ChefHat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import logo from "@/assets/coco-loko-logo.png";
+import { UniformHeader } from "@/components/UniformHeader";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -33,32 +33,11 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
-      {/* Enhanced Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4 sm:py-6">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="relative">
-                <img 
-                  src={logo} 
-                  alt="Coco Loko Açaiteria" 
-                  className="h-12 sm:h-16 w-auto drop-shadow-lg"
-                />
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
-              </div>
-            </div>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-              size="sm"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Sair</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Uniform Header */}
+      <UniformHeader
+        title="Admin"
+        onLogout={handleLogout}
+      />
 
       {/* Enhanced Content */}
       <div className="p-4 sm:p-6 lg:p-8">

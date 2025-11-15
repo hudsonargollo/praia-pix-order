@@ -56,6 +56,7 @@ const AdminWaiterReports = () => {
   const [waiters, setWaiters] = useState<Waiter[]>([]);
   const [selectedWaiterId, setSelectedWaiterId] = useState<string>("");
   const [waiterOrders, setWaiterOrders] = useState<WaiterOrder[]>([]);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("all");
   const [waiterStats, setWaiterStats] = useState<WaiterStats>({
     totalOrders: 0,
     completedOrders: 0,
@@ -67,9 +68,27 @@ const AdminWaiterReports = () => {
     averageOrderValue: 0,
   });
   const [loading, setLoading] = useState(false);
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: new Date(new Date().setDate(new Date().getDate() - 30)),
-    to: new Date(),
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
+    // Try to restore from localStorage
+    const saved = localStorage.getItem('admin_waiter_reports_date_range');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          from: new Date(parsed.from),
+          to: new Date(parsed.to),
+        };
+      } catch (e) {
+        console.error('Failed to parse saved date range:', e);
+      }
+    }
+    // Default to today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return {
+      from: today,
+      to: new Date(),
+    };
   });
 
   useEffect(() => {
@@ -81,6 +100,14 @@ const AdminWaiterReports = () => {
       loadWaiterData();
     }
   }, [selectedWaiterId, dateRange]);
+
+  // Persist date range to localStorage
+  useEffect(() => {
+    localStorage.setItem('admin_waiter_reports_date_range', JSON.stringify({
+      from: dateRange.from.toISOString(),
+      to: dateRange.to.toISOString(),
+    }));
+  }, [dateRange]);
 
   // Set up real-time subscriptions for selected waiter
   useEffect(() => {
@@ -369,7 +396,6 @@ const AdminWaiterReports = () => {
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-end">
             {/* Waiter Selection */}
             <div className="flex-1 w-full lg:min-w-[250px]">
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">Selecionar Garçom</label>
               <Select value={selectedWaiterId} onValueChange={setSelectedWaiterId}>
                 <SelectTrigger className="h-11 border-gray-300 hover:border-purple-400 focus:border-purple-500 focus:ring-purple-500 transition-colors">
                   <SelectValue placeholder="Escolha um garçom..." />
@@ -394,8 +420,7 @@ const AdminWaiterReports = () => {
             </div>
 
             {/* Date Range Selector */}
-            <div className="w-full lg:w-auto">
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">Período</label>
+            <div className="w-full lg:w-auto flex justify-center lg:justify-start">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button 
@@ -426,6 +451,36 @@ const AdminWaiterReports = () => {
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+
+            {/* Payment Status Filter */}
+            <div className="w-full lg:w-auto">
+              <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                <SelectTrigger className="h-11 border-gray-300 hover:border-purple-400 focus:border-purple-500 focus:ring-purple-500 transition-colors">
+                  <SelectValue placeholder="Filtrar por pagamento..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Pedidos</SelectItem>
+                  <SelectItem value="confirmed">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>Pagamento Confirmado</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="pending">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-yellow-600" />
+                      <span>Aguardando Pagamento</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="failed">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-4 w-4 text-red-600" />
+                      <span>Pagamento Falhou</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Export Button */}
@@ -545,23 +600,47 @@ const AdminWaiterReports = () => {
                   Nenhum pedido encontrado para o período selecionado
                 </p>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Pedido</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Telefone</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead className="text-right">Comissão</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Observações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {waiterOrders.map((order) => {
+            ) : (() => {
+              // Filter orders by payment status
+              const filteredOrders = waiterOrders.filter(order => {
+                if (paymentStatusFilter === "all") return true;
+                
+                const commissionStatus = getCommissionStatus(order as any);
+                if (paymentStatusFilter === "confirmed") {
+                  return commissionStatus.status === 'confirmed';
+                }
+                if (paymentStatusFilter === "pending") {
+                  return commissionStatus.status === 'pending';
+                }
+                if (paymentStatusFilter === "failed") {
+                  return commissionStatus.status === 'excluded';
+                }
+                return true;
+              });
+
+              return filteredOrders.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    Nenhum pedido encontrado com o filtro selecionado
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Pedido</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                        <TableHead className="text-right">Comissão</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Observações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredOrders.map((order) => {
                       const commissionStatus = getCommissionStatus(order as any);
                       const CommissionIcon = commissionStatus.icon === 'CheckCircle' ? CheckCircle :
                                             commissionStatus.icon === 'Clock' ? Clock : XCircle;
@@ -604,7 +683,8 @@ const AdminWaiterReports = () => {
                   </TableBody>
                 </Table>
               </div>
-            )}
+              );
+            })()}
           </CardContent>
         </Card>
       )}

@@ -105,18 +105,21 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      // Determine initial status and waiter ID
-      const initialStatus = isWaiter ? "pending" : "pending_payment";
+      // Determine initial status based on user type
+      // Waiter orders: go directly to preparation with pending payment
+      // Customer orders: wait for payment before preparation
+      const initialStatus = isWaiter ? "in_preparation" : "pending_payment";
+      const initialPaymentStatus = isWaiter ? "pending" : "pending";
       
       const orderData = {
         customer_name: customerInfo.name,
         customer_phone: formattedPhone,
         table_number: "-", // Placeholder - orders identified by phone
         status: initialStatus,
+        payment_status: initialPaymentStatus,
         total_amount: getTotalPrice(),
         waiter_id: waiterId, // Assign waiter ID if present
         order_notes: orderNotes.trim() || null, // Add order notes
-        created_by_waiter: isWaiter, // Flag to indicate waiter-created order
       };
 
       // Create order

@@ -46,20 +46,49 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
-    // Determine order status
+    // Determine order status and payment status
     let orderStatus = 'pending_payment';
+    let paymentStatus = 'pending';
     let paymentConfirmedAt = null;
 
     if (payment.status === 'approved') {
       orderStatus = 'paid';
+      paymentStatus = 'confirmed';
       paymentConfirmedAt = new Date().toISOString();
     } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
       orderStatus = 'cancelled';
+      paymentStatus = 'failed';
     }
 
     // Update order in Supabase
     const supabaseUrl = context.env.VITE_SUPABASE_URL;
     const serviceRoleKey = context.env.SUPABASE_SERVICE_KEY;
+
+    // First, check if this payment has already been processed (idempotency)
+    const checkResponse = await fetch(`${supabaseUrl}/rest/v1/orders?id=eq.${orderId}&select=mercadopago_payment_id,payment_status`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'apikey': serviceRoleKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (checkResponse.ok) {
+      const orders = await checkResponse.json();
+      if (orders.length > 0 && orders[0].mercadopago_payment_id === paymentId) {
+        console.log(`Payment ${paymentId} already processed for order ${orderId}`);
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Payment already processed',
+          orderId,
+          status: orders[0].payment_status
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
 
     const updateResponse = await fetch(`${supabaseUrl}/rest/v1/orders?id=eq.${orderId}`, {
       method: 'PATCH',
@@ -71,6 +100,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       },
       body: JSON.stringify({
         status: orderStatus,
+        payment_status: paymentStatus,
         payment_confirmed_at: paymentConfirmedAt,
         mercadopago_payment_id: paymentId
       })
@@ -82,13 +112,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       throw new Error(`Failed to update order: ${error}`);
     }
 
-    console.log(`Order ${orderId} updated to ${orderStatus}`);
+    console.log(`Order ${orderId} updated - status: ${orderStatus}, payment_status: ${paymentStatus}`);
 
     return new Response(JSON.stringify({
       success: true,
       message: 'Webhook processed',
       orderId,
-      status: orderStatus
+      status: orderStatus,
+      payment_status: paymentStatus
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
