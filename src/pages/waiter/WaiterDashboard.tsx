@@ -396,21 +396,21 @@ const WaiterDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Place Order Card */}
           <div data-testid="new-order-section">
-            <Card className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 text-white shadow-2xl border-0 overflow-hidden relative h-full">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
+            <Card className="bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 text-white shadow-2xl border-0 overflow-hidden relative h-full hover:shadow-3xl transition-all duration-300 hover:-translate-y-1">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.1),transparent_50%)]"></div>
               <CardContent className="p-6 sm:p-8 relative flex flex-col h-full">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                      <ShoppingCart className="w-6 h-6 text-white" />
+                <div className="flex-1 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-lg flex-shrink-0">
+                      <ShoppingCart className="w-7 h-7 text-white" />
                     </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-bold">Criar Novo Pedido</h3>
-                      <p className="text-green-100 text-sm">Comece a atender um novo cliente</p>
+                    <div className="flex-1">
+                      <h3 className="text-2xl sm:text-3xl font-bold mb-1 leading-tight">Criar Novo Pedido</h3>
+                      <p className="text-green-50 text-sm sm:text-base">Comece a atender um novo cliente</p>
                     </div>
                   </div>
-                  <p className="text-white/90 text-sm sm:text-base mb-4">
-                    Abra o cardápio digital para fazer um pedido personalizado para o cliente
+                  <p className="text-white/95 text-sm sm:text-base leading-relaxed">
+                    Abra o cardápio digital para fazer um pedido personalizado
                   </p>
                 </div>
                 <Button 
@@ -419,7 +419,7 @@ const WaiterDashboard = () => {
                     navigate("/menu");
                   }}
                   size="lg"
-                  className="bg-white text-green-600 hover:bg-gray-100 font-bold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 w-full"
+                  className="bg-white text-green-600 hover:bg-green-50 font-bold px-6 sm:px-8 py-4 sm:py-5 text-base sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] w-full rounded-xl mt-4"
                   data-testid="new-order-button"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
@@ -430,24 +430,27 @@ const WaiterDashboard = () => {
           </div>
 
           {/* Total Sales Card */}
-          <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-blue-50/50 backdrop-blur-sm overflow-hidden relative h-full">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-              <CardTitle className="text-sm font-medium text-gray-600 group-hover:text-white transition-colors">
-                Total de Vendas
-              </CardTitle>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 group-hover:shadow-xl transition-all duration-300">
-                <ShoppingCart className="h-5 w-5 text-white" />
+          <Card className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-white shadow-xl overflow-hidden relative h-full">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100 to-transparent rounded-bl-full opacity-50"></div>
+            <CardContent className="p-6 sm:p-8 relative z-10 flex flex-col h-full">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-500 group-hover:text-white/90 transition-colors uppercase tracking-wide mb-2">
+                    Total de Vendas
+                  </p>
+                  <div className="text-3xl sm:text-4xl font-bold text-gray-900 group-hover:text-white transition-colors">
+                    {totalSales.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </div>
+                </div>
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-white/20 group-hover:shadow-xl transition-all duration-300 flex-shrink-0">
+                  <ShoppingCart className="h-6 w-6 text-white" />
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-white transition-colors mb-2">
-                {totalSales.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              <div className="flex items-center gap-2 text-sm text-gray-600 group-hover:text-white/90 transition-colors mt-auto">
+                <TrendingUp className="w-4 h-4" />
+                <span className="font-medium">{validOrders.length} pedidos pagos</span>
               </div>
-              <p className="text-sm text-gray-500 group-hover:text-white/90 transition-colors flex items-center">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                {validOrders.length} pedidos pagos
-              </p>
             </CardContent>
           </Card>
         </div>

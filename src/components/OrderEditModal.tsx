@@ -316,7 +316,7 @@ export function OrderEditModal({
         )}
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 pb-6">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 pb-24">
           {/* Order Information */}
           <div className="space-y-4 sm:space-y-5">
           {/* Customer Name and Status on same line */}
@@ -399,7 +399,7 @@ export function OrderEditModal({
           </div>
 
           {/* Order Totals */}
-          <div className={`border-t pt-4 space-y-3 transition-all duration-300 -mx-4 sm:mx-0 px-4 sm:px-0 mb-4 ${
+          <div className={`border-t pt-4 space-y-3 transition-all duration-300 -mx-4 sm:mx-0 px-4 sm:px-0 mb-8 ${
             hasValueChanged ? 'bg-gradient-to-br from-purple-50 to-indigo-50 py-4 rounded-xl border-2 border-purple-200 shadow-sm' : ''
           }`}>
             {/* Total Amount */}
