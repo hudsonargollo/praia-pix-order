@@ -150,29 +150,6 @@ export function CommissionToggle({ orders, onViewChange }: CommissionToggleProps
     }
   };
 
-  const handleCustomDateSelect = (date: Date | undefined) => {
-    if (!date) return;
-    
-    // If no start date, set it
-    if (!customDateRange.from || customDateRange.to) {
-      setCustomDateRange({ from: startOfDay(date), to: endOfDay(date) });
-    } else {
-      // Set end date
-      const newRange = {
-        from: customDateRange.from,
-        to: endOfDay(date)
-      };
-      // Ensure from is before to
-      if (newRange.from > newRange.to) {
-        setCustomDateRange({ from: newRange.to, to: newRange.from });
-      } else {
-        setCustomDateRange(newRange);
-      }
-      setDateFilter('custom');
-      setIsCalendarOpen(false);
-    }
-  };
-
   const displayAmount = activeView === 'received' ? confirmedCommission : estimatedCommission;
   const displayCount = activeView === 'received' ? paidOrdersCount : pendingOrdersCount;
   const displayLabel = activeView === 'received' 
@@ -225,17 +202,27 @@ export function CommissionToggle({ orders, onViewChange }: CommissionToggleProps
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="end">
                     <Calendar
-                      mode="single"
-                      selected={customDateRange.from}
-                      onSelect={handleCustomDateSelect}
+                      mode="range"
+                      selected={{ from: customDateRange.from, to: customDateRange.to }}
+                      onSelect={(range) => {
+                        if (range?.from) {
+                          setCustomDateRange({
+                            from: startOfDay(range.from),
+                            to: range.to ? endOfDay(range.to) : endOfDay(range.from)
+                          });
+                          if (range.to) {
+                            setDateFilter('custom');
+                            setIsCalendarOpen(false);
+                          }
+                        }
+                      }}
                       locale={pt}
                       initialFocus
+                      numberOfMonths={1}
                     />
-                    {customDateRange.from && !customDateRange.to && (
-                      <div className="p-3 text-sm text-gray-600 border-t">
-                        Selecione a data final
-                      </div>
-                    )}
+                    <div className="p-3 text-xs text-gray-600 border-t bg-gray-50">
+                      {!customDateRange.to ? 'Selecione o período desejado' : 'Período selecionado'}
+                    </div>
                   </PopoverContent>
                 </Popover>
               </DropdownMenuItem>
