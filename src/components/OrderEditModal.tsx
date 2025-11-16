@@ -360,18 +360,7 @@ export function OrderEditModal({
           <div className="border-t pt-3 sm:pt-5 -mx-4 sm:mx-0 px-4 sm:px-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
               <h3 className="text-base sm:text-lg font-bold text-gray-900">Itens do Pedido</h3>
-              {isEditable && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toast.info('Adicionar item será implementado em breve')}
-                  className="flex items-center gap-2 w-full sm:w-auto min-h-[44px] sm:min-h-[36px] touch-manipulation hover:bg-gray-50 border-gray-300 text-sm font-medium"
-                  aria-label="Adicionar novo item ao pedido"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Adicionar Item</span>
-                </Button>
-              )}
+              {/* Add items button removed - use AddItemsModal from WaiterDashboard instead */}
             </div>
 
             {isLoading ? (

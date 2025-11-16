@@ -185,7 +185,7 @@ const PIXQRGenerator = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <QrCode className="w-5 h-5 mr-2" />
@@ -193,20 +193,20 @@ const PIXQRGenerator = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Order Summary */}
-          <Card className="p-4">
-            <h3 className="font-semibold mb-2">Resumo do Pedido</h3>
+          <Card className="p-3">
+            <h3 className="font-semibold mb-2 text-sm">Resumo do Pedido</h3>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <span>Cliente:</span>
+                <span className="text-muted-foreground">Cliente:</span>
                 <span className="font-medium">{customerInfo.name}</span>
               </div>
               <div className="flex justify-between">
-                <span>Telefone:</span>
+                <span className="text-muted-foreground">Telefone:</span>
                 <span className="font-medium">{customerInfo.phone}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
+              <div className="flex justify-between text-base font-bold border-t pt-2 mt-2">
                 <span>Total:</span>
                 <span className="text-primary">R$ {amount.toFixed(2)}</span>
               </div>
@@ -268,18 +268,18 @@ const PIXQRGenerator = ({
           {/* QR Code Display */}
           {paymentStatus === 'pending' && paymentData && (
             <>
-              <Card className="p-4 text-center">
-                <h3 className="font-semibold mb-3">Escaneie o QR Code</h3>
+              <Card className="p-3 text-center">
+                <h3 className="font-semibold mb-2 text-sm">Escaneie o QR Code</h3>
                 {paymentData.qrCodeBase64 ? (
-                  <div className="flex justify-center mb-3">
+                  <div className="flex justify-center mb-2">
                     <img
                       src={`data:image/png;base64,${paymentData.qrCodeBase64}`}
                       alt="QR Code para pagamento"
-                      className="w-48 h-48 border rounded-lg"
+                      className="w-40 h-40 border rounded-lg"
                     />
                   </div>
                 ) : (
-                  <div className="w-48 h-48 bg-gray-100 border rounded-lg mx-auto mb-3 flex items-center justify-center">
+                  <div className="w-40 h-40 bg-gray-100 border rounded-lg mx-auto mb-2 flex items-center justify-center">
                     <p className="text-sm text-muted-foreground">QR Code não disponível</p>
                   </div>
                 )}
@@ -288,14 +288,14 @@ const PIXQRGenerator = ({
                 </p>
               </Card>
 
-              <Card className="p-4">
-                <h3 className="font-semibold mb-3">Ou copie o código PIX</h3>
-                <div className="bg-gray-50 p-3 rounded-lg mb-3">
+              <Card className="p-3">
+                <h3 className="font-semibold mb-2 text-sm">Ou copie o código PIX</h3>
+                <div className="bg-gray-50 p-2 rounded-lg mb-2 max-h-20 overflow-y-auto">
                   <p className="text-xs font-mono break-all text-gray-700">
                     {paymentData.pixCopyPaste}
                   </p>
                 </div>
-                <Button onClick={copyPixCode} className="w-full" variant="outline">
+                <Button onClick={copyPixCode} className="w-full" variant="outline" size="sm">
                   <Copy className="w-4 h-4 mr-2" />
                   Copiar Código PIX
                 </Button>
