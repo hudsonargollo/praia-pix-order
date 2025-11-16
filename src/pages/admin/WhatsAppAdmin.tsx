@@ -25,7 +25,7 @@ import {
   Wifi,
   WifiOff,
   MessageCircle,
-  Send,
+  SendHorizontal,
   FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -439,32 +439,35 @@ export default function WhatsAppAdmin() {
 
           <TabsContent value="overview" className="space-y-4">
         {/* Connection Status Card */}
-        <Card className={connectionStatus === 'connected' ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}>
+        <Card className={connectionStatus === 'connected' ? 'border-green-300 bg-gradient-to-r from-green-50 to-emerald-50' : 'border-orange-300 bg-gradient-to-r from-orange-50 to-amber-50'}>
           <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                {connectionStatus === 'connected' ? (
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                ) : (
-                  <AlertTriangle className="h-5 w-5 text-orange-600" />
-                )}
-                <div>
-                  <CardTitle className={`text-base ${connectionStatus === 'connected' ? 'text-green-800' : 'text-orange-800'}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className={`p-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-100' : 'bg-orange-100'}`}>
+                  {connectionStatus === 'connected' ? (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <AlertTriangle className="h-5 w-5 text-orange-600" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <CardTitle className={`text-base font-semibold ${connectionStatus === 'connected' ? 'text-green-800' : 'text-orange-800'}`}>
                     {connectionStatus === 'connected' ? 'WhatsApp Conectado' : 'WhatsApp Desconectado'}
                   </CardTitle>
                   {connectionStatus === 'connected' && connectionInfo?.phoneNumber && (
-                    <CardDescription className="text-green-700 font-medium mt-1">
-                      Tel: {connectionInfo.phoneNumber}
+                    <CardDescription className="text-green-700 font-medium mt-0.5 flex items-center gap-1">
+                      <Smartphone className="h-3 w-3" />
+                      {connectionInfo.phoneNumber}
                     </CardDescription>
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-shrink-0">
                 <Button
                   onClick={checkConnectionStatus}
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 hover:bg-white/50"
                   title="Verificar Status"
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -485,7 +488,7 @@ export default function WhatsAppAdmin() {
                     size="sm"
                     className="h-8 bg-green-600 hover:bg-green-700"
                   >
-                    <Smartphone className="h-4 w-4 mr-1" />
+                    <Wifi className="h-4 w-4 mr-1" />
                     <span className="hidden sm:inline">Conectar</span>
                   </Button>
                 )}
@@ -494,7 +497,8 @@ export default function WhatsAppAdmin() {
           </CardHeader>
           {connectionStatus === 'connected' && connectionInfo?.connectedAt && (
             <CardContent className="pt-0 pb-3">
-              <p className="text-xs text-green-700">
+              <p className="text-xs text-green-700 flex items-center gap-1">
+                <Clock className="h-3 w-3" />
                 Conectado em: {new Date(connectionInfo.connectedAt).toLocaleString('pt-BR')}
               </p>
             </CardContent>
@@ -597,9 +601,9 @@ export default function WhatsAppAdmin() {
             <Button
               onClick={handleTestMessage}
               disabled={connectionStatus !== 'connected'}
-              className="w-full"
+              className="w-full bg-blue-600 hover:bg-blue-700"
             >
-              <Send className="h-4 w-4 mr-2" />
+              <SendHorizontal className="h-4 w-4 mr-2" />
               Enviar Teste
             </Button>
           </CardContent>
