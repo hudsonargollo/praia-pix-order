@@ -114,17 +114,17 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
 
   return (
     <Card className={`p-6 shadow-lg border-2 border-cyan-100 rounded-2xl ${className || ''}`}>
-      <h2 className="font-bold text-xl mb-4 text-purple-900">Dados do Cliente</h2>
+      <h2 className="font-bold text-xl mb-4 text-purple-900">Identificação</h2>
       
       <div className="space-y-4">
         <div>
           <Label htmlFor="customer-name" className="text-sm font-medium">
-            Nome Completo *
+            Nome *
           </Label>
           <Input
             id="customer-name"
             type="text"
-            placeholder="Nome do cliente"
+            placeholder="Seu nome"
             value={customerInfo.name}
             onChange={(e) => updateCustomerInfo('name', e.target.value)}
             className={`mt-1 ${errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
@@ -140,7 +140,7 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
 
         <div>
           <Label htmlFor="customer-phone" className="text-sm font-medium">
-            WhatsApp (com DDD) *
+            WhatsApp *
           </Label>
           <Input
             id="customer-phone"
@@ -164,11 +164,8 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
           )}
         </div>
 
-        <div className="text-sm text-muted-foreground">
-          <p>* Campos obrigatórios</p>
-          <p className="mt-1">
-            Enviaremos notificações sobre o pedido via WhatsApp.
-          </p>
+        <div className="text-sm text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p>💬 Atualizações via WhatsApp</p>
         </div>
 
         {/* Validation status indicator (hidden, for programmatic access) */}
