@@ -4,7 +4,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Users, DollarSign, QrCode, Search, UserCheck } from "lucide-react";
+import { Users, QrCode, Search, Lock } from "lucide-react";
 import logo from "@/assets/coco-loko-logo.png";
 
 const Index = () => {
@@ -131,18 +131,18 @@ const Index = () => {
             <Button
               size="lg"
               onClick={() => navigate("/auth")}
-              className="h-auto py-6 sm:py-8 flex flex-col bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl transition-all rounded-2xl min-h-[120px] sm:min-h-[140px]"
+              className="h-auto py-6 sm:py-8 flex flex-col bg-yellow-500 text-purple-900 hover:bg-yellow-400 shadow-lg hover:shadow-xl transition-all rounded-2xl min-h-[120px] sm:min-h-[140px]"
             >
-              <UserCheck className="h-8 w-8 sm:h-10 sm:w-10 mb-2 sm:mb-3" />
-              <span className="font-bold text-sm sm:text-base text-center">Garçom</span>
+              <Lock className="h-8 w-8 sm:h-10 sm:w-10 mb-2 sm:mb-3" />
+              <span className="font-bold text-sm sm:text-base text-center">Área Restrita</span>
             </Button>
             <Button
               size="lg"
-              onClick={() => navigate("/auth")}
-              className="h-auto py-6 sm:py-8 flex flex-col bg-yellow-500 text-purple-900 hover:bg-yellow-400 shadow-lg hover:shadow-xl transition-all rounded-2xl min-h-[120px] sm:min-h-[140px]"
+              onClick={() => navigate("/customers")}
+              className="h-auto py-6 sm:py-8 flex flex-col bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg hover:shadow-xl transition-all rounded-2xl min-h-[120px] sm:min-h-[140px]"
             >
-              <DollarSign className="h-8 w-8 sm:h-10 sm:w-10 mb-2 sm:mb-3" />
-              <span className="font-bold text-sm sm:text-base text-center">Gerente</span>
+              <Users className="h-8 w-8 sm:h-10 sm:w-10 mb-2 sm:mb-3" />
+              <span className="font-bold text-sm sm:text-base text-center">Clientes</span>
             </Button>
           </div>
         </div>
@@ -176,28 +176,28 @@ const Index = () => {
                 </Card>
               </div>
 
-              {/* Slide 2 - Garçom */}
+              {/* Slide 2 - Área Restrita */}
               <div className="flex-[0_0_90%] sm:flex-[0_0_85%] min-w-0 px-2 sm:px-3">
-                <Card className="p-6 sm:p-8 text-center shadow-lg hover:shadow-xl transition-all border-2 border-green-100 rounded-2xl">
-                  <div className="bg-green-600 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <UserCheck className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
+                <Card className="p-6 sm:p-8 text-center shadow-lg hover:shadow-xl transition-all border-2 border-yellow-100 rounded-2xl">
+                  <div className="bg-yellow-500 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Lock className="h-8 w-8 sm:h-10 sm:w-10 text-purple-900" />
                   </div>
-                  <h3 className="font-bold text-lg sm:text-xl mb-3 text-purple-900">Garçom</h3>
+                  <h3 className="font-bold text-lg sm:text-xl mb-3 text-purple-900">Área Restrita</h3>
                   <p className="text-sm text-gray-600 leading-relaxed">
-                    Gerencia mesas, atende clientes e acompanha pedidos em tempo real
+                    Acesso para garçons e gerentes gerenciarem pedidos e operações
                   </p>
                 </Card>
               </div>
 
-              {/* Slide 3 - Gerente */}
+              {/* Slide 3 - Clientes */}
               <div className="flex-[0_0_90%] sm:flex-[0_0_85%] min-w-0 px-2 sm:px-3">
-                <Card className="p-6 sm:p-8 text-center shadow-lg hover:shadow-xl transition-all border-2 border-yellow-100 rounded-2xl">
-                  <div className="bg-yellow-500 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <DollarSign className="h-8 w-8 sm:h-10 sm:w-10 text-purple-900" />
+                <Card className="p-6 sm:p-8 text-center shadow-lg hover:shadow-xl transition-all border-2 border-indigo-100 rounded-2xl">
+                  <div className="bg-indigo-600 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
                   </div>
-                  <h3 className="font-bold text-lg sm:text-xl mb-3 text-purple-900">Gerente</h3>
+                  <h3 className="font-bold text-lg sm:text-xl mb-3 text-purple-900">Clientes</h3>
                   <p className="text-sm text-gray-600 leading-relaxed">
-                    Gerencia todos os pedidos, edita itens e acompanha relatórios de vendas
+                    Gerenciamento completo de clientes com importação e exportação CSV
                   </p>
                 </Card>
               </div>

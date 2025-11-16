@@ -23,6 +23,7 @@ const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
 const AdminWaiterReportsPage = lazy(() => import("./pages/admin/AdminWaiterReportsPage"));
 const Reports = lazy(() => import("./pages/admin/Reports"));
 const WhatsAppAdmin = lazy(() => import("./pages/admin/WhatsAppAdmin"));
+const CustomerManagement = lazy(() => import("./pages/admin/CustomerManagement"));
 
 // Lazy load staff pages
 const Cashier = lazy(() => import("./pages/staff/Cashier"));
@@ -268,6 +269,16 @@ const App = () => {
               <ProtectedRoute requiredRole="admin">
                 <Suspense fallback={<LoadingFallback />}>
                   <AdminWaiterReportsPage />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customers"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <Suspense fallback={<LoadingFallback />}>
+                  <CustomerManagement />
                 </Suspense>
               </ProtectedRoute>
             }
