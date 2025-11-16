@@ -32,6 +32,8 @@ const Checkout = () => {
   const [dialogView, setDialogView] = useState<'cart' | 'menu'>('cart');
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [loadingMenu, setLoadingMenu] = useState(false);
+  const [selectedMenuItem, setSelectedMenuItem] = useState<any | null>(null);
+  const [itemQuantity, setItemQuantity] = useState(1);
 
   // Animation variants
   const pageVariants = {
@@ -134,21 +136,24 @@ const Checkout = () => {
       }
 
       // Upsert customer record
-      // @ts-ignore - customers table exists but types need regeneration
-      const { error: customerError } = await supabase
-        .from('customers')
-        .upsert({
-          whatsapp: normalizedPhone,
-          name: name.trim(),
-          last_order_date: new Date().toISOString()
-        }, {
-          onConflict: 'whatsapp'
-        });
+      try {
+        const { error: customerError } = await supabase
+          .from('customers')
+          .upsert({
+            whatsapp: normalizedPhone,
+            name: name.trim(),
+            last_order_date: new Date().toISOString()
+          }, {
+            onConflict: 'whatsapp'
+          });
 
-      if (customerError) {
-        console.error('Error upserting customer:', customerError);
-        toast.error("Erro ao salvar informações. Tente novamente.");
-        return;
+        if (customerError) {
+          console.error('Error upserting customer:', customerError);
+          // Don't fail the order if customer upsert fails - it's not critical
+        }
+      } catch (err) {
+        console.error('Exception upserting customer:', err);
+        // Continue with order creation even if customer upsert fails
       }
 
       // Calculate total
@@ -421,7 +426,11 @@ const Checkout = () => {
       {/* Edit Order Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
         setIsEditDialogOpen(open);
-        if (!open) setDialogView('cart'); // Reset to cart view when closing
+        if (!open) {
+          setDialogView('cart'); // Reset to cart view when closing
+          setSelectedMenuItem(null);
+          setItemQuantity(1);
+        }
       }}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -430,7 +439,11 @@ const Checkout = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setDialogView('cart')}
+                  onClick={() => {
+                    setDialogView('cart');
+                    setSelectedMenuItem(null);
+                    setItemQuantity(1);
+                  }}
                   className="h-8 w-8"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -526,37 +539,79 @@ const Checkout = () => {
                   </div>
                 ) : (
                   <>
-                    {menuItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        {item.image_url && (
-                          <img 
-                            src={item.image_url} 
-                            alt={item.name}
-                            className="w-16 h-16 object-cover rounded-md"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900">{item.name}</p>
-                          {item.description && (
-                            <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                    {menuItems.map((item) => {
+                      const isSelected = selectedMenuItem?.id === item.id;
+                      return (
+                        <div key={item.id} className="bg-gray-50 rounded-lg overflow-hidden">
+                          <div className="flex items-center gap-3 p-3">
+                            {item.image_url && (
+                              <img 
+                                src={item.image_url} 
+                                alt={item.name}
+                                className="w-16 h-16 object-cover rounded-md"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-900">{item.name}</p>
+                              {item.description && (
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                              )}
+                              <p className="text-sm font-bold text-purple-600 mt-1">
+                                R$ {item.price.toFixed(2)}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                if (isSelected) {
+                                  // Add the item with selected quantity
+                                  for (let i = 0; i < itemQuantity; i++) {
+                                    addItem(item);
+                                  }
+                                  toast.success(`${itemQuantity}x ${item.name} adicionado!`);
+                                  setSelectedMenuItem(null);
+                                  setItemQuantity(1);
+                                } else {
+                                  // Show quantity selector
+                                  setSelectedMenuItem(item);
+                                  setItemQuantity(1);
+                                }
+                              }}
+                              className="bg-gradient-to-r from-purple-600 to-indigo-600"
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              {isSelected ? 'Confirmar' : 'Adicionar'}
+                            </Button>
+                          </div>
+                          {isSelected && (
+                            <div className="px-3 pb-3 flex items-center justify-between bg-white border-t">
+                              <span className="text-sm font-medium text-gray-700">Quantidade:</span>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <span className="font-bold text-lg min-w-[2rem] text-center">
+                                  {itemQuantity}
+                                </span>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={() => setItemQuantity(itemQuantity + 1)}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
                           )}
-                          <p className="text-sm font-bold text-purple-600 mt-1">
-                            R$ {item.price.toFixed(2)}
-                          </p>
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            addItem(item);
-                            toast.success(`${item.name} adicionado!`);
-                          }}
-                          className="bg-gradient-to-r from-purple-600 to-indigo-600"
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Adicionar
-                        </Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div className="border-t pt-4">
                       <Button
                         className="w-full bg-gradient-to-r from-purple-600 to-indigo-600"
