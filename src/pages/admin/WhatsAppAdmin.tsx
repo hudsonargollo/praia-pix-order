@@ -89,12 +89,14 @@ export default function WhatsAppAdmin() {
       const response = await fetch('/api/whatsapp/connection?action=status');
       const data = await response.json();
       
+      console.log('Connection status response:', data);
+      
       if (data.isConnected) {
         setConnectionStatus('connected');
         setConnectionInfo({
-          phoneNumber: data.phoneNumber,
-          connectedAt: data.lastConnected,
-          profileName: data.profileName
+          phoneNumber: data.phoneNumber || data.phone || data.number,
+          connectedAt: data.lastConnected || data.connectedAt,
+          profileName: data.profileName || data.name
         });
       } else {
         setConnectionStatus('disconnected');
@@ -450,33 +452,75 @@ export default function WhatsAppAdmin() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-        {/* Connection Status Alert */}
-        {connectionStatus === 'disconnected' && (
-          <Alert className="mb-4 border-orange-200 bg-orange-50 p-3 sm:p-4">
-            <AlertTriangle className="h-4 w-4 text-orange-600" />
-            <AlertTitle className="text-orange-800 text-sm sm:text-base">WhatsApp Desconectado</AlertTitle>
-            <AlertDescription className="text-orange-700 text-xs sm:text-sm">
-              O WhatsApp não está conectado. Clique em "Conectar" para escanear o QR code e ativar as notificações.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {connectionStatus === 'connected' && connectionInfo && (
-          <Alert className="mb-4 border-green-200 bg-green-50 p-3 sm:p-4">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800 text-sm sm:text-base">WhatsApp Conectado</AlertTitle>
-            <AlertDescription className="text-green-700 text-xs sm:text-sm">
-              <div className="space-y-0.5">
-                {connectionInfo.phoneNumber && <p>Tel: {connectionInfo.phoneNumber}</p>}
-                {connectionInfo.connectedAt && (
-                  <p className="hidden sm:block">
-                    Conectado: {new Date(connectionInfo.connectedAt).toLocaleString('pt-BR')}
-                  </p>
+        {/* Connection Status Card */}
+        <Card className={connectionStatus === 'connected' ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                {connectionStatus === 'connected' ? (
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                )}
+                <div>
+                  <CardTitle className={`text-base ${connectionStatus === 'connected' ? 'text-green-800' : 'text-orange-800'}`}>
+                    {connectionStatus === 'connected' ? 'WhatsApp Conectado' : 'WhatsApp Desconectado'}
+                  </CardTitle>
+                  {connectionStatus === 'connected' && connectionInfo?.phoneNumber && (
+                    <CardDescription className="text-green-700 font-medium mt-1">
+                      Tel: {connectionInfo.phoneNumber}
+                    </CardDescription>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={checkConnectionStatus}
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  title="Verificar Status"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+                {connectionStatus === 'connected' ? (
+                  <Button
+                    onClick={handleDisconnect}
+                    variant="destructive"
+                    size="sm"
+                    className="h-8"
+                  >
+                    <WifiOff className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline">Desconectar</span>
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleConnectWhatsApp}
+                    size="sm"
+                    className="h-8 bg-green-600 hover:bg-green-700"
+                  >
+                    <Smartphone className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline">Conectar</span>
+                  </Button>
                 )}
               </div>
-            </AlertDescription>
-          </Alert>
-        )}
+            </div>
+          </CardHeader>
+          {connectionStatus === 'connected' && connectionInfo?.connectedAt && (
+            <CardContent className="pt-0 pb-3">
+              <p className="text-xs text-green-700">
+                Conectado em: {new Date(connectionInfo.connectedAt).toLocaleString('pt-BR')}
+              </p>
+            </CardContent>
+          )}
+          {connectionStatus === 'disconnected' && (
+            <CardContent className="pt-0 pb-3">
+              <p className="text-xs text-orange-700">
+                Clique em "Conectar" para escanear o QR code e ativar as notificações.
+              </p>
+            </CardContent>
+          )}
+        </Card>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
@@ -533,131 +577,77 @@ export default function WhatsAppAdmin() {
           </Card>
         </div>
 
-        {/* Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <Card>
-            <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-                Teste de Conexão
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Envie mensagem de teste
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0 space-y-3">
-              {/* Test Number Selection */}
-              <div className="space-y-2">
-                <Label className="text-xs">Número de Teste</Label>
-                <div className="flex gap-2">
-                  <select
-                    value={selectedTestNumber}
-                    onChange={(e) => setSelectedTestNumber(e.target.value)}
-                    className="flex-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                  >
-                    {testPhoneNumbers.map((number) => (
-                      <option key={number} value={number}>
-                        {number}
-                      </option>
-                    ))}
-                  </select>
-                  {testPhoneNumbers.length > 1 && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => removeTestNumber(selectedTestNumber)}
-                      className="h-9 w-9"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Add New Number */}
-              <div className="space-y-2">
-                <Label className="text-xs">Adicionar Número</Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="5573987387231"
-                    value={newTestNumber}
-                    onChange={(e) => setNewTestNumber(e.target.value)}
-                    className="flex-1 h-9"
-                  />
+        {/* Test Connection Card */}
+        <Card>
+          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+              Teste de Conexão
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Envie mensagem de teste
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0 space-y-3">
+            {/* Test Number Selection */}
+            <div className="space-y-2">
+              <Label className="text-xs">Número de Teste</Label>
+              <div className="flex gap-2">
+                <select
+                  value={selectedTestNumber}
+                  onChange={(e) => setSelectedTestNumber(e.target.value)}
+                  className="flex-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                >
+                  {testPhoneNumbers.map((number) => (
+                    <option key={number} value={number}>
+                      {number}
+                    </option>
+                  ))}
+                </select>
+                {testPhoneNumbers.length > 1 && (
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={addTestNumber}
+                    onClick={() => removeTestNumber(selectedTestNumber)}
                     className="h-9 w-9"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                </div>
+                )}
               </div>
+            </div>
 
-              <Button
-                onClick={handleTestMessage}
-                disabled={connectionStatus !== 'connected'}
-                className="w-full"
-              >
-                <Send className="h-4 w-4 mr-2" />
-                Enviar Teste
-              </Button>
-            </CardContent>
-          </Card>
+            {/* Add New Number */}
+            <div className="space-y-2">
+              <Label className="text-xs">Adicionar Número</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="5573987387231"
+                  value={newTestNumber}
+                  onChange={(e) => setNewTestNumber(e.target.value)}
+                  className="flex-1 h-9"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={addTestNumber}
+                  className="h-9 w-9"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
 
-          <Card>
-            <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Users className="h-4 w-4 sm:h-5 sm:w-5" />
-                Gerenciar Conexão
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Conectar ou desconectar
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-              {connectionStatus === 'connected' ? (
-                <div className="flex gap-2">
-                  <Button
-                    onClick={checkConnectionStatus}
-                    variant="outline"
-                    size="icon"
-                    title="Verificar Status"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    onClick={handleDisconnect}
-                    variant="destructive"
-                    className="flex-1"
-                  >
-                    <WifiOff className="h-4 w-4 mr-2" />
-                    Desconectar
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <Button
-                    onClick={checkConnectionStatus}
-                    variant="outline"
-                    size="icon"
-                    title="Verificar Status"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    onClick={handleConnectWhatsApp}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                  >
-                    <Smartphone className="h-4 w-4 mr-2" />
-                    Conectar WhatsApp
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+            <Button
+              onClick={handleTestMessage}
+              disabled={connectionStatus !== 'connected'}
+              className="w-full"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Enviar Teste
+            </Button>
+          </CardContent>
+        </Card>
           </TabsContent>
 
           <TabsContent value="logs">
