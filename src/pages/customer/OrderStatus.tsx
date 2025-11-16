@@ -415,15 +415,15 @@ const OrderStatus = () => {
         )}
 
         {order.status === "ready" && (
-          <Card className="p-6 shadow-soft border-2 border-green-300 bg-green-50">
-            <div className="text-center">
-              <Package className="w-12 h-12 text-green-600 mx-auto mb-2" />
-              <h3 className="font-bold text-lg text-green-800 mb-2">Pedido Pronto!</h3>
-              <p className="text-green-700 mb-4">
+          <Card className="p-8 shadow-soft border-4 border-green-500 bg-white">
+            <div className="text-center space-y-4">
+              <Package className="w-16 h-16 text-green-600 mx-auto" />
+              <h3 className="font-bold text-2xl text-green-700">Pedido Pronto!</h3>
+              <p className="text-gray-700 text-lg">
                 Seu pedido está pronto para retirada no balcão
               </p>
-              <p className="text-sm text-green-600">
-                Apresente este número: <strong>#{order.order_number}</strong>
+              <p className="text-lg text-green-600 font-semibold">
+                Apresente este número: <span className="text-2xl font-bold text-green-700">#{order.order_number}</span>
               </p>
             </div>
           </Card>
