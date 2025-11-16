@@ -195,7 +195,7 @@ const Checkout = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold">Finalizar Pedido</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">Finalizar</h1>
               {customerInfo && customerInfo.name && (
                 <p className="text-white/90 text-sm mt-0.5">{customerInfo.name}</p>
               )}
@@ -210,7 +210,7 @@ const Checkout = () => {
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 sm:p-6">
             <h2 className="font-bold text-lg sm:text-xl text-white flex items-center gap-2">
               <ShoppingCart className="w-5 h-5" />
-              Resumo do Pedido
+              Seu Pedido
             </h2>
           </div>
           <div className="p-4 sm:p-6 space-y-3">
@@ -275,7 +275,7 @@ const Checkout = () => {
           <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm overflow-hidden">
             <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 sm:p-6">
               <h2 className="font-bold text-lg sm:text-xl text-white">
-                {isWaiter ? "Dados do Cliente" : "Seus Dados"}
+                {isWaiter ? "Cliente" : "Contato"}
               </h2>
             </div>
             <div className="p-4 sm:p-6 space-y-4">
@@ -296,7 +296,7 @@ const Checkout = () => {
                 ✏️ Editar Dados
               </Button>
               <p className="text-xs sm:text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                💬 Enviaremos notificações sobre seu pedido via WhatsApp
+                💬 Atualizações via WhatsApp
               </p>
             </div>
           </Card>
@@ -317,7 +317,7 @@ const Checkout = () => {
               <Card className="shadow-xl border-0 bg-gradient-to-br from-green-50 to-emerald-50 sm:shadow-lg">
                 <div className="p-4 sm:p-6 space-y-4">
                   <p className="text-xs sm:text-sm text-gray-700 bg-white/80 rounded-lg p-3 border border-gray-200">
-                    {isWaiter ? "🎯 O pedido será criado e atribuído ao seu ID" : "📱 Você receberá atualizações via WhatsApp"}
+                    {isWaiter ? "🎯 Pedido será atribuído a você" : "📱 Atualizações via WhatsApp"}
                   </p>
                   <Button
                     onClick={handleCreateOrder}
@@ -332,7 +332,7 @@ const Checkout = () => {
                       </span>
                     ) : (
                       <span className="flex items-center gap-2">
-                        {isWaiter ? "✓ Finalizar Pedido" : "💳 Prosseguir para Pagamento"}
+                        {isWaiter ? "✓ Criar Pedido" : "💳 Ir para Pagamento"}
                       </span>
                     )}
                   </Button>
