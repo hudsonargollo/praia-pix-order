@@ -90,20 +90,28 @@ export default function WhatsAppAdmin() {
         // Extract phone number from various possible fields
         let phoneNumber = data.phoneNumber || data.phone || data.number;
         
+        console.log('Raw phone number from API:', phoneNumber);
+        console.log('Full API response:', data);
+        
         // If phone number has @s.whatsapp.net suffix, remove it
         if (phoneNumber && phoneNumber.includes('@')) {
           phoneNumber = phoneNumber.split('@')[0];
+          console.log('After removing @suffix:', phoneNumber);
         }
         
         // Extract from instance data if available
-        if (!phoneNumber && data.instance) {
-          const instancePhone = data.instance.owner || data.instance.phoneNumber;
+        if (!phoneNumber && data.instanceData) {
+          console.log('Trying instanceData:', data.instanceData);
+          const instancePhone = data.instanceData.owner || data.instanceData.phoneNumber || data.instanceData.number;
           if (instancePhone && instancePhone.includes('@')) {
             phoneNumber = instancePhone.split('@')[0];
           } else {
             phoneNumber = instancePhone;
           }
+          console.log('Phone from instanceData:', phoneNumber);
         }
+        
+        console.log('Final extracted phone number:', phoneNumber);
         
         setConnectionInfo({
           phoneNumber,
@@ -113,6 +121,7 @@ export default function WhatsAppAdmin() {
         
         // Always update test number with connected number
         if (phoneNumber) {
+          console.log('Updating test number to:', phoneNumber);
           setTestPhoneNumber(phoneNumber);
           localStorage.setItem('whatsapp_test_number', phoneNumber);
         }
