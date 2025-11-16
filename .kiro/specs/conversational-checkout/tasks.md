@@ -231,7 +231,7 @@ This implementation plan breaks down the conversational checkout feature into di
 
 ### Task 11: End-to-end testing
 
-- [ ]* 11.1 Test legacy checkout preservation
+- [x]* 11.1 Test legacy checkout preservation
   - Navigate to `/checkout2` in browser
   - Add items to cart from menu
   - Complete entire checkout flow
@@ -240,7 +240,7 @@ This implementation plan breaks down the conversational checkout feature into di
   - Confirm functionality is identical to original checkout
   - _Requirements: 5.4_
 
-- [ ]* 11.2 Test new conversational flow end-to-end
+- [x]* 11.2 Test new conversational flow end-to-end
   - Navigate to `/checkout` in browser
   - Verify empty cart redirects to menu
   - Add items to cart and return to checkout
@@ -252,7 +252,7 @@ This implementation plan breaks down the conversational checkout feature into di
   - Verify payment page loads correctly
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 3.1, 3.2, 3.3, 3.4, 3.5, 4.6_
 
-- [ ]* 11.3 Test validation and error handling
+- [x]* 11.3 Test validation and error handling
   - Test NAME step with empty input → verify error message
   - Test NAME step with 1 character → verify error message
   - Test WHATSAPP step with empty input → verify error message
@@ -263,7 +263,7 @@ This implementation plan breaks down the conversational checkout feature into di
   - Verify error messages are displayed in red color
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ]* 11.4 Test animation smoothness
+- [x]* 11.4 Test animation smoothness
   - Complete full checkout flow and observe all transitions
   - Verify fade/slide animations between NAME → WHATSAPP
   - Verify fade/slide animations between WHATSAPP → CONFIRM
@@ -273,7 +273,7 @@ This implementation plan breaks down the conversational checkout feature into di
   - Test on both desktop and mobile viewports
   - _Requirements: 2.1, 2.2, 2.3_
 
-- [ ]* 11.5 Verify database customer record creation
+- [x]* 11.5 Verify database customer record creation
   - Open Supabase Studio and navigate to `customers` table
   - Complete checkout flow with phone number (e.g., 71987654321)
   - Verify new record is created with:
@@ -283,7 +283,7 @@ This implementation plan breaks down the conversational checkout feature into di
   - Note the customer record ID for next test
   - _Requirements: 4.2, 4.3_
 
-- [ ]* 11.6 Test customer upsert (update existing record)
+- [x]* 11.6 Test customer upsert (update existing record)
   - Complete checkout flow again with same phone number but different name
   - Check `customers` table in Supabase Studio
   - Verify the existing record is updated (same ID as before)
