@@ -64,11 +64,7 @@ const Cashier = () => {
     const saved = localStorage.getItem('cashier_waiter_filter');
     return saved || null;
   });
-  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string | null>(() => {
-    // Restore payment status filter from localStorage on mount
-    const saved = localStorage.getItem('cashier_payment_status_filter');
-    return saved || null;
-  });
+
   const [waiters, setWaiters] = useState<WaiterInfo[]>([]);
   
   // Load notification history for all orders
@@ -84,14 +80,7 @@ const Cashier = () => {
     }
   }, [selectedWaiterId]);
 
-  // Persist payment status filter selection to localStorage
-  useEffect(() => {
-    if (selectedPaymentStatus) {
-      localStorage.setItem('cashier_payment_status_filter', selectedPaymentStatus);
-    } else {
-      localStorage.removeItem('cashier_payment_status_filter');
-    }
-  }, [selectedPaymentStatus]);
+
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -223,7 +212,7 @@ const Cashier = () => {
     loadOrders();
     // Fetch all waiters to populate cache and dropdown
     loadWaiters();
-  }, [selectedWaiterId, selectedPaymentStatus]); // Re-load orders when filters change
+  }, [selectedWaiterId]); // Re-load orders when filters change
 
   const loadWaiters = async () => {
     const waitersList = await fetchAllWaiters();
@@ -404,10 +393,8 @@ const Cashier = () => {
     );
   }
 
-  // Apply payment status filter to orders
-  const filteredOrders = selectedPaymentStatus 
-    ? orders.filter(o => o.payment_status === selectedPaymentStatus)
-    : orders;
+  // No payment status filter - show all orders
+  const filteredOrders = orders;
 
   // Calculate order counts based on filtered orders
   // Include both "pending_payment" (customer orders) and "pending" (waiter orders)
@@ -663,62 +650,11 @@ const Cashier = () => {
           </Card>
         </div>
 
-        {/* Filters Section */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
-            <label className="text-sm font-medium text-muted-foreground mb-2 block">
-              Filtrar por Status de Pagamento
-            </label>
-            <Select
-              value={selectedPaymentStatus || "all"}
-              onValueChange={(value) => setSelectedPaymentStatus(value === "all" ? null : value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Todos os status de pagamento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="pending">Aguardando Pagamento</SelectItem>
-                <SelectItem value="confirmed">Pagamento Confirmado</SelectItem>
-                <SelectItem value="failed">Pagamento Falhou</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
           <TabsContent value="pending" className="space-y-4">
-            {/* Payment Status Summary */}
-            {pendingOrders.length > 0 && (
-              <Card className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-orange-900">Status de Pagamento</h3>
-                  <div className="flex gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                      <span className="text-orange-900">
-                        Pendente: <strong>{pendingPaymentBreakdown.pending}</strong>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <span className="text-orange-900">
-                        Confirmado: <strong>{pendingPaymentBreakdown.confirmed}</strong>
-                      </span>
-                    </div>
-                    {pendingPaymentBreakdown.failed > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <span className="text-orange-900">
-                          Falhou: <strong>{pendingPaymentBreakdown.failed}</strong>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            )}
             {pendingOrders.length === 0 ? (
               <Card className="p-8 text-center">
                 <div className="flex flex-col items-center">
