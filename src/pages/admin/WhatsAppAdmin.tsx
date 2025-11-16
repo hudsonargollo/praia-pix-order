@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +25,8 @@ import {
   WifiOff,
   MessageCircle,
   SendHorizontal,
-  FileText
+  FileText,
+  Send
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UniformHeader } from '@/components/UniformHeader';
@@ -633,7 +633,7 @@ export default function WhatsAppAdmin() {
                       src={qrCode} 
                       alt="QR Code" 
                       className="w-48 h-48 sm:w-56 sm:h-56"
-                      onError={(e) => {
+                      onError={() => {
                         console.error('QR Code image failed to load');
                         console.error('QR Code data length:', qrCode?.length);
                         console.error('QR Code starts with:', qrCode?.substring(0, 100));
