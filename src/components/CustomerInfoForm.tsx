@@ -148,8 +148,8 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
           />
         </div>
         
-        <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
-          <span className="text-lg flex-shrink-0 mt-0.5">💬</span>
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+          <span className="text-lg flex-shrink-0">💬</span>
           <p className="text-sm text-gray-700">
             Enviaremos atualizações do seu pedido via WhatsApp
           </p>
