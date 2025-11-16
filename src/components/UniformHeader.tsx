@@ -48,7 +48,7 @@ export const UniformHeader = ({
                   <img 
                     src={logo} 
                     alt="Coco Loko" 
-                    className="h-14 sm:h-16 w-auto drop-shadow-lg"
+                    className="h-10 sm:h-12 w-auto drop-shadow-lg"
                   />
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                 </a>
@@ -57,7 +57,7 @@ export const UniformHeader = ({
                   <img 
                     src={logo} 
                     alt="Coco Loko" 
-                    className="h-14 sm:h-16 w-auto drop-shadow-lg"
+                    className="h-10 sm:h-12 w-auto drop-shadow-lg"
                   />
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                 </div>
@@ -161,7 +161,7 @@ export const UniformHeader = ({
                     <img 
                       src={logo} 
                       alt="Coco Loko" 
-                      className="h-12 sm:h-14 w-auto drop-shadow-lg"
+                      className="h-9 sm:h-10 w-auto drop-shadow-lg"
                     />
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                   </div>

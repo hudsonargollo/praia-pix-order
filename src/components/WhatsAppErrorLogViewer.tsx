@@ -135,52 +135,65 @@ export function WhatsAppErrorLogViewer() {
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Filters */}
-          <div className="flex flex-wrap gap-2">
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1h">Última hora</SelectItem>
-                <SelectItem value="24h">Últimas 24h</SelectItem>
-                <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                <SelectItem value="30d">Últimos 30 dias</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground px-1">Período</label>
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1h">Última hora</SelectItem>
+                  <SelectItem value="24h">Últimas 24h</SelectItem>
+                  <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                  <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Severidade" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="critical">Crítico</SelectItem>
-                <SelectItem value="high">Alto</SelectItem>
-                <SelectItem value="medium">Médio</SelectItem>
-                <SelectItem value="low">Baixo</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground px-1">Severidade</label>
+              <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Severidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="critical">Crítico</SelectItem>
+                  <SelectItem value="high">Alto</SelectItem>
+                  <SelectItem value="medium">Médio</SelectItem>
+                  <SelectItem value="low">Baixo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {Object.entries(categoryLabels).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground px-1">Categoria</label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {Object.entries(categoryLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {orderIdFilter && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSearchParams({})}
-              >
-                Limpar Filtro de Pedido
-              </Button>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground px-1">Filtro Ativo</label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSearchParams({})}
+                  className="w-full justify-start"
+                >
+                  Limpar Filtro de Pedido
+                </Button>
+              </div>
             )}
           </div>
 
