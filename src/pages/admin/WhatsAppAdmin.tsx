@@ -141,7 +141,7 @@ export default function WhatsAppAdmin() {
       const qrData = await qrResponse.json();
 
       if (qrData.success && qrData.qrCode) {
-        console.log('QR Code received:', qrData.qrCode.substring(0, 50) + '...');
+        console.log('QR Code received:', qrData.qrCode.length > 50 ? qrData.qrCode.substring(0, 50) + '...' : qrData.qrCode);
         // Ensure QR code has proper data URL prefix
         const qrCodeData = qrData.qrCode.startsWith('data:') 
           ? qrData.qrCode 
@@ -159,7 +159,7 @@ export default function WhatsAppAdmin() {
       if (restartResponse.ok) {
         const restartData = await restartResponse.json();
         if (restartData.qrCode) {
-          console.log('QR Code from restart:', restartData.qrCode.substring(0, 50) + '...');
+          console.log('QR Code from restart:', restartData.qrCode.length > 50 ? restartData.qrCode.substring(0, 50) + '...' : restartData.qrCode);
           const qrCodeData = restartData.qrCode.startsWith('data:') 
             ? restartData.qrCode 
             : `data:image/png;base64,${restartData.qrCode}`;
@@ -174,7 +174,7 @@ export default function WhatsAppAdmin() {
       const data = await response.json();
 
       if (data.qrCode) {
-        console.log('QR Code from connect:', data.qrCode.substring(0, 50) + '...');
+        console.log('QR Code from connect:', data.qrCode.length > 50 ? data.qrCode.substring(0, 50) + '...' : data.qrCode);
         const qrCodeData = data.qrCode.startsWith('data:') 
           ? data.qrCode 
           : `data:image/png;base64,${data.qrCode}`;
@@ -242,7 +242,7 @@ export default function WhatsAppAdmin() {
         const qrData = await qrResponse.json();
 
         if (qrData.success && qrData.qrCode) {
-          console.log('QR Code from polling:', qrData.qrCode.substring(0, 50) + '...');
+          console.log('QR Code from polling:', qrData.qrCode.length > 50 ? qrData.qrCode.substring(0, 50) + '...' : qrData.qrCode);
           const qrCodeData = qrData.qrCode.startsWith('data:') 
             ? qrData.qrCode 
             : `data:image/png;base64,${qrData.qrCode}`;
@@ -257,7 +257,7 @@ export default function WhatsAppAdmin() {
         const data = await response.json();
 
         if (data.qrCode) {
-          console.log('QR Code from polling fallback:', data.qrCode.substring(0, 50) + '...');
+          console.log('QR Code from polling fallback:', data.qrCode.length > 50 ? data.qrCode.substring(0, 50) + '...' : data.qrCode);
           const qrCodeData = data.qrCode.startsWith('data:') 
             ? data.qrCode 
             : `data:image/png;base64,${data.qrCode}`;
