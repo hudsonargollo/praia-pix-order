@@ -89,12 +89,30 @@ export function CategoryManagement({ categories, onCategoriesChange }: CategoryM
         if (error) throw error;
         toast.success('Categoria atualizada com sucesso!');
       } else {
-        // Create new category
+        // Create new category with automatic reordering
+        const newOrder = formData.display_order;
+        
+        // Check if there's already a category with this order number
+        const conflictingCategories = categories.filter(
+          cat => cat.display_order >= newOrder
+        );
+
+        if (conflictingCategories.length > 0) {
+          // Shift all categories with order >= newOrder by 1
+          for (const cat of conflictingCategories) {
+            await supabase
+              .from('menu_categories')
+              .update({ display_order: cat.display_order + 1 })
+              .eq('id', cat.id);
+          }
+        }
+
+        // Insert the new category
         const { error } = await supabase
           .from('menu_categories')
           .insert({
             name: formData.name.trim(),
-            display_order: formData.display_order,
+            display_order: newOrder,
           });
 
         if (error) throw error;
