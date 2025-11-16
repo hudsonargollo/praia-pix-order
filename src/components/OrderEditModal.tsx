@@ -316,7 +316,7 @@ export function OrderEditModal({
         )}
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 pb-24">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5">
           {/* Order Information */}
           <div className="space-y-4 sm:space-y-5">
           {/* Customer Name and Status on same line */}
@@ -399,7 +399,7 @@ export function OrderEditModal({
           </div>
 
           {/* Order Totals */}
-          <div className={`border-t pt-4 space-y-3 transition-all duration-300 -mx-4 sm:mx-0 px-4 sm:px-0 mb-8 ${
+          <div className={`border-t pt-4 space-y-3 transition-all duration-300 -mx-4 sm:mx-0 px-4 sm:px-0 mb-4 ${
             hasValueChanged ? 'bg-gradient-to-br from-purple-50 to-indigo-50 py-4 rounded-xl border-2 border-purple-200 shadow-sm' : ''
           }`}>
             {/* Total Amount */}
@@ -489,12 +489,12 @@ export function OrderEditModal({
         </div>
 
         {/* Sticky Footer */}
-        <DialogFooter className="px-5 sm:px-6 py-4 sm:py-5 border-t bg-white sticky bottom-0 flex-col-reverse sm:flex-row gap-3 rounded-b-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+        <DialogFooter className="px-5 sm:px-6 py-4 sm:py-5 border-t bg-white flex-shrink-0 flex-col-reverse sm:flex-row gap-3 rounded-b-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
           <Button
             variant="outline"
             onClick={onClose}
             disabled={isSaving}
-            className="w-full sm:w-auto min-h-[52px] sm:min-h-[44px] touch-manipulation text-base font-semibold hover:bg-gray-50 border-2 border-gray-300 rounded-xl shrink-0"
+            className="w-full sm:w-auto min-h-[52px] sm:min-h-[44px] touch-manipulation text-base font-semibold hover:bg-gray-50 border-2 border-gray-300 rounded-xl"
             aria-label={isEditable ? 'Cancelar edição' : 'Fechar detalhes'}
           >
             {isEditable ? 'Cancelar' : 'Fechar'}
@@ -503,7 +503,7 @@ export function OrderEditModal({
             <Button
               onClick={handleSave}
               disabled={isSaving || !isModified || items.length === 0}
-              className="w-full sm:w-auto min-h-[52px] sm:min-h-[44px] touch-manipulation text-base font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 shadow-md rounded-xl shrink-0"
+              className="w-full sm:w-auto min-h-[52px] sm:min-h-[44px] touch-manipulation text-base font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 shadow-md rounded-xl"
               aria-label="Salvar alterações do pedido"
             >
               {isSaving ? 'Salvando...' : 'Salvar Alterações'}
