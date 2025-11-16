@@ -60,10 +60,8 @@ export default function WhatsAppAdmin() {
     deliveryRate: 0
   });
   
-  // Test phone number - load from localStorage or use default
-  const [testPhoneNumber, setTestPhoneNumber] = useState<string>(() => {
-    return localStorage.getItem('whatsapp_test_number') || '5573987387231';
-  });
+  // Test phone number - start with empty, will be set from API
+  const [testPhoneNumber, setTestPhoneNumber] = useState<string>('');
 
   useEffect(() => {
     checkConnectionStatus();
@@ -122,12 +120,18 @@ export default function WhatsAppAdmin() {
         // Always update test number with connected number
         if (phoneNumber) {
           console.log('Updating test number to:', phoneNumber);
+          // Clear any old cached value and set the new one
+          localStorage.removeItem('whatsapp_test_number');
           setTestPhoneNumber(phoneNumber);
           localStorage.setItem('whatsapp_test_number', phoneNumber);
         }
       } else {
         setConnectionStatus('disconnected');
         setConnectionInfo(null);
+        // Set default number if disconnected and no number is set
+        if (!testPhoneNumber) {
+          setTestPhoneNumber('5573987387231');
+        }
       }
     } catch (error) {
       console.error('Failed to check connection status:', error);
