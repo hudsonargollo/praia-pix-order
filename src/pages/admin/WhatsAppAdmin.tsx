@@ -25,12 +25,8 @@ import {
   Wifi,
   WifiOff,
   MessageCircle,
-  Users,
-  TrendingUp,
   Send,
-  FileText,
-  Plus,
-  Trash2
+  FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UniformHeader } from '@/components/UniformHeader';
@@ -67,10 +63,10 @@ export default function WhatsAppAdmin() {
     deliveryRate: 0
   });
   
-  // Test phone numbers
-  const [testPhoneNumbers, setTestPhoneNumbers] = useState<string[]>(['5573987387231']);
-  const [newTestNumber, setNewTestNumber] = useState('');
-  const [selectedTestNumber, setSelectedTestNumber] = useState('5573987387231');
+  // Test phone number - load from localStorage or use default
+  const [testPhoneNumber, setTestPhoneNumber] = useState<string>(() => {
+    return localStorage.getItem('whatsapp_test_number') || '5573987387231';
+  });
 
   useEffect(() => {
     checkConnectionStatus();
@@ -93,11 +89,18 @@ export default function WhatsAppAdmin() {
       
       if (data.isConnected) {
         setConnectionStatus('connected');
+        const phoneNumber = data.phoneNumber || data.phone || data.number;
         setConnectionInfo({
-          phoneNumber: data.phoneNumber || data.phone || data.number,
+          phoneNumber,
           connectedAt: data.lastConnected || data.connectedAt,
           profileName: data.profileName || data.name
         });
+        
+        // Pre-populate test number with connected number if not already set
+        if (phoneNumber && !localStorage.getItem('whatsapp_test_number')) {
+          setTestPhoneNumber(phoneNumber);
+          localStorage.setItem('whatsapp_test_number', phoneNumber);
+        }
       } else {
         setConnectionStatus('disconnected');
         setConnectionInfo(null);
@@ -344,13 +347,16 @@ export default function WhatsAppAdmin() {
       return;
     }
 
-    if (!selectedTestNumber) {
-      toast.error('Selecione um número de teste.');
+    if (!testPhoneNumber) {
+      toast.error('Digite um número de teste.');
       return;
     }
 
+    // Save to localStorage
+    localStorage.setItem('whatsapp_test_number', testPhoneNumber);
+
     try {
-      toast.info(`Enviando mensagem de teste para ${selectedTestNumber}...`);
+      toast.info(`Enviando mensagem de teste para ${testPhoneNumber}...`);
       
       const response = await fetch('/api/whatsapp/test-message', {
         method: 'POST',
@@ -358,7 +364,7 @@ export default function WhatsAppAdmin() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          phoneNumber: selectedTestNumber,
+          phoneNumber: testPhoneNumber,
           message: '🥥 Teste de conexão WhatsApp - Coco Loko Açaiteria ✅\n\nSe você recebeu esta mensagem, o sistema de notificações está funcionando perfeitamente!\n\n📱 Mensagem enviada em: ' + new Date().toLocaleString('pt-BR')
         })
       });
@@ -377,26 +383,6 @@ export default function WhatsAppAdmin() {
       console.error('Failed to send test message:', error);
       toast.error('❌ Erro de conexão ao enviar mensagem de teste');
     }
-  };
-
-  const addTestNumber = () => {
-    if (!newTestNumber) return;
-    if (testPhoneNumbers.includes(newTestNumber)) {
-      toast.error('Este número já está na lista');
-      return;
-    }
-    setTestPhoneNumbers([...testPhoneNumbers, newTestNumber]);
-    setSelectedTestNumber(newTestNumber);
-    setNewTestNumber('');
-    toast.success('Número adicionado');
-  };
-
-  const removeTestNumber = (number: string) => {
-    setTestPhoneNumbers(testPhoneNumbers.filter(n => n !== number));
-    if (selectedTestNumber === number) {
-      setSelectedTestNumber(testPhoneNumbers[0] || '');
-    }
-    toast.success('Número removido');
   };
 
   if (loading) {
@@ -589,53 +575,23 @@ export default function WhatsAppAdmin() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0 space-y-3">
-            {/* Test Number Selection */}
+            {/* Test Number Input */}
             <div className="space-y-2">
               <Label className="text-xs">Número de Teste</Label>
-              <div className="flex gap-2">
-                <select
-                  value={selectedTestNumber}
-                  onChange={(e) => setSelectedTestNumber(e.target.value)}
-                  className="flex-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                >
-                  {testPhoneNumbers.map((number) => (
-                    <option key={number} value={number}>
-                      {number}
-                    </option>
-                  ))}
-                </select>
-                {testPhoneNumbers.length > 1 && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => removeTestNumber(selectedTestNumber)}
-                    className="h-9 w-9"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Add New Number */}
-            <div className="space-y-2">
-              <Label className="text-xs">Adicionar Número</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="5573987387231"
-                  value={newTestNumber}
-                  onChange={(e) => setNewTestNumber(e.target.value)}
-                  className="flex-1 h-9"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={addTestNumber}
-                  className="h-9 w-9"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <Input
+                placeholder="5573987387231"
+                value={testPhoneNumber}
+                onChange={(e) => {
+                  setTestPhoneNumber(e.target.value);
+                  localStorage.setItem('whatsapp_test_number', e.target.value);
+                }}
+                className="h-9"
+              />
+              <p className="text-xs text-muted-foreground">
+                {connectionInfo?.phoneNumber 
+                  ? `Número conectado: ${connectionInfo.phoneNumber}`
+                  : 'Digite o número para enviar teste'}
+              </p>
             </div>
 
             <Button
