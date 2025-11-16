@@ -374,30 +374,29 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-gradient-ocean text-white p-4 shadow-medium" role="banner">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white hover:bg-white/20 min-h-[44px] min-w-[44px]"
-            onClick={handleBack}
-            aria-label="Voltar"
-          >
-            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold">
-              {selectedPaymentMethod === 'pix' ? 'Detalhes do pagamento PIX' : 'Pagamento com Cartão'}
-            </h1>
-            <p className="text-sm text-white/90">
-              {selectedPaymentMethod === 'pix' 
-                ? 'Use o código PIX abaixo para concluir o pagamento'
-                : 'Preencha os dados do cartão para finalizar o pagamento'
-              }
-            </p>
+      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white shadow-2xl sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-4 sm:py-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/20 transition-all"
+              onClick={handleBack}
+              aria-label="Voltar"
+            >
+              <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+            </Button>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold">Pagamento</h1>
+              {order && (
+                <p className="text-white/90 text-sm mt-0.5">
+                  Pedido #{order.order_number} • R$ {order.total_amount.toFixed(2)}
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="max-w-2xl mx-auto p-4 space-y-6" role="main">
         {/* Payment Method Selector (Task 7.2) */}
