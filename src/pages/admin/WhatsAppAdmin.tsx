@@ -420,7 +420,7 @@ export default function WhatsAppAdmin() {
         {/* Connection Status Card */}
         <Card className={connectionStatus === 'connected' ? 'border-green-200 bg-white' : 'border-orange-200 bg-white'}>
           <CardHeader className="pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                 <div className={`p-2 sm:p-3 rounded-2xl flex-shrink-0 ${connectionStatus === 'connected' ? 'bg-green-100' : 'bg-orange-100'}`}>
                   <MessageCircle className={`h-6 w-6 sm:h-8 sm:w-8 ${connectionStatus === 'connected' ? 'text-green-600' : 'text-orange-600'}`} />
@@ -435,14 +435,9 @@ export default function WhatsAppAdmin() {
                       <span className="truncate">{connectionInfo.phoneNumber}</span>
                     </CardDescription>
                   )}
-                  {connectionStatus === 'disconnected' && (
-                    <CardDescription className="text-orange-700 mt-1 text-sm">
-                      Clique em "Conectar" para escanear o QR code
-                    </CardDescription>
-                  )}
                 </div>
               </div>
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex gap-2 flex-shrink-0 self-start sm:self-center">
                 <Button
                   onClick={checkConnectionStatus}
                   variant="outline"
@@ -543,42 +538,41 @@ export default function WhatsAppAdmin() {
 
         {/* Test Connection Card */}
         <Card>
-          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-              Teste de Conexão
+          <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg">
+              Testar Notificações
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
-              Envie mensagem de teste
+              Envie uma mensagem de teste para verificar a conexão
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0 space-y-3">
-            {/* Test Number Input */}
             <div className="space-y-2">
-              <Label className="text-xs">Número de Teste</Label>
+              <Label className="text-sm font-medium">Número do WhatsApp</Label>
               <Input
-                placeholder="5573987387231"
+                placeholder="Ex: 5573987387231"
                 value={testPhoneNumber}
                 onChange={(e) => {
                   setTestPhoneNumber(e.target.value);
                   localStorage.setItem('whatsapp_test_number', e.target.value);
                 }}
-                className="h-9"
+                className="h-10"
+                disabled={connectionStatus !== 'connected'}
               />
-              <p className="text-xs text-muted-foreground">
-                {connectionInfo?.phoneNumber 
-                  ? `Número conectado: ${connectionInfo.phoneNumber}`
-                  : 'Digite o número para enviar teste'}
-              </p>
+              {connectionInfo?.phoneNumber && (
+                <p className="text-xs text-muted-foreground">
+                  Número conectado: {connectionInfo.phoneNumber}
+                </p>
+              )}
             </div>
 
             <Button
               onClick={handleTestMessage}
-              disabled={connectionStatus !== 'connected'}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={connectionStatus !== 'connected' || !testPhoneNumber}
+              className="w-full bg-green-600 hover:bg-green-700 h-10"
             >
               <SendHorizontal className="h-4 w-4 mr-2" />
-              Enviar Teste
+              Enviar Mensagem de Teste
             </Button>
           </CardContent>
         </Card>
