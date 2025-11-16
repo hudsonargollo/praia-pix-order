@@ -10,7 +10,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Copy, CheckCircle, Clock, AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import PaymentMethodSelector from "@/components/PaymentMethodSelector";
+import CreditCardPayment from "@/components/CreditCardPayment";
 import type { MercadoPagoPaymentResponse } from "@/integrations/mercadopago/types";
+
+type PaymentMethod = 'pix' | 'credit_card';
 
 interface Order {
   id: string;
@@ -34,6 +38,48 @@ const Payment = () => {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [retryCount, setRetryCount] = useState(0);
   const [isRecovering, setIsRecovering] = useState(false);
+  
+  // Payment method state management (Task 7.1)
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('pix');
+  
+  // Handler for payment method changes
+  const handlePaymentMethodChange = (method: PaymentMethod) => {
+    setSelectedPaymentMethod(method);
+  };
+
+  // Credit card payment callbacks (Task 7.4)
+  const handleCardPaymentSuccess = (paymentId: string) => {
+    setPaymentStatus('approved');
+    setRetryCount(0);
+    toast.success('Pagamento aprovado com sucesso!');
+    
+    // Update order status in database
+    if (orderId) {
+      supabase
+        .from('orders')
+        .update({
+          status: 'paid',
+          mercadopago_payment_id: paymentId,
+          payment_confirmed_at: new Date().toISOString()
+        })
+        .eq('id', orderId)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error updating order status:', error);
+          }
+        });
+    }
+  };
+
+  const handleCardPaymentError = (error: string) => {
+    setPaymentStatus('error');
+    toast.error(error);
+  };
+
+  const handleCardPaymentPending = () => {
+    setPaymentStatus('pending');
+    toast.info('Pagamento em análise. Você receberá uma notificação quando for aprovado.');
+  };
 
   // Load order and create payment
   useEffect(() => {
@@ -304,15 +350,30 @@ const Payment = () => {
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-xl font-bold">Detalhes do pagamento PIX</h1>
+            <h1 className="text-xl font-bold">
+              {selectedPaymentMethod === 'pix' ? 'Detalhes do pagamento PIX' : 'Pagamento com Cartão'}
+            </h1>
             <p className="text-sm text-white/90">
-              Use o código PIX abaixo para concluir o pagamento
+              {selectedPaymentMethod === 'pix' 
+                ? 'Use o código PIX abaixo para concluir o pagamento'
+                : 'Preencha os dados do cartão para finalizar o pagamento'
+              }
             </p>
           </div>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto p-4 space-y-6" role="main">
+        {/* Payment Method Selector (Task 7.2) */}
+        <Card className="p-4 shadow-soft">
+          <h2 className="font-bold text-lg mb-3">Método de Pagamento</h2>
+          <PaymentMethodSelector
+            selectedMethod={selectedPaymentMethod}
+            onMethodChange={handlePaymentMethodChange}
+            disabled={loading || paymentStatus === 'approved'}
+          />
+        </Card>
+
         {/* Payment Status */}
         <Card className="p-4 shadow-soft" role="region" aria-label="Status do pagamento">
           <div className="flex items-center justify-between mb-4">
@@ -320,10 +381,20 @@ const Payment = () => {
             {getStatusBadge()}
           </div>
           
-          {paymentStatus === 'pending' && timeRemaining > 0 && (
+          {paymentStatus === 'pending' && selectedPaymentMethod === 'pix' && timeRemaining > 0 && (
             <div className="text-center" role="timer" aria-live="polite" aria-atomic="true">
               <p className="text-muted-foreground mb-2 text-sm">Tempo restante para pagamento:</p>
               <p className="text-2xl font-bold text-primary" aria-label={`${formatTime(timeRemaining)} restantes`}>{formatTime(timeRemaining)}</p>
+            </div>
+          )}
+
+          {paymentStatus === 'pending' && selectedPaymentMethod === 'credit_card' && (
+            <div className="text-center" role="status" aria-live="polite">
+              <Clock className="w-16 h-16 mx-auto mb-2 text-yellow-600" aria-hidden="true" />
+              <p className="font-semibold text-base">Pagamento em análise</p>
+              <p className="text-sm text-muted-foreground">
+                Você receberá uma notificação quando for aprovado
+              </p>
             </div>
           )}
 
@@ -342,7 +413,7 @@ const Payment = () => {
             </div>
           )}
 
-          {paymentStatus === 'expired' && (
+          {paymentStatus === 'expired' && selectedPaymentMethod === 'pix' && (
             <div className="text-center" role="alert" aria-live="assertive">
               <AlertCircle className="w-16 h-16 mx-auto mb-2 text-destructive" aria-hidden="true" />
               <p className="font-semibold text-destructive text-base">Pagamento expirado</p>
@@ -374,7 +445,7 @@ const Payment = () => {
             </div>
           )}
 
-          {paymentStatus === 'error' && (
+          {paymentStatus === 'error' && selectedPaymentMethod === 'pix' && (
             <div className="text-center" role="alert" aria-live="assertive">
               <AlertCircle className="w-16 h-16 mx-auto mb-2 text-destructive" aria-hidden="true" />
               <p className="font-semibold text-destructive text-base">Erro no pagamento</p>
@@ -414,10 +485,20 @@ const Payment = () => {
               </div>
             </div>
           )}
+
+          {paymentStatus === 'error' && selectedPaymentMethod === 'credit_card' && (
+            <div className="text-center" role="alert" aria-live="assertive">
+              <AlertCircle className="w-16 h-16 mx-auto mb-2 text-destructive" aria-hidden="true" />
+              <p className="font-semibold text-destructive text-base">Erro no pagamento</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Verifique os dados do cartão e tente novamente
+              </p>
+            </div>
+          )}
         </Card>
 
-        {/* QR Code and Pix */}
-        {paymentStatus === 'pending' && paymentData && (
+        {/* QR Code and Pix - Conditional rendering for PIX method (Task 7.3) */}
+        {selectedPaymentMethod === 'pix' && paymentStatus === 'pending' && paymentData && (
           <>
             {/* Primary PIX Code Section */}
             <Card className="p-6 shadow-soft border-2 border-primary/20">
@@ -477,6 +558,23 @@ const Payment = () => {
             </Card>
 
           </>
+        )}
+
+        {/* Credit Card Payment - Conditional rendering for credit card method (Task 7.4) */}
+        {selectedPaymentMethod === 'credit_card' && order && (
+          <Card className="p-6 shadow-soft border-2 border-primary/20">
+            <h3 className="font-bold text-lg mb-4">Pagamento com Cartão de Crédito</h3>
+            <CreditCardPayment
+              orderId={order.id}
+              amount={order.total_amount}
+              customerEmail=""
+              customerDocument=""
+              customerDocumentType="CPF"
+              onPaymentSuccess={handleCardPaymentSuccess}
+              onPaymentError={handleCardPaymentError}
+              onPaymentPending={handleCardPaymentPending}
+            />
+          </Card>
         )}
 
         {/* Order Summary */}

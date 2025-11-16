@@ -25,6 +25,11 @@
 
   <body>
     <div id="root"></div>
+    <!-- MercadoPago SDK for Payment Brick -->
+    <script 
+      src="https://sdk.mercadopago.com/js/v2" 
+      onerror="console.error('Failed to load MercadoPago SDK from CDN. Fallback to dynamic loading will be used.')">
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,6 +1,23 @@
-// MercadoPago API client for payment processing
+/**
+ * MercadoPago API Client
+ * 
+ * Provides a service layer for interacting with MercadoPago payment APIs.
+ * Handles both PIX and credit card payments with comprehensive error handling
+ * and retry logic.
+ * 
+ * Features:
+ * - Exponential backoff retry for transient failures
+ * - User-friendly error messages in Portuguese
+ * - Request validation
+ * - Mock service for development without credentials
+ * 
+ * @module mercadopago/client
+ * @see {@link https://www.mercadopago.com.br/developers/en/reference}
+ */
+
 import { toast } from "sonner";
 import { mockMercadoPagoService } from "./mock";
+import type { CardPaymentRequest, CardPaymentResponse } from "./types";
 
 // Environment variables for MercadoPago
 const MERCADOPAGO_ACCESS_TOKEN = import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
@@ -66,7 +83,18 @@ class MercadoPagoService {
   }
 
   /**
-   * Retry mechanism with exponential backoff
+   * Implements retry mechanism with exponential backoff
+   * 
+   * Automatically retries failed operations with increasing delays between attempts.
+   * Only retries on transient errors (network issues, timeouts, 5xx errors).
+   * 
+   * @template T
+   * @param {function} operation - Async operation to retry
+   * @param {string} context - Description of operation for logging
+   * @param {number} [maxRetries] - Maximum number of retry attempts
+   * @returns {Promise<T>} Result of the operation
+   * @throws {Error} Last error if all retries fail
+   * @private
    */
   private async retryWithBackoff<T>(
     operation: () => Promise<T>,
@@ -106,7 +134,17 @@ class MercadoPagoService {
   }
 
   /**
-   * Check if an error is retryable
+   * Determines if an error should trigger a retry
+   * 
+   * Retryable errors include:
+   * - Network errors (connection, timeout)
+   * - HTTP 5xx server errors
+   * - HTTP 429 rate limiting
+   * - Temporary MercadoPago errors
+   * 
+   * @param {Error} error - Error to check
+   * @returns {boolean} True if error is retryable
+   * @private
    */
   private isRetryableError(error: Error): boolean {
     const message = error.message.toLowerCase();
@@ -142,7 +180,13 @@ class MercadoPagoService {
   }
 
   /**
-   * Get user-friendly error message
+   * Converts technical error messages to user-friendly Portuguese messages
+   * 
+   * Maps common error types to clear, actionable messages for customers.
+   * 
+   * @param {Error} error - Error object
+   * @returns {string} User-friendly error message in Portuguese
+   * @private
    */
   private getUserFriendlyErrorMessage(error: Error): string {
     const message = error.message.toLowerCase();
@@ -183,19 +227,27 @@ class MercadoPagoService {
   }
 
   /**
-   * Create a new payment with MercadoPago
+   * Creates a new PIX payment with MercadoPago
+   * 
+   * This method:
+   * 1. Validates payment data
+   * 2. Sends request to backend API
+   * 3. Returns PIX QR code and payment details
+   * 4. Handles errors with retry logic
+   * 
+   * @async
+   * @param {PaymentRequest} paymentData - Payment request data
+   * @returns {Promise<PaymentResponse>} Payment response with QR code and details
+   * @throws {Error} If validation fails or payment creation fails after retries
    */
   async createPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
     // Check if we should use mock service (only for development without credentials)
     const useMock = !this.accessToken || this.accessToken === "your_mercadopago_access_token_here";
     
     if (useMock) {
-      console.warn("Using mock MercadoPago service - no real payments will be processed");
       toast.info("Modo de teste - pagamento simulado");
       return mockMercadoPagoService.createPayment(paymentData);
     }
-
-    console.log("Using real MercadoPago API with credentials");
 
     return this.retryWithBackoff(async () => {
       try {
@@ -239,7 +291,17 @@ class MercadoPagoService {
   }
 
   /**
-   * Validate payment data before sending to API
+   * Validates payment request data before sending to API
+   * 
+   * Checks for:
+   * - Required fields (orderId, amount, customer info)
+   * - Valid data types and formats
+   * - Minimum value constraints
+   * - Access token configuration
+   * 
+   * @param {PaymentRequest} paymentData - Payment data to validate
+   * @throws {Error} If validation fails with specific error message
+   * @private
    */
   private validatePaymentData(paymentData: PaymentRequest): void {
     if (!paymentData.orderId) {
@@ -268,7 +330,14 @@ class MercadoPagoService {
   }
 
   /**
-   * Check payment status
+   * Checks the current status of a payment
+   * 
+   * Used for polling payment status or verifying payment completion.
+   * 
+   * @async
+   * @param {string} paymentId - MercadoPago payment ID
+   * @returns {Promise<PaymentStatus>} Current payment status and details
+   * @throws {Error} If payment ID is invalid or status check fails
    */
   async checkPaymentStatus(paymentId: string): Promise<PaymentStatus> {
     // Use mock service if payment ID starts with 'mock_'
@@ -349,7 +418,106 @@ class MercadoPagoService {
       throw error;
     }
   }
+
+  /**
+   * Creates a credit card payment with MercadoPago
+   * 
+   * This method:
+   * 1. Validates the payment request data
+   * 2. Sends the card token and payment details to the backend
+   * 3. Handles the payment response (approved, rejected, in_process)
+   * 4. Shows appropriate toast notifications
+   * 5. Retries on transient failures
+   * 
+   * Security:
+   * - Only the card token is sent (not raw card data)
+   * - Token is single-use and expires quickly
+   * - Backend validates and processes the payment
+   * 
+   * @async
+   * @param {CardPaymentRequest} request - Payment request with token and order details
+   * @returns {Promise<CardPaymentResponse>} Payment result with status and details
+   * @throws {Error} If validation fails or payment processing fails after retries
+   */
+  async createCardPayment(request: CardPaymentRequest): Promise<CardPaymentResponse> {
+    return this.retryWithBackoff(async () => {
+      try {
+        // Validate request data
+        if (!request.orderId) {
+          throw new Error('Order ID is required');
+        }
+        
+        if (!request.token) {
+          throw new Error('Card token is required');
+        }
+        
+        if (!request.amount || request.amount <= 0) {
+          throw new Error('Valid amount is required');
+        }
+        
+        if (!request.paymentMethodId) {
+          throw new Error('Payment method is required');
+        }
+        
+        if (!request.payer?.email || !request.payer?.identification?.type || !request.payer?.identification?.number) {
+          throw new Error('Payer information is required');
+        }
+
+        const response = await fetch('/api/mercadopago/create-card-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(request)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || 'Payment failed';
+          throw new Error(errorMessage);
+        }
+
+        const data: CardPaymentResponse = await response.json();
+
+        // Show appropriate toast based on status
+        if (data.success && data.status === 'approved') {
+          toast.success('Pagamento aprovado!');
+        } else if (data.status === 'rejected') {
+          toast.error(data.error || 'Pagamento recusado');
+        } else if (data.status === 'in_process') {
+          toast.info('Pagamento em análise');
+        }
+
+        return data;
+      } catch (error) {
+        const friendlyMessage = this.getUserFriendlyErrorMessage(error as Error);
+        console.error('Error creating card payment:', error);
+        
+        // Only show toast on final failure (not during retries)
+        if (error instanceof Error && !this.isRetryableError(error)) {
+          toast.error(friendlyMessage);
+        }
+        
+        throw error;
+      }
+    }, 'Create card payment');
+  }
 }
 
-// Export singleton instance
+/**
+ * Singleton instance of MercadoPagoService
+ * 
+ * Use this instance throughout the application for all MercadoPago operations.
+ * 
+ * @example
+ * ```typescript
+ * import { mercadoPagoService } from '@/integrations/mercadopago/client';
+ * 
+ * // Create PIX payment
+ * const payment = await mercadoPagoService.createPayment(paymentData);
+ * 
+ * // Create card payment
+ * const cardPayment = await mercadoPagoService.createCardPayment(cardRequest);
+ * ```
+ */
 export const mercadoPagoService = new MercadoPagoService();

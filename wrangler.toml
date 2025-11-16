@@ -8,6 +8,10 @@ pages_build_output_dir = "dist"
 # Frontend environment variables
 VITE_SUPABASE_URL = "https://sntxekdwdllwkszclpiq.supabase.co"
 VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudHhla2R3ZGxsd2tzemNscGlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMDQ1ODksImV4cCI6MjA3Nzc4MDU4OX0.aPQeASkYkf7jl3Sl-1GFHH7B8VU-pOtn5sYJKMs9u8I"
+
+# MercadoPago Configuration (PIX and Credit Card Payments)
+# Public key is used by Payment Brick SDK for credit card tokenization
+# Access token is used for API calls (both PIX and card payments)
 VITE_MERCADOPAGO_PUBLIC_KEY = "APP_USR-ef0ab051-6520-4ea1-a3e3-5e53825685fe"
 VITE_MERCADOPAGO_ACCESS_TOKEN = "APP_USR-4813437808298526-110522-fa108581dfa5cb10a87458875e5c8136-1769074499"
 
@@ -19,5 +23,10 @@ VITE_EVOLUTION_INSTANCE_NAME = "cocooo"
 # Server-side environment variables (for Cloudflare Functions)
 SUPABASE_URL = "https://sntxekdwdllwkszclpiq.supabase.co"
 SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudHhla2R3ZGxsd2tzemNscGlxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjIwNDU4OSwiZXhwIjoyMDc3NzgwNTg5fQ.I5R498LlD6rohVRHh2nyWzKQIgzvfPRdC1nfNRLwBn0"
+
+# MercadoPago Access Token (for payment processing in Cloudflare Functions)
+# Used by /api/mercadopago/create-card-payment endpoint
 MERCADOPAGO_ACCESS_TOKEN = "APP_USR-4813437808298526-110522-fa108581dfa5cb10a87458875e5c8136-1769074499"
+
+# WhatsApp Configuration
 WHATSAPP_SESSION_ID = "coco-loko-main"

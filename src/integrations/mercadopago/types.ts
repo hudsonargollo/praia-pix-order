@@ -77,3 +77,105 @@ export const PAYMENT_STATUS_MAP = {
 
 export type MercadoPagoStatus = keyof typeof PAYMENT_STATUS_MAP;
 export type OrderStatus = typeof PAYMENT_STATUS_MAP[MercadoPagoStatus];
+
+// Payment Brick types
+export interface PaymentBrickConfig {
+  amount: number;
+  locale: 'pt-BR';
+  customization?: {
+    visual?: {
+      hidePaymentButton?: boolean;
+      style?: {
+        theme?: 'default' | 'dark' | 'bootstrap' | 'flat';
+      };
+    };
+    paymentMethods?: {
+      maxInstallments?: number;
+      minInstallments?: number;
+      types?: {
+        excluded?: string[];
+        included?: string[];
+      };
+    };
+  };
+}
+
+export interface PaymentBrickCallbacks {
+  onReady?: () => void;
+  onError?: (error: PaymentBrickError) => void;
+  onSubmit?: (formData: PaymentBrickFormData) => Promise<void>;
+}
+
+export interface PaymentBrickFormData {
+  token: string;
+  issuer_id: string;
+  payment_method_id: string;
+  transaction_amount: number;
+  installments: number;
+  payer: {
+    email: string;
+    identification: {
+      type: string;
+      number: string;
+    };
+  };
+}
+
+export interface PaymentBrickError {
+  message: string;
+  cause?: string;
+  detail?: string;
+}
+
+export interface PaymentBrickInstance {
+  mount: (containerId: string) => Promise<void>;
+  unmount: () => Promise<void>;
+  update: (config: Partial<PaymentBrickConfig>) => Promise<void>;
+  getFormData: () => Promise<PaymentBrickFormData>;
+}
+
+export interface CardTokenResponse {
+  id: string;
+  public_key: string;
+  card_id: string | null;
+  luhn_validation: boolean;
+  status: string;
+  date_created: string;
+  date_last_updated: string;
+  date_due: string;
+  cardholder: {
+    identification: {
+      number: string;
+      type: string;
+    };
+    name: string;
+  };
+  security_code_length: number;
+  expiration_month: number;
+  expiration_year: number;
+  last_four_digits: string;
+  first_six_digits: string;
+}
+
+// Card payment request/response types
+export interface CardPaymentRequest {
+  orderId: string;
+  token: string;
+  amount: number;
+  paymentMethodId: string;
+  payer: {
+    email: string;
+    identification: {
+      type: 'CPF' | 'CNPJ';
+      number: string;
+    };
+  };
+}
+
+export interface CardPaymentResponse {
+  success: boolean;
+  paymentId?: string;
+  status: 'approved' | 'rejected' | 'in_process';
+  statusDetail?: string;
+  error?: string;
+}

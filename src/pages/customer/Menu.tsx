@@ -318,39 +318,46 @@ const Menu = () => {
           </div>
         </div>
 
-        {/* Desktop: Gradient header with centered logo and categories */}
+        {/* Desktop: Gradient header with logo, title, and categories */}
         <div className="hidden md:block bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 shadow-xl">
-          <div className="max-w-6xl mx-auto px-4 py-6">
-            {/* Logo centered with logout on right */}
-            <div className="flex items-center justify-center mb-6 relative">
-              <img 
-                src={logo} 
-                alt="Coco Loko" 
-                className="h-20 w-auto drop-shadow-lg"
-              />
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            {/* Top Row: Logo, Title, Cart, Logout */}
+            <div className="flex items-center justify-between mb-6">
+              {/* Logo and Title */}
+              <div className="flex items-center gap-4">
+                <img 
+                  src={logo} 
+                  alt="Coco Loko" 
+                  className="h-16 w-auto drop-shadow-lg"
+                />
+                <h1 className="text-3xl font-bold text-white drop-shadow-md">
+                  Cardápio
+                </h1>
+              </div>
               
-              {/* Cart Badge - Desktop */}
-              {getTotalItems() > 0 && (
-                <div className="absolute right-12">
-                  <div className="bg-purple-600 text-white border-2 border-purple-300 shadow-lg animate-pulse-badge px-3 py-1.5 rounded-full font-bold text-sm flex items-center gap-1.5">
-                    <ShoppingCart className="w-4 h-4" />
+              {/* Right Side: Cart Badge and Logout */}
+              <div className="flex items-center gap-4">
+                {/* Cart Badge - Desktop */}
+                {getTotalItems() > 0 && (
+                  <div className="bg-white text-purple-700 border-2 border-purple-300 shadow-lg animate-pulse-badge px-4 py-2 rounded-full font-bold text-base flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5" />
                     <span>{getTotalItems()}</span>
                   </div>
-                </div>
-              )}
-              
-              <button
-                onClick={handleLogout}
-                className="absolute right-0 p-2 text-white hover:text-white/80 hover:bg-white/20 rounded-full transition-all"
-                aria-label="Sair"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+                )}
+                
+                <button
+                  onClick={handleLogout}
+                  className="p-2.5 text-white hover:text-white/80 hover:bg-white/20 rounded-full transition-all"
+                  aria-label="Sair"
+                >
+                  <LogOut className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             {/* Category Navigation */}
             {categorizedItems.length > 0 && (
-              <div className="flex items-center justify-center gap-2 flex-wrap">
+              <div className="flex items-center justify-center gap-3 flex-wrap">
                 {categorizedItems.map((category) => {
                   const isSelected = selectedCategory === category.id;
                   
@@ -359,7 +366,7 @@ const Menu = () => {
                       key={category.id}
                       onClick={() => handleCategoryScroll(category.id)}
                       className={`
-                        px-5 py-2.5 rounded-full transition-all font-medium text-sm shadow-md hover:shadow-lg
+                        px-6 py-3 rounded-full transition-all font-semibold text-base shadow-md hover:shadow-lg
                         ${isSelected 
                           ? 'bg-white text-purple-700 scale-105' 
                           : 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
@@ -386,7 +393,7 @@ const Menu = () => {
       </div>
 
       {/* Menu Content - Adjusted padding for fixed header */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-48 md:pt-56 pb-32 space-y-6">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-48 md:pt-44 pb-32 space-y-6">
         {categorizedItems.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <div className="text-4xl mb-3">🥥</div>

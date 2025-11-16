@@ -5,6 +5,12 @@ export { default as PIXQRGenerator } from './PIXQRGenerator';
 export { default as AdminWaiterReports } from './AdminWaiterReports';
 export type { CustomerInfo } from './CustomerInfoForm';
 
+// Payment Components
+export { default as PaymentMethodSelector } from './PaymentMethodSelector';
+export type { PaymentMethod } from './PaymentMethodSelector';
+export { default as CreditCardPayment } from './CreditCardPayment';
+export type { CreditCardPaymentProps } from './CreditCardPayment';
+
 // Commission Components
 export { CommissionDisplay } from './CommissionDisplay';
 export { CommissionCards } from './CommissionCards';

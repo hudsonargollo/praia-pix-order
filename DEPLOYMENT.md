@@ -54,11 +54,13 @@ For automated deployment, add these secrets to your GitHub repository:
 ### Application Secrets
 - `VITE_SUPABASE_URL` - Your Supabase project URL
 - `VITE_SUPABASE_PUBLISHABLE_KEY` - Supabase publishable key
-- `VITE_MERCADOPAGO_PUBLIC_KEY` - MercadoPago public key
-- `VITE_MERCADOPAGO_ACCESS_TOKEN` - MercadoPago access token
+- `VITE_MERCADOPAGO_PUBLIC_KEY` - MercadoPago public key (for credit card payments)
+- `VITE_MERCADOPAGO_ACCESS_TOKEN` - MercadoPago access token (for PIX and card payments)
 - `VITE_EVOLUTION_API_URL` - Evolution API URL for WhatsApp
 - `VITE_EVOLUTION_API_KEY` - Evolution API key
 - `VITE_EVOLUTION_INSTANCE_NAME` - Evolution instance name
+
+**Note**: Both `VITE_MERCADOPAGO_PUBLIC_KEY` and `VITE_MERCADOPAGO_ACCESS_TOKEN` are required for the credit card payment feature. Get these from your [MercadoPago Developer Dashboard](https://www.mercadopago.com.br/developers/panel/app).
 
 ### How to Get Cloudflare Credentials
 
@@ -73,6 +75,35 @@ For automated deployment, add these secrets to your GitHub repository:
 1. Go to: https://dash.cloudflare.com/
 2. Select your account
 3. Copy the Account ID from the URL or sidebar
+
+### Configuring Cloudflare Pages Environment Variables
+
+After deploying to Cloudflare Pages, you need to configure environment variables:
+
+1. **Go to Cloudflare Pages Dashboard**
+   - Navigate to: https://dash.cloudflare.com/
+   - Select "Pages" from the sidebar
+   - Select your project (e.g., "coco-loko-acaiteria")
+
+2. **Add Environment Variables**
+   - Go to "Settings" > "Environment variables"
+   - Add each variable for both "Production" and "Preview" environments:
+     - `VITE_SUPABASE_URL`
+     - `VITE_SUPABASE_PUBLISHABLE_KEY`
+     - `VITE_MERCADOPAGO_PUBLIC_KEY`
+     - `VITE_MERCADOPAGO_ACCESS_TOKEN`
+     - `VITE_EVOLUTION_API_URL`
+     - `VITE_EVOLUTION_API_KEY`
+     - `VITE_EVOLUTION_INSTANCE_NAME`
+     - `SUPABASE_SERVICE_KEY` (for Cloudflare Functions)
+
+3. **Redeploy After Adding Variables**
+   - After adding environment variables, trigger a new deployment
+   - Go to "Deployments" tab
+   - Click "Retry deployment" on the latest deployment
+   - Or push a new commit to trigger automatic deployment
+
+**Important**: Environment variables are only available after redeployment. Changes to environment variables require a new deployment to take effect.
 
 ## Step 3: Automated Deployment (Recommended)
 
@@ -126,6 +157,75 @@ This script will:
 3. Run tests
 4. Build application
 5. Deploy to Cloudflare Pages
+
+## MercadoPago Configuration
+
+### Getting Your MercadoPago Credentials
+
+The application supports both PIX and credit card payments through MercadoPago. You'll need two credentials:
+
+1. **Public Key** (`VITE_MERCADOPAGO_PUBLIC_KEY`)
+   - Used by the frontend Payment Brick SDK to tokenize credit card data
+   - Safe to expose in client-side code
+   - Format: `APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+
+2. **Access Token** (`VITE_MERCADOPAGO_ACCESS_TOKEN`)
+   - Used by backend to create payments and process transactions
+   - Must be kept secret (though prefixed with VITE_ for Cloudflare compatibility)
+   - Format: `APP_USR-xxxxxxxxxxxxxxxx-xxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxx`
+
+### How to Get Your Credentials
+
+1. **Login to MercadoPago**
+   - Go to: https://www.mercadopago.com.br/developers/panel/app
+   - Login with your MercadoPago account
+
+2. **Create or Select an Application**
+   - Create a new application or select an existing one
+   - Give it a descriptive name (e.g., "Coco Loko Açaiteria")
+
+3. **Get Your Credentials**
+   - Navigate to "Credenciais de produção" (Production Credentials) or "Credenciais de teste" (Test Credentials)
+   - Copy the **Public Key** (Chave pública)
+   - Copy the **Access Token** (Access token)
+
+4. **Add to Environment Variables**
+   - Add both credentials to your `.env` file
+   - Add both to GitHub Secrets for automated deployment
+   - Add both to Cloudflare Pages environment variables
+
+### Testing vs Production
+
+**Test Mode** (Sandbox):
+- Use test credentials from "Credenciais de teste"
+- Test with MercadoPago test cards
+- No real money is processed
+- Recommended for development
+
+**Production Mode**:
+- Use production credentials from "Credenciais de produção"
+- Real payments are processed
+- Requires verified MercadoPago account
+- Use only after thorough testing
+
+### Test Cards for Development
+
+When using test credentials, use these test cards:
+
+**Approved Payment**:
+- Card: `5031 4332 1540 6351`
+- CVV: `123`
+- Expiry: `11/25`
+- Name: Any name
+- CPF: `12345678909`
+
+**Rejected Payment (Insufficient Funds)**:
+- Card: `5031 4332 1540 6351`
+- CVV: `123`
+- Expiry: `11/25`
+- Amount: Specific test amounts per MercadoPago docs
+
+See [MercadoPago Test Cards Documentation](https://www.mercadopago.com.br/developers/pt/docs/checkout-api/integration-test/test-cards) for more test scenarios.
 
 ## Step 5: Verify Deployment
 
@@ -201,8 +301,8 @@ The application requires these environment variables:
 ### Frontend (VITE_*)
 - `VITE_SUPABASE_URL` - Supabase project URL
 - `VITE_SUPABASE_PUBLISHABLE_KEY` - Supabase anon/public key
-- `VITE_MERCADOPAGO_PUBLIC_KEY` - MercadoPago public key
-- `VITE_MERCADOPAGO_ACCESS_TOKEN` - MercadoPago access token
+- `VITE_MERCADOPAGO_PUBLIC_KEY` - MercadoPago public key (for Payment Brick SDK)
+- `VITE_MERCADOPAGO_ACCESS_TOKEN` - MercadoPago access token (for API calls)
 - `VITE_EVOLUTION_API_URL` - WhatsApp API URL
 - `VITE_EVOLUTION_API_KEY` - WhatsApp API key
 - `VITE_EVOLUTION_INSTANCE_NAME` - WhatsApp instance name
@@ -210,8 +310,10 @@ The application requires these environment variables:
 ### Backend (Cloudflare Functions)
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_SERVICE_KEY` - Supabase service role key
-- `MERCADOPAGO_ACCESS_TOKEN` - MercadoPago access token
+- `VITE_MERCADOPAGO_ACCESS_TOKEN` - MercadoPago access token (for payment processing)
 - `WHATSAPP_SESSION_ID` - WhatsApp session identifier
+
+**Important**: The `VITE_MERCADOPAGO_ACCESS_TOKEN` must be available in both frontend and backend environments for the credit card payment feature to work properly.
 
 ## Database Schema Changes
 

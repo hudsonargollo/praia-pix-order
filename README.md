@@ -12,7 +12,8 @@ Coco Loko Açaiteria is a comprehensive digital ordering platform designed speci
 
 ### Key Features
 
-- **Customer Flow**: QR code menu access, digital ordering, PIX payments, WhatsApp notifications
+- **Customer Flow**: QR code menu access, digital ordering, PIX and credit card payments, WhatsApp notifications
+- **Payment Methods**: Secure PIX instant payments and credit card payments via MercadoPago Payment Brick
 - **Kitchen Dashboard**: Real-time view of paid orders, order status management
 - **Cashier Panel**: Order monitoring and customer notification system
 - **Admin Panel**: Product management, waiter management, sales reports, WhatsApp administration
@@ -40,7 +41,7 @@ Coco Loko Açaiteria is a comprehensive digital ordering platform designed speci
 - **State Management**: TanStack Query for server state
 - **Routing**: React Router DOM v6
 - **Forms**: React Hook Form with Zod validation
-- **Payment Integration**: Mercado Pago PIX
+- **Payment Integration**: MercadoPago (PIX and Credit Card via Payment Brick)
 - **Messaging**: WhatsApp notifications via Evolution API
 
 ### Key Libraries
@@ -160,12 +161,19 @@ Create a `.env` file in the root directory with the following variables:
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
 
-# Mercado Pago Configuration (optional for development)
-VITE_MERCADOPAGO_ACCESS_TOKEN=your_mercadopago_token
+# MercadoPago Configuration
+# Required for PIX and credit card payments
+# Get your keys from: https://www.mercadopago.com.br/developers/panel/app
+VITE_MERCADOPAGO_PUBLIC_KEY=your_mercadopago_public_key
+VITE_MERCADOPAGO_ACCESS_TOKEN=your_mercadopago_access_token
 
 # WhatsApp Configuration (optional for development)
-VITE_WHATSAPP_API_URL=your_whatsapp_api_url
+VITE_EVOLUTION_API_URL=your_evolution_api_url
+VITE_EVOLUTION_API_KEY=your_evolution_api_key
+VITE_EVOLUTION_INSTANCE_NAME=your_instance_name
 ```
+
+See `.env.example` for a complete template with all available configuration options.
 
 4. **Start local Supabase instance**
 
@@ -308,9 +316,12 @@ npm run test:production  # Test production deployment
 1. Scan QR code at table → Welcome page
 2. Browse menu → Add items to cart
 3. Proceed to checkout → Enter name and WhatsApp
-4. Generate PIX payment → Display QR code
-5. Payment confirmation → Order sent to kitchen
-6. Order status tracking → WhatsApp notifications
+4. Choose payment method → PIX or Credit Card
+5. Complete payment:
+   - **PIX**: Scan QR code or copy payment code
+   - **Credit Card**: Enter card details in secure form (Payment Brick)
+6. Payment confirmation → Order sent to kitchen
+7. Order status tracking → WhatsApp notifications
 
 **Kitchen Flow**
 1. Login with kitchen credentials
@@ -377,6 +388,17 @@ Ensure the following environment variables are set in your production environmen
 - `VITE_WHATSAPP_API_URL`
 
 ## 🎯 Recent Improvements
+
+### Credit Card Payments (November 2024)
+- ✅ MercadoPago Payment Brick integration for secure card payments
+- ✅ Client-side card tokenization (PCI DSS compliant)
+- ✅ Payment method selector (PIX / Credit Card)
+- ✅ Single payment only (no installments)
+- ✅ Real-time payment status updates
+- ✅ Comprehensive error handling with user-friendly messages
+- ✅ Retry functionality for failed payments
+- ✅ Mobile-responsive payment form
+- ✅ Full accessibility compliance (WCAG AA)
 
 ### Waiter Payment Workflow (November 2024)
 - ✅ Independent order and payment status tracking
