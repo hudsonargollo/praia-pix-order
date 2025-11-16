@@ -111,8 +111,8 @@ export default function WhatsAppAdmin() {
           profileName: data.profileName || data.name || data.instance?.profileName
         });
         
-        // Pre-populate test number with connected number if not already set
-        if (phoneNumber && !localStorage.getItem('whatsapp_test_number')) {
+        // Always update test number with connected number
+        if (phoneNumber) {
           setTestPhoneNumber(phoneNumber);
           localStorage.setItem('whatsapp_test_number', phoneNumber);
         }
