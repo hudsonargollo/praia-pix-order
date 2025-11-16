@@ -29,6 +29,9 @@ const Checkout = () => {
   const [errors, setErrors] = useState({ name: "", whatsapp: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [dialogView, setDialogView] = useState<'cart' | 'menu'>('cart');
+  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [loadingMenu, setLoadingMenu] = useState(false);
 
   // Animation variants
   const pageVariants = {
@@ -92,6 +95,31 @@ const Checkout = () => {
       return () => clearTimeout(timer);
     }
   }, [step]);
+
+  // Load menu items when switching to menu view
+  const loadMenuItems = async () => {
+    setLoadingMenu(true);
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select('*')
+        .eq('available', true)
+        .order('sort_order', { ascending: true });
+      
+      if (error) throw error;
+      setMenuItems(data || []);
+    } catch (error) {
+      console.error('Error loading menu:', error);
+      toast.error('Erro ao carregar cardápio');
+    } finally {
+      setLoadingMenu(false);
+    }
+  };
+
+  const handleShowMenu = () => {
+    setDialogView('menu');
+    loadMenuItems();
+  };
 
   // Handle payment navigation
   const handleGoToPayment = async () => {
@@ -391,13 +419,31 @@ const Checkout = () => {
       </div>
 
       {/* Edit Order Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) setDialogView('cart'); // Reset to cart view when closing
+      }}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Editar Pedido</DialogTitle>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              {dialogView === 'menu' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDialogView('cart')}
+                  className="h-8 w-8"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              )}
+              {dialogView === 'cart' ? 'Editar Pedido' : 'Adicionar Itens'}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {cartState.items.map((item) => (
+            {dialogView === 'cart' ? (
+              // Cart View
+              <>
+                {cartState.items.map((item) => (
               <div key={item.id} className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 truncate">{item.name}</p>
@@ -456,7 +502,7 @@ const Checkout = () => {
                   <Button
                     variant="outline"
                     className="flex-1"
-                    onClick={() => navigate('/menu')}
+                    onClick={handleShowMenu}
                   >
                     Adicionar Mais
                   </Button>
@@ -467,6 +513,60 @@ const Checkout = () => {
                     Continuar
                   </Button>
                 </div>
+              </>
+            )}
+            </> 
+            ) : (
+              // Menu View
+              <>
+                {loadingMenu ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin text-4xl mb-2">⏳</div>
+                    <p className="text-gray-600">Carregando cardápio...</p>
+                  </div>
+                ) : (
+                  <>
+                    {menuItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        {item.image_url && (
+                          <img 
+                            src={item.image_url} 
+                            alt={item.name}
+                            className="w-16 h-16 object-cover rounded-md"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900">{item.name}</p>
+                          {item.description && (
+                            <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                          )}
+                          <p className="text-sm font-bold text-purple-600 mt-1">
+                            R$ {item.price.toFixed(2)}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            addItem(item);
+                            toast.success(`${item.name} adicionado!`);
+                          }}
+                          className="bg-gradient-to-r from-purple-600 to-indigo-600"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Adicionar
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="border-t pt-4">
+                      <Button
+                        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600"
+                        onClick={() => setDialogView('cart')}
+                      >
+                        Ver Carrinho ({cartState.items.reduce((sum, item) => sum + item.quantity, 0)} itens)
+                      </Button>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
