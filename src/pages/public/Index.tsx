@@ -149,9 +149,9 @@ const Index = () => {
       </div>
 
       {/* Features Section */}
-      <div className="bg-white py-8 sm:py-16">
+      <div className="bg-[#4a1a4a] py-8 sm:py-16">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12 text-purple-900">Como Funciona</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12 text-white">Como Funciona</h2>
           
           {/* Carousel Container */}
           <div 
