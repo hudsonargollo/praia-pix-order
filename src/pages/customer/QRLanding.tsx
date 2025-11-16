@@ -11,7 +11,7 @@ const QRLanding = () => {
 
   return (
     <div 
-      className="min-h-screen flex flex-col justify-end py-8 px-4 bg-cover bg-center bg-no-repeat bg-[#4a1a4a]"
+      className="min-h-screen h-screen flex flex-col justify-end py-8 px-4 bg-cover bg-center bg-no-repeat bg-[#4a1a4a] fixed inset-0 overflow-y-auto"
       style={{
         backgroundImage: `url(${bckImage})`,
       }}
