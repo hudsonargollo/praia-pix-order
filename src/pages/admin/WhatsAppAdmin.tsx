@@ -566,8 +566,19 @@ export default function WhatsAppAdmin() {
                       src={qrCode} 
                       alt="QR Code" 
                       className="w-48 h-48 sm:w-56 sm:h-56"
+                      onError={(e) => {
+                        console.error('QR Code image failed to load');
+                        console.error('QR Code data length:', qrCode?.length);
+                        console.error('QR Code starts with:', qrCode?.substring(0, 100));
+                      }}
+                      onLoad={() => {
+                        console.log('QR Code image loaded successfully');
+                      }}
                     />
                   </div>
+                  <p className="text-xs text-gray-500">
+                    {qrCode && `QR Code carregado (${qrCode.length} caracteres)`}
+                  </p>
                   <div className="text-center space-y-2">
                     <p className="text-xs sm:text-sm font-medium">Como conectar:</p>
                     <ol className="text-xs text-gray-600 space-y-0.5 sm:space-y-1 text-left">
