@@ -419,48 +419,48 @@ export default function WhatsAppAdmin() {
           <TabsContent value="overview" className="space-y-4">
         {/* Connection Status Card */}
         <Card className={connectionStatus === 'connected' ? 'border-green-200 bg-white' : 'border-orange-200 bg-white'}>
-          <CardHeader className="pb-4">
-            <div className="flex flex-col items-center text-center gap-4">
-              <div className={`p-3 rounded-2xl ${connectionStatus === 'connected' ? 'bg-green-100' : 'bg-orange-100'}`}>
+          <CardHeader className="pb-4 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className={`p-3 rounded-2xl flex-shrink-0 ${connectionStatus === 'connected' ? 'bg-green-100' : 'bg-orange-100'}`}>
                 <MessageCircle className={`h-8 w-8 ${connectionStatus === 'connected' ? 'text-green-600' : 'text-orange-600'}`} />
               </div>
-              <div className="w-full">
+              <div className="flex-1 min-w-0">
                 <CardTitle className={`text-xl font-bold ${connectionStatus === 'connected' ? 'text-green-800' : 'text-orange-800'}`}>
                   {connectionStatus === 'connected' ? 'Notificações Ativas' : 'Notificações por WhatsApp'}
                 </CardTitle>
                 {connectionStatus === 'connected' && connectionInfo?.phoneNumber ? (
-                  <CardDescription className="text-green-700 font-medium mt-2 flex items-center justify-center gap-1.5 text-sm">
+                  <CardDescription className="text-green-700 font-medium mt-1 flex items-center gap-1.5 text-sm">
                     <Smartphone className="h-4 w-4 flex-shrink-0" />
-                    <span>{connectionInfo.phoneNumber}</span>
+                    <span className="truncate">{connectionInfo.phoneNumber}</span>
                   </CardDescription>
                 ) : (
-                  <CardDescription className="text-orange-700 mt-2 text-sm">
+                  <CardDescription className="text-orange-700 mt-1 text-sm">
                     Conecte sua conta para enviar alertas
                   </CardDescription>
                 )}
               </div>
-              <div className="w-full">
-                {connectionStatus === 'connected' ? (
-                  <Button
-                    onClick={handleDisconnect}
-                    variant="outline"
-                    size="default"
-                    className="border-red-200 text-red-700 hover:bg-red-50 h-11 text-sm w-full"
-                  >
-                    <WifiOff className="h-5 w-5 mr-2" />
-                    Desconectar
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleConnectWhatsApp}
-                    size="default"
-                    className="bg-green-600 hover:bg-green-700 h-11 text-sm w-full"
-                  >
-                    <Wifi className="h-5 w-5 mr-2" />
-                    Conectar Agora
-                  </Button>
-                )}
-              </div>
+            </div>
+            <div className="w-full">
+              {connectionStatus === 'connected' ? (
+                <Button
+                  onClick={handleDisconnect}
+                  variant="outline"
+                  size="default"
+                  className="border-red-200 text-red-700 hover:bg-red-50 h-11 text-sm w-full"
+                >
+                  <WifiOff className="h-5 w-5 mr-2" />
+                  Desconectar
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleConnectWhatsApp}
+                  size="default"
+                  className="bg-green-600 hover:bg-green-700 h-11 text-sm w-full"
+                >
+                  <Wifi className="h-5 w-5 mr-2" />
+                  Conectar Agora
+                </Button>
+              )}
             </div>
           </CardHeader>
           {connectionStatus === 'connected' && connectionInfo?.connectedAt && (
