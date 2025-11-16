@@ -44,7 +44,7 @@ export const UniformHeader = ({
                 </Button>
               )}
               {logoLink ? (
-                <a href={logoLink} className="relative cursor-pointer hover:opacity-80 transition-opacity">
+                <a href={logoLink} className="relative cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
                   <img 
                     src={logo} 
                     alt="Coco Loko" 
@@ -53,7 +53,7 @@ export const UniformHeader = ({
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                 </a>
               ) : (
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                   <img 
                     src={logo} 
                     alt="Coco Loko" 
@@ -62,8 +62,8 @@ export const UniformHeader = ({
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                 </div>
               )}
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold">{title}</h1>
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold truncate">{title}</h1>
               </div>
             </div>
 
@@ -148,16 +148,16 @@ export const UniformHeader = ({
                   </Button>
                 )}
                 {logoLink ? (
-                  <a href={logoLink} className="relative cursor-pointer hover:opacity-80 transition-opacity">
+                  <a href={logoLink} className="relative cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
                     <img 
                       src={logo} 
                       alt="Coco Loko" 
-                      className="h-12 sm:h-14 w-auto drop-shadow-lg"
+                      className="h-9 sm:h-10 w-auto drop-shadow-lg"
                     />
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                   </a>
                 ) : (
-                  <div className="relative">
+                  <div className="relative flex-shrink-0">
                     <img 
                       src={logo} 
                       alt="Coco Loko" 
@@ -166,8 +166,8 @@ export const UniformHeader = ({
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                   </div>
                 )}
-                <div>
-                  <h1 className="text-lg sm:text-xl font-bold">{title}</h1>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg sm:text-xl font-bold truncate">{title}</h1>
                 </div>
               </div>
               
