@@ -150,10 +150,6 @@ export default function CreditCardPayment({
               visual: {
                 hidePaymentButton: true, // We use our own button
               },
-              paymentMethods: {
-                maxInstallments: 1, // No installments
-                minInstallments: 1,
-              },
             },
           },
           {
@@ -320,10 +316,6 @@ export default function CreditCardPayment({
           customization: {
             visual: {
               hidePaymentButton: true,
-            },
-            paymentMethods: {
-              maxInstallments: 1,
-              minInstallments: 1,
             },
           },
         },

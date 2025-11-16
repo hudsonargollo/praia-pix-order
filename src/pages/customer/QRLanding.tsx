@@ -11,13 +11,13 @@ const QRLanding = () => {
 
   return (
     <div 
-      className="min-h-screen h-screen flex flex-col justify-end py-8 px-4 bg-cover bg-center bg-no-repeat bg-[#4a1a4a] fixed inset-0 overflow-y-auto"
+      className="min-h-screen h-screen flex flex-col justify-center py-8 px-4 bg-cover bg-center bg-no-repeat bg-[#4a1a4a] fixed inset-0"
       style={{
         backgroundImage: `url(${bckImage})`,
       }}
     >
       {/* Bottom Section - Button */}
-      <div className="pb-6 md:pb-8">
+      <div className="mt-auto pb-[78px] md:pb-[94px]">
         <div className="max-w-lg mx-auto px-2 md:px-4">
           <Button 
             size="lg" 

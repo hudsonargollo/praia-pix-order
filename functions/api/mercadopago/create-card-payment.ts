@@ -262,6 +262,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
 
 
+    // Log the request for debugging
+    console.log('Processing card payment:', {
+      orderId,
+      amount,
+      paymentMethodId,
+      hasToken: !!token,
+      tokenLength: token?.length,
+      payerEmail: payer.email,
+      payerIdType: payer.identification.type,
+      payerIdNumber: payer.identification.number?.substring(0, 3) + '***'
+    });
+
     // Prepare payment payload for MercadoPago API
     const paymentPayload = {
       transaction_amount: amount,
@@ -280,7 +292,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         order_id: orderId
       },
       external_reference: orderId,
-      notification_url: `https://${context.request.headers.get('host')}/api/mercadopago/webhook`
+      notification_url: `https://${context.request.headers.get('host')}/api/mercadopago/webhook`,
+      // Add statement descriptor for better identification
+      statement_descriptor: 'COCO LOKO',
+      // Capture payment immediately
+      capture: true
     };
 
     // Make request to MercadoPago API with retry logic
@@ -351,6 +367,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const payment = await response.json();
+
+    // Log the payment response for debugging
+    console.log('MercadoPago payment response:', {
+      id: payment.id,
+      status: payment.status,
+      status_detail: payment.status_detail,
+      payment_method_id: payment.payment_method_id,
+      transaction_amount: payment.transaction_amount
+    });
 
     // Map MercadoPago status to our response
     const status = payment.status as 'approved' | 'rejected' | 'in_process';

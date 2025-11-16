@@ -42,8 +42,19 @@ export async function onRequestGet(context) {
       });
     }
 
-    // Get access token with fallback
-    const accessToken = env.MERCADOPAGO_ACCESS_TOKEN || 'APP_USR-4813437808298526-110522-fa108581dfa5cb10a87458875e5c8136-1769074499';
+    // Get access token - try both variable names for compatibility
+    const accessToken = env.VITE_MERCADOPAGO_ACCESS_TOKEN || env.MERCADOPAGO_ACCESS_TOKEN;
+    
+    if (!accessToken) {
+      console.error('MercadoPago access token not configured');
+      return new Response(JSON.stringify({ 
+        error: 'Payment service not configured',
+        details: 'Access token missing'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     // MercadoPago API call
     const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {

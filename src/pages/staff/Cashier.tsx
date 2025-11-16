@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { notificationTriggers } from "@/integrations/whatsapp";
 import { useCashierOrders } from "@/hooks/useRealtimeOrders";
 import { useNotificationHistory } from "@/hooks/useNotificationHistory";
+import { useWhatsAppErrors } from "@/hooks/useWhatsAppErrors";
 import { RealtimeNotifications, notificationUtils } from "@/components/RealtimeNotifications";
 import { ConnectionMonitor, useConnectionMonitor } from "@/components/ConnectionMonitor";
 import { NotificationControls } from "@/components/NotificationControls";
+import { WhatsAppErrorIndicator } from "@/components/WhatsAppErrorIndicator";
 import { OrderDetailsDialog } from "@/components/OrderDetailsDialog";
 import { OrderEditDialog } from "@/components/OrderEditDialog";
 import { OrderCardInfo } from "@/components/OrderCardInfo";
@@ -70,6 +72,9 @@ const Cashier = () => {
   // Load notification history for all orders
   const orderIds = orders.map(o => o.id);
   const { history: notificationHistory, refresh: refreshNotifications } = useNotificationHistory(orderIds);
+  
+  // Load WhatsApp errors for all orders
+  const { errors: whatsappErrors, refresh: refreshErrors } = useWhatsAppErrors(orderIds);
 
   // Persist waiter filter selection to localStorage
   useEffect(() => {
@@ -829,6 +834,7 @@ const Cashier = () => {
                 const paymentStatus = getPaymentStatus(order);
                 const PaymentIcon = paymentStatus.icon;
                 const orderNotificationHistory = notificationHistory.get(order.id);
+                const orderErrors = whatsappErrors.get(order.id) || [];
                 
                 return (
                   <Card key={order.id} className="p-4 sm:p-6 shadow-soft">
@@ -854,6 +860,13 @@ const Cashier = () => {
                         </p>
                       </div>
                     </div>
+                    
+                    {/* WhatsApp Error Indicator */}
+                    {orderErrors.length > 0 && (
+                      <div className="mb-3">
+                        <WhatsAppErrorIndicator errors={orderErrors} orderId={order.id} />
+                      </div>
+                    )}
                     
                     {/* Action Buttons */}
                     <div className="border-t pt-3 space-y-2">
@@ -983,6 +996,7 @@ const Cashier = () => {
                 const paymentStatus = getPaymentStatus(order);
                 const PaymentIcon = paymentStatus.icon;
                 const orderNotificationHistory = notificationHistory.get(order.id);
+                const orderErrors = whatsappErrors.get(order.id) || [];
                 
                 return (
                   <Card key={order.id} className="p-4 sm:p-6 shadow-soft border-l-4 border-l-success">
@@ -1008,6 +1022,13 @@ const Cashier = () => {
                         </p>
                       </div>
                     </div>
+                    
+                    {/* WhatsApp Error Indicator */}
+                    {orderErrors.length > 0 && (
+                      <div className="mb-3">
+                        <WhatsAppErrorIndicator errors={orderErrors} orderId={order.id} />
+                      </div>
+                    )}
                     
                     {/* Action Buttons */}
                     <div className="border-t pt-3 space-y-2">

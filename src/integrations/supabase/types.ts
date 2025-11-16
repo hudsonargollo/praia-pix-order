@@ -431,6 +431,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_order_payment: {
+        Args: {
+          _order_id: string
+          _payment_id: string
+        }
+        Returns: void
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -6,6 +6,7 @@ import { validatePhoneNumber } from './phone-validator';
 import { encryptPhoneNumberSafe, decryptPhoneNumberSafe } from './phone-encryption';
 import { optOutManager } from './opt-out-manager';
 import { complianceChecker } from './compliance';
+import { errorLogger } from './error-logger';
 
 /**
  * Notification Queue Manager
@@ -236,6 +237,18 @@ export class NotificationQueueManager {
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const attempts = notification.attempts + 1;
+
+      // Log error for tracking
+      await errorLogger.logError(error as Error, {
+        operation: 'send_whatsapp_notification',
+        orderId: notification.order_id,
+        customerPhone: await decryptPhoneNumberSafe(notification.customer_phone),
+        notificationId: notificationId,
+        additionalData: {
+          notificationType: notification.notification_type,
+          attempts,
+        }
+      });
 
       // Check if we should retry
       if (attempts < RETRY_CONFIG.maxAttempts && this.isRetryableError(error as Error)) {

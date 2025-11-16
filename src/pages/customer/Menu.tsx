@@ -392,8 +392,28 @@ const Menu = () => {
         </div>
       </div>
 
-      {/* Menu Content - Adjusted padding for fixed header */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-48 md:pt-44 pb-32 space-y-6">
+      {/* Cart Button - Top Position */}
+      {cartState.items.length > 0 && (
+        <div className="fixed top-[180px] md:top-[200px] left-0 right-0 p-4 z-30 animate-in slide-in-from-top duration-300">
+          <div className="max-w-2xl mx-auto">
+            <Button
+              onClick={goToCheckout}
+              className="w-full bg-gradient-to-r from-purple-700 to-purple-600 hover:from-purple-800 hover:to-purple-700 text-white py-4 rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all"
+            >
+              <div className="flex items-center justify-between w-full px-2">
+                <div className="flex items-center gap-3">
+                  <ShoppingCart className="h-6 w-6" />
+                  <span>Ver Carrinho ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'itens'})</span>
+                </div>
+                <span className="font-bold text-lg">R$ {getTotalPrice().toFixed(2)}</span>
+              </div>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Menu Content - Adjusted padding for fixed header and cart */}
+      <div className={`relative z-10 max-w-2xl mx-auto px-4 pb-8 space-y-6 ${cartState.items.length > 0 ? 'pt-64 md:pt-72' : 'pt-48 md:pt-44'}`}>
         {categorizedItems.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <div className="text-4xl mb-3">🥥</div>
@@ -530,25 +550,7 @@ const Menu = () => {
         )}
       </div>
 
-      {/* Cart Button - No Background */}
-      {cartState.items.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 z-50">
-          <div className="max-w-2xl mx-auto">
-            <Button
-              onClick={goToCheckout}
-              className="w-full bg-gradient-to-r from-purple-700 to-purple-600 hover:from-purple-800 hover:to-purple-700 text-white py-4 rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all"
-            >
-              <div className="flex items-center justify-between w-full px-2">
-                <div className="flex items-center gap-3">
-                  <ShoppingCart className="h-6 w-6" />
-                  <span>Ver Carrinho ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'itens'})</span>
-                </div>
-                <span className="font-bold text-lg">R$ {getTotalPrice().toFixed(2)}</span>
-              </div>
-            </Button>
-          </div>
-        </div>
-      )}
+
 
       {/* Enhanced Product Detail Dialog */}
       <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>

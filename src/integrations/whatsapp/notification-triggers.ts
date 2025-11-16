@@ -5,6 +5,7 @@
 
 import { supabase } from '../supabase/client';
 import { queueManager } from './queue-manager';
+import { errorLogger } from './error-logger';
 import { NotificationRequest, OrderData } from './types';
 
 export class NotificationTriggerService {
@@ -49,6 +50,12 @@ export class NotificationTriggerService {
       console.log('Payment confirmation notification queued:', { orderId });
     } catch (error) {
       console.error('Error triggering payment confirmation notification:', error);
+      // Log error for tracking
+      await errorLogger.logError(error as Error, {
+        operation: 'trigger_payment_confirmation',
+        orderId,
+        additionalData: { notificationType: 'payment_confirmed' }
+      });
       // Don't throw - notification failures shouldn't break the payment flow
     }
   }
@@ -94,6 +101,12 @@ export class NotificationTriggerService {
       console.log('Preparing notification queued:', { orderId });
     } catch (error) {
       console.error('Error triggering preparing notification:', error);
+      // Log error for tracking
+      await errorLogger.logError(error as Error, {
+        operation: 'trigger_preparing_notification',
+        orderId,
+        additionalData: { notificationType: 'preparing' }
+      });
       // Don't throw - notification failures shouldn't break the order flow
     }
   }
@@ -139,6 +152,12 @@ export class NotificationTriggerService {
       console.log('Ready notification queued:', { orderId });
     } catch (error) {
       console.error('Error triggering ready notification:', error);
+      // Log error for tracking
+      await errorLogger.logError(error as Error, {
+        operation: 'trigger_ready_notification',
+        orderId,
+        additionalData: { notificationType: 'ready' }
+      });
       // Don't throw - notification failures shouldn't break the order flow
     }
   }
@@ -174,6 +193,12 @@ export class NotificationTriggerService {
       }
     } catch (error) {
       console.error('Error handling order status change notification:', error);
+      // Log error for tracking
+      await errorLogger.logError(error as Error, {
+        operation: 'trigger_status_change_notification',
+        orderId,
+        additionalData: { oldStatus, newStatus }
+      });
       // Don't throw - notification failures shouldn't break the order flow
     }
   }

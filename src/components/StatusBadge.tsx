@@ -34,7 +34,7 @@ const orderStatusConfig: Record<OrderStatus, { label: string; className: string 
     className: "bg-yellow-100 text-yellow-800 border-yellow-200",
   },
   pending_payment: {
-    label: "Aguardando Pagamento",
+    label: "Pedido Criado",
     className: "bg-yellow-100 text-yellow-800 border-yellow-200",
   },
   paid: {

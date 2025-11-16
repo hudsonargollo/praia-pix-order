@@ -240,18 +240,74 @@ const OrderStatus = () => {
             )}
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-            <div 
-              className="bg-primary h-2 rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${statusInfo.progress}%` }}
-            ></div>
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Pedido</span>
-            <span>Pagamento</span>
-            <span>Preparo</span>
-            <span>Pronto</span>
+          {/* Progress Dots */}
+          <div className="flex items-center justify-between px-4 mb-6">
+            {/* Pedido Criado */}
+            <div className="flex flex-col items-center flex-1">
+              <div className={`w-4 h-4 rounded-full mb-2 ${
+                ['pending_payment', 'paid', 'in_preparation', 'ready', 'completed'].includes(order.status)
+                  ? 'bg-green-500'
+                  : 'bg-gray-300'
+              }`}></div>
+              <span className="text-xs text-center text-muted-foreground">Pedido</span>
+            </div>
+            
+            {/* Line */}
+            <div className={`h-1 flex-1 mx-2 ${
+              ['paid', 'in_preparation', 'ready', 'completed'].includes(order.status)
+                ? 'bg-green-500'
+                : 'bg-gray-300'
+            }`}></div>
+            
+            {/* Pagamento */}
+            <div className="flex flex-col items-center flex-1">
+              <div className={`w-4 h-4 rounded-full mb-2 ${
+                order.status === 'paid'
+                  ? 'bg-green-500 animate-pulse'
+                  : ['in_preparation', 'ready', 'completed'].includes(order.status)
+                  ? 'bg-green-500'
+                  : 'bg-gray-300'
+              }`}></div>
+              <span className="text-xs text-center text-muted-foreground">Pagamento</span>
+            </div>
+            
+            {/* Line */}
+            <div className={`h-1 flex-1 mx-2 ${
+              ['in_preparation', 'ready', 'completed'].includes(order.status)
+                ? 'bg-blue-500'
+                : 'bg-gray-300'
+            }`}></div>
+            
+            {/* Preparo */}
+            <div className="flex flex-col items-center flex-1">
+              <div className={`w-4 h-4 rounded-full mb-2 ${
+                order.status === 'in_preparation'
+                  ? 'bg-blue-500 animate-pulse'
+                  : ['ready', 'completed'].includes(order.status)
+                  ? 'bg-green-500'
+                  : 'bg-gray-300'
+              }`}></div>
+              <span className="text-xs text-center text-muted-foreground">Preparo</span>
+            </div>
+            
+            {/* Line */}
+            <div className={`h-1 flex-1 mx-2 ${
+              ['ready', 'completed'].includes(order.status)
+                ? 'bg-green-500'
+                : 'bg-gray-300'
+            }`}></div>
+            
+            {/* Pronto */}
+            <div className="flex flex-col items-center flex-1">
+              <div className={`w-4 h-4 rounded-full mb-2 ${
+                order.status === 'ready'
+                  ? 'bg-green-500 animate-pulse'
+                  : order.status === 'completed'
+                  ? 'bg-green-500'
+                  : 'bg-gray-300'
+              }`}></div>
+              <span className="text-xs text-center text-muted-foreground">Pronto</span>
+            </div>
           </div>
         </Card>
 

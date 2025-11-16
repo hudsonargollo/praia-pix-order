@@ -44,6 +44,7 @@ const QRRedirect = lazy(() => import("./pages/debug/QRRedirect"));
 const MenuDebug = lazy(() => import("./pages/debug/MenuDebug"));
 const PaymentDebug = lazy(() => import("./pages/debug/PaymentDebug"));
 const CreditCardDebug = lazy(() => import("./pages/debug/CreditCardDebug"));
+const CardPaymentTest = lazy(() => import("./pages/debug/CardPaymentTest"));
 const PaymentTest = lazy(() => import("./pages/debug/PaymentTest"));
 const Monitoring = lazy(() => import("./pages/debug/Monitoring"));
 const SystemDiagnostic = lazy(() => import("./pages/debug/SystemDiagnostic"));
@@ -98,6 +99,11 @@ const App = () => {
           <Route path="/credit-card-debug" element={
             <Suspense fallback={<LoadingFallback />}>
               <CreditCardDebug />
+            </Suspense>
+          } />
+          <Route path="/card-payment-test" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <CardPaymentTest />
             </Suspense>
           } />
           <Route path="/payment-test" element={

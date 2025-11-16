@@ -48,26 +48,29 @@ const Payment = () => {
   };
 
   // Credit card payment callbacks (Task 7.4)
-  const handleCardPaymentSuccess = (paymentId: string) => {
+  const handleCardPaymentSuccess = async (paymentId: string) => {
     setPaymentStatus('approved');
     setRetryCount(0);
     toast.success('Pagamento aprovado com sucesso!');
     
-    // Update order status in database
+    // Update order status in database using the security definer function
     if (orderId) {
-      supabase
-        .from('orders')
-        .update({
-          status: 'paid',
-          mercadopago_payment_id: paymentId,
-          payment_confirmed_at: new Date().toISOString()
-        })
-        .eq('id', orderId)
-        .then(({ error }) => {
-          if (error) {
-            console.error('Error updating order status:', error);
-          }
+      try {
+        // @ts-ignore - Type will be updated after Supabase types regeneration
+        const { error } = await supabase.rpc('confirm_order_payment', {
+          _order_id: orderId,
+          _payment_id: paymentId
         });
+        
+        if (error) {
+          console.error('Error confirming order payment:', error);
+          toast.error('Erro ao confirmar pagamento. Entre em contato com o suporte.');
+        } else {
+          console.log('Order payment confirmed successfully:', { orderId, paymentId });
+        }
+      } catch (error) {
+        console.error('Exception confirming order payment:', error);
+      }
     }
   };
 
@@ -91,24 +94,56 @@ const Payment = () => {
     loadOrderAndCreatePayment();
   }, [orderId]);
 
+  // Poll order status directly from database as backup
+  useEffect(() => {
+    if (!orderId || paymentStatus !== 'pending') {
+      return;
+    }
+
+    const checkOrderStatus = async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('status, payment_status, payment_confirmed_at')
+        .eq('id', orderId)
+        .single();
+
+      if (!error && data) {
+        console.log('📊 Order status check:', data);
+        if (data.payment_confirmed_at || data.payment_status === 'confirmed' || data.status === 'paid') {
+          console.log('✅ Payment confirmed detected via direct check!');
+          setPaymentStatus('approved');
+        }
+      }
+    };
+
+    // Check every 3 seconds as a backup
+    const interval = setInterval(checkOrderStatus, 3000);
+    return () => clearInterval(interval);
+  }, [orderId, paymentStatus]);
+
   // Payment status polling with custom hook
   const { stopPolling } = usePaymentPolling({
     paymentId: paymentData?.id || null,
     orderId: orderId || null,
-    isActive: paymentStatus === 'pending',
+    isActive: paymentStatus === 'pending' && selectedPaymentMethod === 'pix',
     onSuccess: () => {
+      console.log('✅ Payment polling detected approval!');
       setPaymentStatus('approved');
       setRetryCount(0);
       paymentRecoveryService.resetRecoveryAttempts(orderId!);
     },
     onError: (error) => {
-      console.error('Payment polling error:', error);
+      console.error('❌ Payment polling error:', error);
       setPaymentStatus('error');
       handlePaymentError();
     },
     onTimeout: () => {
+      console.log('⏰ Payment polling timeout');
       setPaymentStatus('expired');
       handlePaymentTimeout();
+    },
+    onStatusChange: (status) => {
+      console.log('🔄 Payment status changed to:', status);
     }
   });
 
@@ -385,6 +420,11 @@ const Payment = () => {
             <div className="text-center" role="timer" aria-live="polite" aria-atomic="true">
               <p className="text-muted-foreground mb-2 text-sm">Tempo restante para pagamento:</p>
               <p className="text-2xl font-bold text-primary" aria-label={`${formatTime(timeRemaining)} restantes`}>{formatTime(timeRemaining)}</p>
+              {paymentData?.id.startsWith('mock_') && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  💡 Modo de teste: O pagamento será aprovado automaticamente em ~10 segundos
+                </p>
+              )}
             </div>
           )}
 

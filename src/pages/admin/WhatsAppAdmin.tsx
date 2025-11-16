@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -24,10 +25,12 @@ import {
   MessageCircle,
   Users,
   TrendingUp,
-  Send
+  Send,
+  FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UniformHeader } from '@/components/UniformHeader';
+import { WhatsAppErrorLogViewer } from '@/components/WhatsAppErrorLogViewer';
 
 interface ConnectionInfo {
   phoneNumber?: string;
@@ -46,6 +49,7 @@ interface WhatsAppStats {
 export default function WhatsAppAdmin() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
   
   // WhatsApp connection state
   const [showConnectionDialog, setShowConnectionDialog] = useState(false);
@@ -354,6 +358,20 @@ export default function WhatsAppAdmin() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="overview">
+              <Activity className="h-4 w-4 mr-2" />
+              Visão Geral
+            </TabsTrigger>
+            <TabsTrigger value="logs">
+              <FileText className="h-4 w-4 mr-2" />
+              Log de Erros
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
         {/* Connection Status Alert */}
         {connectionStatus === 'disconnected' && (
           <Alert className="mb-4 border-orange-200 bg-orange-50 p-3 sm:p-4">
@@ -501,6 +519,12 @@ export default function WhatsAppAdmin() {
             </CardContent>
           </Card>
         </div>
+          </TabsContent>
+
+          <TabsContent value="logs">
+            <WhatsAppErrorLogViewer />
+          </TabsContent>
+        </Tabs>
 
         {/* WhatsApp Connection Dialog */}
         <Dialog open={showConnectionDialog} onOpenChange={setShowConnectionDialog}>

@@ -286,6 +286,7 @@ class PaymentBrickService {
         customization: {
           visual: {
             hidePaymentButton: true, // We'll use our own button
+            hideFormTitle: true, // Hide form title
             style: {
               theme: 'default' as const,
             },
@@ -293,16 +294,15 @@ class PaymentBrickService {
           },
           paymentMethods: {
             maxInstallments: 1, // No installments
-            minInstallments: 1,
             ...config.customization?.paymentMethods,
           },
         },
       };
 
-      // Create Payment Brick instance
+      // Create Card Payment Brick instance
       const bricksBuilder = this.mp.bricks();
       
-      this.brickController = await bricksBuilder.create('payment', containerId, {
+      this.brickController = await bricksBuilder.create('cardPayment', containerId, {
         initialization: {
           amount: brickConfig.amount,
         },

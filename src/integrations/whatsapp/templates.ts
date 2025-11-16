@@ -86,99 +86,169 @@ export class WhatsAppTemplates {
   
   private static generateOrderConfirmationFallback(orderData: OrderData): string {
     const itemsList = orderData.items
-      .map(item => `• ${item.quantity}x ${item.itemName} - R$ ${item.unitPrice.toFixed(2)}`)
+      .map(item => {
+        const itemTotal = item.quantity * item.unitPrice;
+        return `• ${item.quantity}x ${item.itemName} - R$ ${itemTotal.toFixed(2)}`;
+      })
       .join('\n');
+
+    // Get first name for personalization
+    const firstName = orderData.customerName.split(' ')[0];
 
     return `🌴 *Coco Loko Açaiteria* 🌴
 
-✅ *Pedido Confirmado!*
+Olá *${firstName}*! 👋
+
+✅ *Pagamento Confirmado!*
+
+Seu pedido foi recebido e já está sendo preparado com muito carinho! 🥥
 
 📋 *Pedido #${orderData.orderNumber}*
-👤 *Cliente:* ${orderData.customerName}
-📱 *Telefone:* ${orderData.customerPhone}
+🪑 *Mesa:* ${orderData.tableNumber}
 
-📝 *Itens do Pedido:*
+📝 *Seus Itens:*
+${itemsList}
+
+💰 *Total Pago:* R$ ${orderData.totalAmount.toFixed(2)}
+
+⏰ *Tempo estimado:* 15-20 minutos
+
+Você receberá uma nova mensagem quando seu pedido estiver pronto para retirada no balcão!
+
+Obrigado por escolher a Coco Loko! 🌊`;
+  }
+
+  private static generateReadyForPickupFallback(orderData: OrderData): string {
+    const itemsList = orderData.items
+      .map(item => `• ${item.quantity}x ${item.itemName}`)
+      .join('\n');
+
+    // Get first name for personalization
+    const firstName = orderData.customerName.split(' ')[0];
+
+    return `🌴 *Coco Loko Açaiteria* 🌴
+
+🎉 *${firstName}, seu pedido está pronto!*
+
+Pode vir buscar no balcão! 🥥✨
+
+📋 *Pedido #${orderData.orderNumber}*
+🪑 *Mesa:* ${orderData.tableNumber}
+
+📝 *Seus Itens:*
+${itemsList}
+
+💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
+
+✨ Por favor, apresente o número do seu pedido: *#${orderData.orderNumber}*
+
+Aproveite! 🌊`;
+  }
+
+  private static generatePreparingFallback(orderData: OrderData): string {
+    const itemsList = orderData.items
+      .map(item => `• ${item.quantity}x ${item.itemName}`)
+      .join('\n');
+
+    // Get first name for personalization
+    const firstName = orderData.customerName.split(' ')[0];
+
+    return `🌴 *Coco Loko Açaiteria* 🌴
+
+Olá *${firstName}*! 👋
+
+👨‍🍳 *Seu pedido está sendo preparado!*
+
+📋 *Pedido #${orderData.orderNumber}*
+🪑 *Mesa:* ${orderData.tableNumber}
+
+📝 *Seus Itens:*
 ${itemsList}
 
 💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
 
 ⏰ *Tempo estimado:* 15-20 minutos
 
-Você receberá uma nova mensagem quando seu pedido estiver pronto para retirada!
-
-Obrigado por escolher a Coco Loko! 🥥🌊`;
-  }
-
-  private static generateReadyForPickupFallback(orderData: OrderData): string {
-    return `🌴 *Coco Loko Açaiteria* 🌴
-
-🎉 *Seu Pedido está pronto para retirada no balcão!*
-
-📋 *Pedido #${orderData.orderNumber}*
-👤 *Cliente:* ${orderData.customerName}
-
-✨ Por favor, apresente o número do seu pedido: *#${orderData.orderNumber}*`;
-  }
-
-  private static generatePreparingFallback(orderData: OrderData): string {
-    return `🌴 *Coco Loko Açaiteria* 🌴
-
-👨‍🍳 *Pedido em Preparo!*
-
-📋 *Pedido #${orderData.orderNumber}*
-👤 *Cliente:* ${orderData.customerName}
-
-Seu pedido está sendo preparado com carinho!
-
-⏰ *Tempo estimado:* 15-20 minutos
-
-Em breve você receberá uma notificação quando estiver pronto! 🥥🌊`;
+Estamos preparando tudo com muito carinho! Em breve você receberá uma notificação quando estiver pronto! 🥥🌊`;
   }
 
   private static generateStatusUpdateFallback(orderData: OrderData, status: string): string {
     let statusMessage = '';
     let emoji = '';
+    let additionalMessage = '';
+
+    // Get first name for personalization
+    const firstName = orderData.customerName.split(' ')[0];
+
+    const itemsList = orderData.items
+      .map(item => `• ${item.quantity}x ${item.itemName}`)
+      .join('\n');
 
     switch (status) {
       case 'in_preparation':
       case 'preparing':
         statusMessage = 'em preparo';
         emoji = '👨‍🍳';
+        additionalMessage = 'Estamos preparando seu pedido com carinho!';
         break;
       case 'ready':
         statusMessage = 'pronto para retirada';
         emoji = '✅';
+        additionalMessage = `Por favor, *${firstName}*, retire seu pedido no balcão!`;
         break;
       case 'completed':
         statusMessage = 'finalizado';
         emoji = '🎉';
+        additionalMessage = `Obrigado pela preferência, *${firstName}*!`;
         break;
       default:
         statusMessage = status;
         emoji = 'ℹ️';
+        additionalMessage = 'Obrigado pela preferência!';
     }
 
     return `🌴 *Coco Loko Açaiteria* 🌴
 
+Olá *${firstName}*! 👋
+
 ${emoji} *Atualização do Pedido*
 
 📋 *Pedido #${orderData.orderNumber}*
-👤 *Cliente:* ${orderData.customerName}
-📱 *Telefone:* ${orderData.customerPhone}
+🪑 *Mesa:* ${orderData.tableNumber}
+
+📝 *Seus Itens:*
+${itemsList}
+
+💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
 
 📊 *Status:* ${statusMessage}
 
-${status === 'ready' ? 'Por favor, retire seu pedido no balcão!' : 'Obrigado pela preferência!'}
+${additionalMessage}
 
 🥥🌊`;
   }
 
   private static generateCustomMessageFallback(orderData: OrderData, customText: string): string {
+    // Get first name for personalization
+    const firstName = orderData.customerName.split(' ')[0];
+
+    const itemsList = orderData.items
+      .map(item => `• ${item.quantity}x ${item.itemName}`)
+      .join('\n');
+
     return `🌴 *Coco Loko Açaiteria* 🌴
 
+Olá *${firstName}*! 👋
+
 📋 *Pedido #${orderData.orderNumber}*
-👤 *Cliente:* ${orderData.customerName}
-📱 *Telefone:* ${orderData.customerPhone}
+🪑 *Mesa:* ${orderData.tableNumber}
+
+📝 *Seus Itens:*
+${itemsList}
+
+💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
+
+---
 
 ${customText}
 
