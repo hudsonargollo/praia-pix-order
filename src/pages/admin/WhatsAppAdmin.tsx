@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -26,7 +28,9 @@ import {
   Users,
   TrendingUp,
   Send,
-  FileText
+  FileText,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UniformHeader } from '@/components/UniformHeader';
@@ -62,6 +66,11 @@ export default function WhatsAppAdmin() {
     totalPending: 0,
     deliveryRate: 0
   });
+  
+  // Test phone numbers
+  const [testPhoneNumbers, setTestPhoneNumbers] = useState<string[]>(['5573987387231']);
+  const [newTestNumber, setNewTestNumber] = useState('');
+  const [selectedTestNumber, setSelectedTestNumber] = useState('5573987387231');
 
   useEffect(() => {
     checkConnectionStatus();
@@ -333,8 +342,13 @@ export default function WhatsAppAdmin() {
       return;
     }
 
+    if (!selectedTestNumber) {
+      toast.error('Selecione um número de teste.');
+      return;
+    }
+
     try {
-      toast.info('Enviando mensagem de teste...');
+      toast.info(`Enviando mensagem de teste para ${selectedTestNumber}...`);
       
       const response = await fetch('/api/whatsapp/test-message', {
         method: 'POST',
@@ -342,6 +356,7 @@ export default function WhatsAppAdmin() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          phoneNumber: selectedTestNumber,
           message: '🥥 Teste de conexão WhatsApp - Coco Loko Açaiteria ✅\n\nSe você recebeu esta mensagem, o sistema de notificações está funcionando perfeitamente!\n\n📱 Mensagem enviada em: ' + new Date().toLocaleString('pt-BR')
         })
       });
@@ -360,6 +375,26 @@ export default function WhatsAppAdmin() {
       console.error('Failed to send test message:', error);
       toast.error('❌ Erro de conexão ao enviar mensagem de teste');
     }
+  };
+
+  const addTestNumber = () => {
+    if (!newTestNumber) return;
+    if (testPhoneNumbers.includes(newTestNumber)) {
+      toast.error('Este número já está na lista');
+      return;
+    }
+    setTestPhoneNumbers([...testPhoneNumbers, newTestNumber]);
+    setSelectedTestNumber(newTestNumber);
+    setNewTestNumber('');
+    toast.success('Número adicionado');
+  };
+
+  const removeTestNumber = (number: string) => {
+    setTestPhoneNumbers(testPhoneNumbers.filter(n => n !== number));
+    if (selectedTestNumber === number) {
+      setSelectedTestNumber(testPhoneNumbers[0] || '');
+    }
+    toast.success('Número removido');
   };
 
   if (loading) {
@@ -510,7 +545,56 @@ export default function WhatsAppAdmin() {
                 Envie mensagem de teste
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0 space-y-3">
+              {/* Test Number Selection */}
+              <div className="space-y-2">
+                <Label className="text-xs">Número de Teste</Label>
+                <div className="flex gap-2">
+                  <select
+                    value={selectedTestNumber}
+                    onChange={(e) => setSelectedTestNumber(e.target.value)}
+                    className="flex-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  >
+                    {testPhoneNumbers.map((number) => (
+                      <option key={number} value={number}>
+                        {number}
+                      </option>
+                    ))}
+                  </select>
+                  {testPhoneNumbers.length > 1 && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => removeTestNumber(selectedTestNumber)}
+                      className="h-9 w-9"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Add New Number */}
+              <div className="space-y-2">
+                <Label className="text-xs">Adicionar Número</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="5573987387231"
+                    value={newTestNumber}
+                    onChange={(e) => setNewTestNumber(e.target.value)}
+                    className="flex-1 h-9"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={addTestNumber}
+                    className="h-9 w-9"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
               <Button
                 onClick={handleTestMessage}
                 disabled={connectionStatus !== 'connected'}
@@ -532,33 +616,45 @@ export default function WhatsAppAdmin() {
                 Conectar ou desconectar
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0 space-y-2">
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
               {connectionStatus === 'connected' ? (
-                <Button
-                  onClick={handleDisconnect}
-                  variant="destructive"
-                  className="w-full"
-                >
-                  <WifiOff className="h-4 w-4 mr-2" />
-                  Desconectar
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={checkConnectionStatus}
+                    variant="outline"
+                    size="icon"
+                    title="Verificar Status"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    onClick={handleDisconnect}
+                    variant="destructive"
+                    className="flex-1"
+                  >
+                    <WifiOff className="h-4 w-4 mr-2" />
+                    Desconectar
+                  </Button>
+                </div>
               ) : (
-                <Button
-                  onClick={handleConnectWhatsApp}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                >
-                  <Smartphone className="h-4 w-4 mr-2" />
-                  Conectar WhatsApp
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={checkConnectionStatus}
+                    variant="outline"
+                    size="icon"
+                    title="Verificar Status"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    onClick={handleConnectWhatsApp}
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                  >
+                    <Smartphone className="h-4 w-4 mr-2" />
+                    Conectar WhatsApp
+                  </Button>
+                </div>
               )}
-              <Button
-                onClick={checkConnectionStatus}
-                variant="outline"
-                className="w-full"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Verificar Status
-              </Button>
             </CardContent>
           </Card>
         </div>
