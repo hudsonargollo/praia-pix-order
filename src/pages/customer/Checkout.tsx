@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import { normalizePhone } from "@/lib/phoneUtils";
@@ -180,8 +180,31 @@ const Checkout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white shadow-2xl sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-4 sm:py-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/20 transition-all"
+              onClick={() => navigate("/menu")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold">Finalizar Pedido</h1>
+              {name && (
+                <p className="text-white/90 text-sm mt-0.5">{name}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-md mx-auto p-4 pt-8">
         <AnimatePresence mode="wait">
           {step === 'NAME' && (
             <motion.div
