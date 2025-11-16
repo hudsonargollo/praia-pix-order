@@ -114,22 +114,24 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
 
   return (
     <Card className={`p-6 shadow-lg border-2 border-cyan-100 rounded-2xl ${className || ''}`}>
-      <h2 className="font-bold text-xl mb-4 text-purple-900">Identificação</h2>
+      <h2 className="font-bold text-xl mb-2 text-purple-900">Informe seu nome e telefone</h2>
+      <p className="text-sm text-muted-foreground mb-4">💬 Atualizações via WhatsApp</p>
       
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="customer-name" className="text-sm font-medium">
-            Nome *
-          </Label>
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xl">
+            👤
+          </div>
           <Input
             id="customer-name"
             type="text"
-            placeholder="Seu nome"
+            placeholder="Digite seu nome"
             value={customerInfo.name}
             onChange={(e) => updateCustomerInfo('name', e.target.value)}
-            className={`mt-1 ${errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+            className={`pl-12 ${errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? "name-error" : undefined}
+            aria-label="Nome"
           />
           {errors.name && (
             <p id="name-error" className="text-sm font-medium text-red-600 mt-1">
@@ -138,34 +140,27 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
           )}
         </div>
 
-        <div>
-          <Label htmlFor="customer-phone" className="text-sm font-medium">
-            WhatsApp *
-          </Label>
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xl">
+            📱
+          </div>
           <Input
             id="customer-phone"
             type="tel"
-            placeholder="73999999999"
+            placeholder="DDD + Telefone"
             value={customerInfo.phone}
             onChange={handlePhoneChange}
             maxLength={11}
-            className={`mt-1 ${errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+            className={`pl-12 ${errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
             aria-invalid={!!errors.phone}
-            aria-describedby={errors.phone ? "phone-error" : "phone-help"}
+            aria-describedby={errors.phone ? "phone-error" : undefined}
+            aria-label="WhatsApp"
           />
-          {errors.phone ? (
+          {errors.phone && (
             <p id="phone-error" className="text-sm font-medium text-red-600 mt-1">
               {errors.phone}
             </p>
-          ) : (
-            <p id="phone-help" className="text-sm text-muted-foreground mt-1">
-              Digite apenas números (DDD + número)
-            </p>
           )}
-        </div>
-
-        <div className="text-sm text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p>💬 Atualizações via WhatsApp</p>
         </div>
 
         {/* Validation status indicator (hidden, for programmatic access) */}
