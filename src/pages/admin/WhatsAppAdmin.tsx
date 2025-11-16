@@ -86,11 +86,29 @@ export default function WhatsAppAdmin() {
       
       if (data.isConnected) {
         setConnectionStatus('connected');
-        const phoneNumber = data.phoneNumber || data.phone || data.number;
+        
+        // Extract phone number from various possible fields
+        let phoneNumber = data.phoneNumber || data.phone || data.number;
+        
+        // If phone number has @s.whatsapp.net suffix, remove it
+        if (phoneNumber && phoneNumber.includes('@')) {
+          phoneNumber = phoneNumber.split('@')[0];
+        }
+        
+        // Extract from instance data if available
+        if (!phoneNumber && data.instance) {
+          const instancePhone = data.instance.owner || data.instance.phoneNumber;
+          if (instancePhone && instancePhone.includes('@')) {
+            phoneNumber = instancePhone.split('@')[0];
+          } else {
+            phoneNumber = instancePhone;
+          }
+        }
+        
         setConnectionInfo({
           phoneNumber,
-          connectedAt: data.lastConnected || data.connectedAt,
-          profileName: data.profileName || data.name
+          connectedAt: data.lastConnected || data.connectedAt || data.instance?.createdAt,
+          profileName: data.profileName || data.name || data.instance?.profileName
         });
         
         // Pre-populate test number with connected number if not already set
