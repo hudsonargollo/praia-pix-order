@@ -19,10 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Edit, Plus, Upload, ArrowUpDown, ShoppingBag } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Edit, Plus, Upload, ArrowUpDown, ShoppingBag, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { SortingDialog } from '@/components/SortingDialog';
+import { CategoryManagement } from '@/components/CategoryManagement';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { UniformHeader } from '@/components/UniformHeader';
 
@@ -353,17 +355,30 @@ const AdminProducts = () => {
         }
       />
 
-      {/* Enhanced Products Grid */}
+      {/* Tabs for Products and Categories */}
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Produtos do Cardápio</h2>
-          <p className="text-gray-600">
-            {menuItems.length} produtos cadastrados • Clique em "Editar" para modificar
-          </p>
-        </div>
+        <Tabs defaultValue="products" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+            <TabsTrigger value="products" className="flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4" />
+              Produtos
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="flex items-center gap-2">
+              <FolderOpen className="w-4 h-4" />
+              Categorias
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Category-based sections with sorting buttons */}
-        {categories.map((category) => {
+          <TabsContent value="products" className="space-y-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Produtos do Cardápio</h2>
+              <p className="text-gray-600">
+                {menuItems.length} produtos cadastrados • Clique em "Editar" para modificar
+              </p>
+            </div>
+
+            {/* Category-based sections with sorting buttons */}
+            {categories.map((category) => {
           const categoryItems = menuItems.filter(item => item.category_id === category.id);
           
           if (categoryItems.length === 0) return null;
@@ -487,6 +502,15 @@ const AdminProducts = () => {
             </Button>
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="categories">
+            <CategoryManagement 
+              categories={categories}
+              onCategoriesChange={loadData}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit Dialog */}
