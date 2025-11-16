@@ -402,24 +402,6 @@ export default function WhatsAppAdmin() {
       <UniformHeader
         title="WhatsApp"
         onBack={() => navigate("/admin")}
-        actions={
-          connectionStatus === 'connected' ? (
-            <Badge variant="default" className="bg-green-600 text-white">
-              <Wifi className="h-3 w-3 mr-1" />
-              <span className="hidden sm:inline">Conectado</span>
-            </Badge>
-          ) : (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleConnectWhatsApp}
-              className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
-            >
-              <Smartphone className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Conectar</span>
-            </Button>
-          )
-        }
       />
 
       {/* Main Content */}
@@ -439,75 +421,69 @@ export default function WhatsAppAdmin() {
 
           <TabsContent value="overview" className="space-y-4">
         {/* Connection Status Card */}
-        <Card className={connectionStatus === 'connected' ? 'border-green-300 bg-gradient-to-r from-green-50 to-emerald-50' : 'border-orange-300 bg-gradient-to-r from-orange-50 to-amber-50'}>
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className={`p-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-100' : 'bg-orange-100'}`}>
-                  {connectionStatus === 'connected' ? (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  ) : (
-                    <AlertTriangle className="h-5 w-5 text-orange-600" />
-                  )}
+        <Card className={connectionStatus === 'connected' ? 'border-green-200 bg-white' : 'border-orange-200 bg-white'}>
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-2xl ${connectionStatus === 'connected' ? 'bg-green-100' : 'bg-orange-100'}`}>
+                  <MessageCircle className={`h-8 w-8 ${connectionStatus === 'connected' ? 'text-green-600' : 'text-orange-600'}`} />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <CardTitle className={`text-base font-semibold ${connectionStatus === 'connected' ? 'text-green-800' : 'text-orange-800'}`}>
-                    {connectionStatus === 'connected' ? 'WhatsApp Conectado' : 'WhatsApp Desconectado'}
+                <div>
+                  <CardTitle className={`text-xl font-bold ${connectionStatus === 'connected' ? 'text-green-800' : 'text-orange-800'}`}>
+                    WhatsApp {connectionStatus === 'connected' ? 'Conectado' : 'Desconectado'}
                   </CardTitle>
                   {connectionStatus === 'connected' && connectionInfo?.phoneNumber && (
-                    <CardDescription className="text-green-700 font-medium mt-0.5 flex items-center gap-1">
-                      <Smartphone className="h-3 w-3" />
+                    <CardDescription className="text-green-700 font-medium mt-1 flex items-center gap-1.5">
+                      <Smartphone className="h-4 w-4" />
                       {connectionInfo.phoneNumber}
+                    </CardDescription>
+                  )}
+                  {connectionStatus === 'disconnected' && (
+                    <CardDescription className="text-orange-700 mt-1">
+                      Clique em "Conectar" para escanear o QR code
                     </CardDescription>
                   )}
                 </div>
               </div>
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex gap-2">
                 <Button
                   onClick={checkConnectionStatus}
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 hover:bg-white/50"
-                  title="Verificar Status"
+                  className="h-10 w-10"
+                  title="Atualizar Status"
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className="h-5 w-5" />
                 </Button>
                 {connectionStatus === 'connected' ? (
                   <Button
                     onClick={handleDisconnect}
-                    variant="destructive"
-                    size="sm"
-                    className="h-8"
+                    variant="outline"
+                    size="default"
+                    className="border-red-200 text-red-700 hover:bg-red-50"
                   >
-                    <WifiOff className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">Desconectar</span>
+                    <WifiOff className="h-5 w-5 mr-2" />
+                    Desconectar
                   </Button>
                 ) : (
                   <Button
                     onClick={handleConnectWhatsApp}
-                    size="sm"
-                    className="h-8 bg-green-600 hover:bg-green-700"
+                    size="default"
+                    className="bg-green-600 hover:bg-green-700"
                   >
-                    <Wifi className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">Conectar</span>
+                    <Wifi className="h-5 w-5 mr-2" />
+                    Conectar
                   </Button>
                 )}
               </div>
             </div>
           </CardHeader>
           {connectionStatus === 'connected' && connectionInfo?.connectedAt && (
-            <CardContent className="pt-0 pb-3">
-              <p className="text-xs text-green-700 flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Conectado em: {new Date(connectionInfo.connectedAt).toLocaleString('pt-BR')}
-              </p>
-            </CardContent>
-          )}
-          {connectionStatus === 'disconnected' && (
-            <CardContent className="pt-0 pb-3">
-              <p className="text-xs text-orange-700">
-                Clique em "Conectar" para escanear o QR code e ativar as notificações.
-              </p>
+            <CardContent className="pt-0 pb-4 border-t">
+              <div className="flex items-center gap-2 text-sm text-gray-600 mt-4">
+                <Clock className="h-4 w-4" />
+                <span>Conectado em: {new Date(connectionInfo.connectedAt).toLocaleString('pt-BR')}</span>
+              </div>
             </CardContent>
           )}
         </Card>
