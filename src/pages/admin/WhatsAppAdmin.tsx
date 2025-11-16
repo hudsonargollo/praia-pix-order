@@ -419,8 +419,8 @@ export default function WhatsAppAdmin() {
           <TabsContent value="overview" className="space-y-4">
         {/* Connection Status Card */}
         <Card className={connectionStatus === 'connected' ? 'border-green-200 bg-white' : 'border-orange-200 bg-white'}>
-          <CardHeader className="pb-4 space-y-4">
-            <div className="flex items-start gap-3">
+          <CardHeader className="p-5 sm:p-6 space-y-4">
+            <div className="flex items-start gap-4">
               <div className={`p-3 rounded-2xl flex-shrink-0 ${connectionStatus === 'connected' ? 'bg-green-100' : 'bg-orange-100'}`}>
                 <MessageCircle className={`h-8 w-8 ${connectionStatus === 'connected' ? 'text-green-600' : 'text-orange-600'}`} />
               </div>
@@ -429,18 +429,18 @@ export default function WhatsAppAdmin() {
                   {connectionStatus === 'connected' ? 'Notificações Ativas' : 'Notificações por WhatsApp'}
                 </CardTitle>
                 {connectionStatus === 'connected' && connectionInfo?.phoneNumber ? (
-                  <CardDescription className="text-green-700 font-medium mt-1 flex items-center gap-1.5 text-sm">
+                  <CardDescription className="text-green-700 font-medium mt-1.5 flex items-center gap-1.5 text-sm">
                     <Smartphone className="h-4 w-4 flex-shrink-0" />
                     <span className="truncate">{connectionInfo.phoneNumber}</span>
                   </CardDescription>
                 ) : (
-                  <CardDescription className="text-orange-700 mt-1 text-sm">
+                  <CardDescription className="text-orange-700 mt-1.5 text-sm">
                     Conecte sua conta para enviar alertas
                   </CardDescription>
                 )}
               </div>
             </div>
-            <div className="w-full">
+            <div className="w-full pt-1">
               {connectionStatus === 'connected' ? (
                 <Button
                   onClick={handleDisconnect}
@@ -577,22 +577,22 @@ export default function WhatsAppAdmin() {
 
         {/* WhatsApp Connection Dialog */}
         <Dialog open={showConnectionDialog} onOpenChange={setShowConnectionDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg">Conectar WhatsApp</DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm">
+          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="space-y-2">
+              <DialogTitle className="text-lg sm:text-xl font-bold">Conectar WhatsApp</DialogTitle>
+              <DialogDescription className="text-sm text-gray-600">
                 Escaneie o QR code com seu WhatsApp para conectar
               </DialogDescription>
             </DialogHeader>
             
-            <div className="flex flex-col items-center justify-center py-4 sm:py-6 space-y-3 sm:space-y-4">
+            <div className="flex flex-col items-center justify-center py-6 space-y-4">
               {connectionStatus === 'connecting' && qrCode ? (
                 <>
-                  <div className="bg-white p-3 sm:p-4 rounded-lg border-2 border-gray-200">
+                  <div className="bg-white p-4 rounded-xl border-2 border-gray-300 shadow-sm">
                     <img 
                       src={qrCode} 
                       alt="QR Code" 
-                      className="w-48 h-48 sm:w-56 sm:h-56"
+                      className="w-56 h-56 sm:w-64 sm:h-64"
                       onError={() => {
                         console.error('QR Code image failed to load');
                         console.error('QR Code data length:', qrCode?.length);
@@ -603,40 +603,51 @@ export default function WhatsAppAdmin() {
                       }}
                     />
                   </div>
-                  <p className="text-xs text-gray-500">
-                    {qrCode && `QR Code carregado (${qrCode.length} caracteres)`}
-                  </p>
-                  <div className="text-center space-y-2">
-                    <p className="text-xs sm:text-sm font-medium">Como conectar:</p>
-                    <ol className="text-xs text-gray-600 space-y-0.5 sm:space-y-1 text-left">
-                      <li>1. Abra o WhatsApp no seu celular</li>
-                      <li>2. Vá em <strong>Configurações</strong> → <strong>Aparelhos conectados</strong></li>
-                      <li>3. Toque em <strong>Conectar aparelho</strong></li>
-                      <li>4. Escaneie este QR code</li>
+                  <div className="text-center space-y-3 px-4">
+                    <p className="text-sm font-semibold text-gray-900">Como conectar:</p>
+                    <ol className="text-sm text-gray-700 space-y-2 text-left bg-gray-50 p-4 rounded-lg">
+                      <li className="flex items-start gap-2">
+                        <span className="font-semibold text-green-600">1.</span>
+                        <span>Abra o WhatsApp no seu celular</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-semibold text-green-600">2.</span>
+                        <span>Vá em <strong>Configurações</strong> → <strong>Aparelhos conectados</strong></span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-semibold text-green-600">3.</span>
+                        <span>Toque em <strong>Conectar aparelho</strong></span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-semibold text-green-600">4.</span>
+                        <span>Escaneie este QR code</span>
+                      </li>
                     </ol>
                   </div>
                 </>
               ) : connectionStatus === 'connecting' ? (
-                <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                  <RefreshCw className="h-12 w-12 animate-spin text-green-600" />
-                  <p className="text-sm text-gray-600">Gerando QR code...</p>
-                  <p className="text-xs text-gray-500 text-center">
-                    Isso pode levar alguns segundos. Aguarde...
-                  </p>
+                <div className="flex flex-col items-center space-y-4 py-8">
+                  <RefreshCw className="h-16 w-16 animate-spin text-green-600" />
+                  <div className="text-center space-y-2">
+                    <p className="text-base font-medium text-gray-900">Gerando QR code...</p>
+                    <p className="text-sm text-gray-500">
+                      Isso pode levar alguns segundos. Aguarde...
+                    </p>
+                  </div>
                 </div>
               ) : connectionStatus === 'connected' ? (
-                <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                  <div className="bg-green-100 p-4 rounded-full">
-                    <Wifi className="h-12 w-12 text-green-600" />
+                <div className="flex flex-col items-center space-y-4 py-4">
+                  <div className="bg-green-100 p-5 rounded-full">
+                    <Wifi className="h-16 w-16 text-green-600" />
                   </div>
-                  <div className="text-center space-y-2">
-                    <p className="text-lg font-semibold text-green-700">Conectado!</p>
+                  <div className="text-center space-y-3">
+                    <p className="text-xl font-bold text-green-700">Conectado!</p>
                     {connectionInfo && (
-                      <div className="text-sm text-gray-600 space-y-1">
-                        {connectionInfo.profileName && <p>Perfil: {connectionInfo.profileName}</p>}
-                        {connectionInfo.phoneNumber && <p>Telefone: {connectionInfo.phoneNumber}</p>}
+                      <div className="text-sm text-gray-600 space-y-1 bg-gray-50 p-4 rounded-lg">
+                        {connectionInfo.profileName && <p><strong>Perfil:</strong> {connectionInfo.profileName}</p>}
+                        {connectionInfo.phoneNumber && <p><strong>Telefone:</strong> {connectionInfo.phoneNumber}</p>}
                         {connectionInfo.connectedAt && (
-                          <p>Conectado em: {new Date(connectionInfo.connectedAt).toLocaleString('pt-BR')}</p>
+                          <p><strong>Conectado em:</strong> {new Date(connectionInfo.connectedAt).toLocaleString('pt-BR')}</p>
                         )}
                       </div>
                     )}
@@ -644,18 +655,18 @@ export default function WhatsAppAdmin() {
                   <Button
                     variant="outline"
                     onClick={handleDisconnect}
-                    className="mt-4"
+                    className="mt-2 border-red-200 text-red-700 hover:bg-red-50"
                   >
                     <WifiOff className="h-4 w-4 mr-2" />
                     Desconectar
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                  <div className="bg-gray-100 p-4 rounded-full">
-                    <WifiOff className="h-12 w-12 text-gray-400" />
+                <div className="flex flex-col items-center space-y-4 py-8">
+                  <div className="bg-gray-100 p-5 rounded-full">
+                    <WifiOff className="h-16 w-16 text-gray-400" />
                   </div>
-                  <p className="text-sm text-gray-600">Desconectado</p>
+                  <p className="text-base text-gray-600">Desconectado</p>
                 </div>
               )}
             </div>
