@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, ArrowLeft } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { CheckCircle, ArrowLeft, Plus, Minus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import { normalizePhone } from "@/lib/phoneUtils";
@@ -15,13 +21,14 @@ type CheckoutStep = 'NAME' | 'WHATSAPP' | 'CONFIRM' | 'REVIEW';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { state: cartState, clearCart } = useCart();
+  const { state: cartState, clearCart, addItem, removeItem } = useCart();
   
   const [step, setStep] = useState<CheckoutStep>('NAME');
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [errors, setErrors] = useState({ name: "", whatsapp: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Animation variants
   const pageVariants = {
@@ -355,7 +362,7 @@ const Checkout = () => {
                   {/* Action buttons */}
                   <div className="space-y-3 pt-2">
                     <Button
-                      onClick={() => navigate('/menu')}
+                      onClick={() => setIsEditDialogOpen(true)}
                       variant="outline"
                       className="w-full py-6 text-lg font-semibold"
                     >
@@ -382,6 +389,89 @@ const Checkout = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Edit Order Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Editar Pedido</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {cartState.items.map((item) => (
+              <div key={item.id} className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 truncate">{item.name}</p>
+                  <p className="text-sm text-gray-600">R$ {item.price.toFixed(2)}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8 rounded-full"
+                    onClick={() => removeItem(item.id)}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="font-bold text-lg min-w-[2rem] text-center">
+                    {item.quantity}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8 rounded-full"
+                    onClick={() => addItem(item)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            
+            {cartState.items.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <p>Carrinho vazio</p>
+                <Button
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    navigate('/menu');
+                  }}
+                  className="mt-4"
+                >
+                  Voltar ao Cardápio
+                </Button>
+              </div>
+            )}
+            
+            {cartState.items.length > 0 && (
+              <>
+                <div className="border-t pt-4">
+                  <div className="flex justify-between items-center text-lg font-bold">
+                    <span>Total:</span>
+                    <span className="text-purple-600">
+                      R$ {cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => navigate('/menu')}
+                  >
+                    Adicionar Mais
+                  </Button>
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600"
+                    onClick={() => setIsEditDialogOpen(false)}
+                  >
+                    Continuar
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
