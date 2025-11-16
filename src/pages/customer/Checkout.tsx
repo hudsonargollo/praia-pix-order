@@ -22,12 +22,20 @@ const Checkout = () => {
   const [whatsapp, setWhatsapp] = useState("");
   const [errors, setErrors] = useState({ name: "", whatsapp: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCartLoaded, setIsCartLoaded] = useState(false);
 
-  // Redirect if cart is empty
+  // Wait for cart to load, then check if empty
   useEffect(() => {
-    if (cartState.items.length === 0) {
-      navigate("/qr");
-    }
+    // Give cart context time to load from localStorage
+    const timer = setTimeout(() => {
+      setIsCartLoaded(true);
+      if (cartState.items.length === 0) {
+        console.log('Cart is empty, redirecting to /qr');
+        navigate("/qr");
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [cartState.items.length, navigate]);
 
   // Animation variants
@@ -185,6 +193,18 @@ const Checkout = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Show loading while cart is being checked
+  if (!isCartLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin text-4xl mb-4">⏳</div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
