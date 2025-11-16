@@ -120,29 +120,40 @@ Obrigado por escolher a Coco Loko! 🌊`;
 
   private static generateReadyForPickupFallback(orderData: OrderData): string {
     const itemsList = orderData.items
-      .map(item => `• ${item.quantity}x ${item.itemName}`)
+      .map(item => {
+        const itemTotal = item.quantity * item.unitPrice;
+        return `• ${item.quantity}x ${item.itemName} — R$ ${itemTotal.toFixed(2)}`;
+      })
       .join('\n');
 
     // Get first name for personalization
     const firstName = orderData.customerName.split(' ')[0];
 
+    // Determine payment status indicator
+    let paymentStatus = '🔴 Pendente';
+    if (orderData.paymentMethod === 'pix' || orderData.paymentMethod === 'PIX') {
+      paymentStatus = '🟢 Confirmado via PIX';
+    } else if (orderData.paymentMethod === 'credit_card' || orderData.paymentMethod === 'card') {
+      paymentStatus = '🔵 Confirmado via Cartão';
+    } else if (orderData.paymentConfirmedAt) {
+      // If payment is confirmed but method unknown, check for PIX first
+      paymentStatus = '🟢 Confirmado via PIX';
+    }
+
     return `🌴 *Coco Loko Açaiteria* 🌴
 
-🎉 *${firstName}, seu pedido está pronto!*
+Olá, *${firstName}*!
 
-Pode vir buscar no balcão! 🥥✨
+Seu pedido já está pronto para retirada no balcão.
 
-📋 *Pedido #${orderData.orderNumber}*
-🪑 *Mesa:* ${orderData.tableNumber}
-
-📝 *Seus Itens:*
+📝 *Itens do Pedido [#${orderData.orderNumber}]:*
 ${itemsList}
 
 💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
 
-✨ Por favor, apresente o número do seu pedido: *#${orderData.orderNumber}*
+📌 *Status do pagamento:* ${paymentStatus}
 
-Aproveite! 🌊`;
+Obrigado pela preferência! 🙌`;
   }
 
   private static generatePreparingFallback(orderData: OrderData): string {

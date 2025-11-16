@@ -123,6 +123,8 @@ export interface OrderData {
   }>;
   status: string;
   createdAt: string;
+  paymentMethod?: string;
+  paymentConfirmedAt?: string;
 }
 
 // Service Interfaces

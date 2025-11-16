@@ -59,14 +59,15 @@ const Payment = () => {
         // @ts-ignore - Type will be updated after Supabase types regeneration
         const { error } = await supabase.rpc('confirm_order_payment', {
           _order_id: orderId,
-          _payment_id: paymentId
+          _payment_id: paymentId,
+          _payment_method: 'credit_card'
         });
         
         if (error) {
           console.error('Error confirming order payment:', error);
           toast.error('Erro ao confirmar pagamento. Entre em contato com o suporte.');
         } else {
-          console.log('Order payment confirmed successfully:', { orderId, paymentId });
+          console.log('Order payment confirmed successfully:', { orderId, paymentId, method: 'credit_card' });
         }
       } catch (error) {
         console.error('Exception confirming order payment:', error);

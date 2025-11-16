@@ -228,6 +228,16 @@ export class NotificationTriggerService {
         return null;
       }
 
+      // Determine payment method from mercadopago_payment_id or payment_method field
+      let paymentMethod = data.payment_method || 'pix'; // Default to PIX
+      
+      // If payment_method is not set, try to infer from payment ID
+      if (!data.payment_method && data.mercadopago_payment_id) {
+        // Check if it's a card payment (card payments typically have different ID format)
+        // For now, default to PIX unless explicitly set
+        paymentMethod = 'pix';
+      }
+
       return {
         id: data.id,
         orderNumber: data.order_number,
@@ -242,6 +252,8 @@ export class NotificationTriggerService {
         })),
         status: data.status,
         createdAt: data.created_at,
+        paymentMethod: paymentMethod,
+        paymentConfirmedAt: data.payment_confirmed_at,
       };
     } catch (error) {
       console.error('Error getting order data:', error);
