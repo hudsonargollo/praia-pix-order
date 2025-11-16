@@ -119,7 +119,7 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
       
       <div className="space-y-4">
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xl">
+          <div className="absolute left-3 top-3 text-xl leading-none flex items-center h-10">
             👤
           </div>
           <Input
@@ -128,7 +128,7 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
             placeholder="Digite seu nome"
             value={customerInfo.name}
             onChange={(e) => updateCustomerInfo('name', e.target.value)}
-            className={`pl-12 ${errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+            className={`pl-12 h-10 ${errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? "name-error" : undefined}
             aria-label="Nome"
@@ -141,7 +141,7 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
         </div>
 
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xl">
+          <div className="absolute left-3 top-3 text-xl leading-none flex items-center h-10">
             📱
           </div>
           <Input
@@ -151,7 +151,7 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
             value={customerInfo.phone}
             onChange={handlePhoneChange}
             maxLength={11}
-            className={`pl-12 ${errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+            className={`pl-12 h-10 ${errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
             aria-invalid={!!errors.phone}
             aria-describedby={errors.phone ? "phone-error" : undefined}
             aria-label="WhatsApp"
