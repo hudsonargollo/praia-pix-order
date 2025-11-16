@@ -12,7 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // Lazy load customer pages
 const QRLanding = lazy(() => import("./pages/customer/QRLanding"));
 const Menu = lazy(() => import("./pages/customer/Menu"));
-const Checkout = lazy(() => import("./pages/customer/Checkout"));
+const CheckoutLegacy = lazy(() => import("./pages/customer/CheckoutLegacy"));
 const Payment = lazy(() => import("./pages/customer/Payment"));
 const OrderStatus = lazy(() => import("./pages/customer/OrderStatus"));
 
@@ -111,9 +111,9 @@ const App = () => {
               <PaymentTest />
             </Suspense>
           } />
-          <Route path="/checkout" element={
+          <Route path="/checkout2" element={
             <Suspense fallback={<LoadingFallback />}>
-              <Checkout />
+              <CheckoutLegacy />
             </Suspense>
           } />
           <Route path="/payment/:orderId" element={

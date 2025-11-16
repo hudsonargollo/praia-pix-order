@@ -1,127 +1,150 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ShoppingCart } from "lucide-react";
+import { CheckCircle, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
-import CustomerInfoForm, { CustomerInfo } from "@/components/CustomerInfoForm";
-import OrderNotesInput from "@/components/OrderNotesInput";
+import { normalizePhone } from "@/lib/phoneUtils";
+
+type CheckoutStep = 'NAME' | 'WHATSAPP' | 'CONFIRM' | 'REVIEW';
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const { state: cartState, clearCart } = useCart();
   
-  const { state: cartState, clearCart, addItem, removeItem } = useCart();
-  const [loading, setLoading] = useState(false);
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-    name: "",
-    phone: ""
-  });
-  const [orderNotes, setOrderNotes] = useState("");
-  const [isWaiter, setIsWaiter] = useState(false);
-  const [waiterId, setWaiterId] = useState<string | null>(null);
+  const [step, setStep] = useState<CheckoutStep>('NAME');
+  const [name, setName] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [errors, setErrors] = useState({ name: "", whatsapp: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Redirect if cart is empty
   useEffect(() => {
-    // Redirect if cart is empty
     if (cartState.items.length === 0) {
       navigate("/menu");
-      return;
     }
+  }, [cartState.items.length, navigate]);
 
-    // Check for logged-in user (waiter)
-    const checkUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const role = user?.user_metadata?.role;
-      
-      if (role === "waiter") {
-        setIsWaiter(true);
-        setWaiterId(user.id);
-        // Waiter-assisted orders require customer info collection
-        setCustomerInfo({ name: "", phone: "" });
-      } else {
-        setIsWaiter(false);
-        setWaiterId(null);
-        // Load customer info from sessionStorage for regular customers
-        const storedCustomerInfo = sessionStorage.getItem("customerInfo");
-        if (storedCustomerInfo) {
-          try {
-            const parsed = JSON.parse(storedCustomerInfo);
-            setCustomerInfo(parsed);
-          } catch (error) {
-            console.error("Error parsing customer info:", error);
-          }
-        }
-      }
-    };
-
-    checkUserRole();
-  }, [navigate, cartState.items.length]);
-
-  const getTotalPrice = () => {
-    return cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // Animation variants
+  const pageVariants = {
+    initial: { opacity: 0, x: 20 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -20 }
   };
 
-  const handleCreateOrder = async () => {
-    if (cartState.items.length === 0) {
-      toast.error("Carrinho vazio");
-      return;
+  const transition = { duration: 0.3 };
+
+  // Validation functions
+  const validateName = (value: string): boolean => {
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setErrors(prev => ({ ...prev, name: "Nome deve ter pelo menos 2 caracteres" }));
+      return false;
     }
+    setErrors(prev => ({ ...prev, name: "" }));
+    return true;
+  };
 
-    if (!customerInfo.name?.trim() || !customerInfo.phone?.trim()) {
-      toast.error("Preencha seu nome e WhatsApp");
-      return;
+  const validateWhatsApp = (value: string): boolean => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length !== 11) {
+      setErrors(prev => ({ ...prev, whatsapp: "WhatsApp deve ter 11 dígitos (DDD + número)" }));
+      return false;
     }
-
-    // Validate phone number (should be 11 digits)
-    const phoneDigits = customerInfo.phone.replace(/\D/g, '');
-    if (phoneDigits.length !== 11) {
-      toast.error("WhatsApp deve ter 11 dígitos");
-      return;
+    const ddd = parseInt(digits.substring(0, 2));
+    if (ddd < 11 || ddd > 99) {
+      setErrors(prev => ({ ...prev, whatsapp: "DDD inválido" }));
+      return false;
     }
+    setErrors(prev => ({ ...prev, whatsapp: "" }));
+    return true;
+  };
 
-    // Validate name length
-    if (customerInfo.name.trim().length < 2) {
-      toast.error("Nome muito curto");
-      return;
+  // Step handlers
+  const handleNameContinue = () => {
+    if (validateName(name)) {
+      setStep('WHATSAPP');
     }
+  };
 
-    // Format phone with +55 prefix for database
-    const formattedPhone = `+55${phoneDigits}`;
+  const handleWhatsAppContinue = () => {
+    if (validateWhatsApp(whatsapp)) {
+      setStep('CONFIRM');
+    }
+  };
 
-    // Save customer info to sessionStorage
-    sessionStorage.setItem("customerInfo", JSON.stringify(customerInfo));
+  const handleWhatsAppInput = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    setWhatsapp(digits.slice(0, 11));
+  };
 
-    setLoading(true);
+  // Auto-advance from CONFIRM to REVIEW
+  useEffect(() => {
+    if (step === 'CONFIRM') {
+      const timer = setTimeout(() => {
+        setStep('REVIEW');
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
 
+  // Handle payment navigation
+  const handleGoToPayment = async () => {
+    setIsSubmitting(true);
+    
     try {
-      // Determine initial status based on user type
-      // Waiter orders: go directly to preparation with pending payment
-      // Customer orders: wait for payment before preparation
-      const initialStatus = isWaiter ? "in_preparation" : "pending_payment";
-      const initialPaymentStatus = isWaiter ? "pending" : "pending";
-      
-      const orderData = {
-        customer_name: customerInfo.name,
-        customer_phone: formattedPhone,
-        table_number: "-", // Placeholder - orders identified by phone
-        status: initialStatus,
-        payment_status: initialPaymentStatus,
-        total_amount: getTotalPrice(),
-        waiter_id: waiterId, // Assign waiter ID if present
-        order_notes: orderNotes.trim() || null, // Add order notes
-      };
+      // Normalize phone number
+      const normalizedPhone = normalizePhone(whatsapp);
+      if (!normalizedPhone) {
+        toast.error("Número de WhatsApp inválido");
+        return;
+      }
+
+      // Upsert customer record
+      // @ts-ignore - customers table exists but types need regeneration
+      const { error: customerError } = await supabase
+        .from('customers')
+        .upsert({
+          whatsapp: normalizedPhone,
+          name: name.trim(),
+          last_order_date: new Date().toISOString()
+        }, {
+          onConflict: 'whatsapp'
+        });
+
+      if (customerError) {
+        console.error('Error upserting customer:', customerError);
+        toast.error("Erro ao salvar informações. Tente novamente.");
+        return;
+      }
+
+      // Calculate total
+      const totalAmount = cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
       // Create order
       const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert(orderData)
+        .from('orders')
+        .insert({
+          customer_name: name.trim(),
+          customer_phone: normalizedPhone,
+          table_number: '-',
+          status: 'pending_payment',
+          payment_status: 'pending',
+          total_amount: totalAmount
+        })
         .select()
         .single();
 
-      if (orderError) throw orderError;
+      if (orderError || !order) {
+        console.error('Error creating order:', orderError);
+        toast.error("Erro ao criar pedido. Tente novamente.");
+        return;
+      }
 
       // Create order items
       const orderItems = cartState.items.map((item) => ({
@@ -129,167 +152,219 @@ const Checkout = () => {
         menu_item_id: item.id,
         quantity: item.quantity,
         unit_price: item.price,
-        item_name: item.name,
+        item_name: item.name
       }));
 
       const { error: itemsError } = await supabase
-        .from("order_items")
+        .from('order_items')
         .insert(orderItems);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('Error creating order items:', itemsError);
+        toast.error("Erro ao criar itens do pedido. Tente novamente.");
+        return;
+      }
+
+      // Save customer info to sessionStorage
+      sessionStorage.setItem('customerInfo', JSON.stringify({
+        name: name.trim(),
+        phone: normalizedPhone
+      }));
 
       // Clear cart after successful order creation
       clearCart();
 
+      // Navigate to payment with orderId
       toast.success("Pedido criado com sucesso!");
+      navigate(`/payment/${order.id}`);
       
-      // Navigate based on user role
-      if (isWaiter) {
-        // Waiter-assisted order is created, redirect to the menu for the next order
-        navigate("/menu");
-      } else {
-        // Regular customer order, redirect to payment
-        navigate(`/payment/${order.id}`);
-      }
     } catch (error) {
-      console.error("Error creating order:", error);
-      toast.error("Erro ao criar pedido. Tente novamente.");
+      console.error('Exception in handleGoToPayment:', error);
+      toast.error("Erro ao processar. Tente novamente.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (cartState.items.length === 0) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="p-6 text-center max-w-md">
-          <p className="text-muted-foreground mb-4">Carrinho vazio</p>
-          <Button onClick={() => navigate("/menu")}>
-            Voltar ao Cardápio
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
-      {/* Enhanced Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white shadow-2xl sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4 sm:py-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-white hover:bg-white/20 transition-all"
-              onClick={() => navigate("/menu")}
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <AnimatePresence mode="wait">
+          {step === 'NAME' && (
+            <motion.div
+              key="name"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={transition}
             >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold">Finalizar</h1>
-              {customerInfo && customerInfo.name && (
-                <p className="text-white/90 text-sm mt-0.5">{customerInfo.name}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6 pb-24">
-        {/* Order Summary */}
-        <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 sm:p-6">
-            <h2 className="font-bold text-lg sm:text-xl text-white flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5" />
-              Seu Pedido
-            </h2>
-          </div>
-          <div className="p-4 sm:p-6 space-y-3">
-            {cartState.items.map((item) => (
-              <div key={item.id} className="flex items-start sm:items-center justify-between py-3 border-b border-gray-100 last:border-0 gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{item.name}</p>
-                  <p className="text-xs sm:text-sm text-gray-600">R$ {item.price.toFixed(2)} cada</p>
-                </div>
-                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
-                  <div className="flex items-center gap-1.5 bg-purple-50 rounded-lg p-1">
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="w-7 h-7 rounded-md bg-red-500 hover:bg-red-600 active:scale-95 text-white flex items-center justify-center transition-all shadow-sm"
-                      aria-label="Remover um"
-                    >
-                      <span className="text-lg leading-none">−</span>
-                    </button>
-                    <span className="font-bold text-purple-900 text-sm sm:text-base min-w-[24px] text-center">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() => addItem(item)}
-                      className="w-7 h-7 rounded-md bg-green-500 hover:bg-green-600 active:scale-95 text-white flex items-center justify-center transition-all shadow-sm"
-                      aria-label="Adicionar mais"
-                    >
-                      <span className="text-lg leading-none">+</span>
-                    </button>
-                  </div>
-                  <span className="font-bold text-cyan-600 text-sm sm:text-base min-w-[70px] sm:min-w-[80px] text-right">
-                    R$ {(item.price * item.quantity).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            ))}
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-4 mt-4 flex justify-between items-center shadow-sm">
-              <span className="font-bold text-lg sm:text-xl text-purple-900">Total</span>
-              <span className="font-bold text-xl sm:text-2xl text-purple-900">R$ {getTotalPrice().toFixed(2)}</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Customer Info */}
-        <CustomerInfoForm
-          onCustomerInfoChange={setCustomerInfo}
-          initialData={customerInfo}
-        />
-
-        {/* Order Notes - Only for waiter orders */}
-        {isWaiter && (
-          <OrderNotesInput
-            notes={orderNotes}
-            onNotesChange={setOrderNotes}
-          />
-        )}
-
-        {/* Order Action Button */}
-        {customerInfo.name && customerInfo.phone && customerInfo.phone.replace(/\D/g, '').length === 11 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-2xl p-4 sm:relative sm:border-0 sm:shadow-none sm:p-0 z-20">
-            <div className="max-w-2xl mx-auto">
-              <Card className="shadow-xl border-0 bg-gradient-to-br from-green-50 to-emerald-50 sm:shadow-lg">
-                <div className="p-4 sm:p-6 space-y-4">
-                  <p className="text-xs sm:text-sm text-gray-700 bg-white/80 rounded-lg p-3 border border-gray-200">
-                    {isWaiter ? "🎯 Pedido será atribuído a você" : "📱 Atualizações via WhatsApp"}
-                  </p>
-                  <Button
-                    onClick={handleCreateOrder}
-                    size="lg"
-                    className="w-full bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 hover:from-purple-700 hover:via-purple-800 hover:to-indigo-800 text-white font-bold py-6 sm:py-7 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-98 text-base sm:text-lg"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="animate-spin">⏳</span>
-                        Processando...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        {isWaiter ? "✓ Criar Pedido" : "💳 Ir para Pagamento"}
-                      </span>
+              <Card className="p-6 shadow-xl">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Olá! 👋 Para quem é o pedido?
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="name" className="text-base">
+                      👤 Seu nome
+                    </Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Digite seu nome"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      onBlur={() => validateName(name)}
+                      className="mt-2 text-lg"
+                      autoFocus
+                    />
+                    {errors.name && (
+                      <p className="text-red-500 text-sm mt-1">{errors.name}</p>
                     )}
+                  </div>
+                  <Button
+                    onClick={handleNameContinue}
+                    disabled={name.trim().length < 2}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-6 text-lg"
+                  >
+                    Continuar
                   </Button>
                 </div>
               </Card>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+
+          {step === 'WHATSAPP' && (
+            <motion.div
+              key="whatsapp"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={transition}
+            >
+              <Card className="p-6 shadow-xl">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Legal, {name}! E qual o seu WhatsApp com DDD?
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="whatsapp" className="text-base">
+                      📱 WhatsApp
+                    </Label>
+                    <Input
+                      id="whatsapp"
+                      type="tel"
+                      placeholder="71987654321"
+                      value={whatsapp}
+                      onChange={(e) => handleWhatsAppInput(e.target.value)}
+                      onBlur={() => validateWhatsApp(whatsapp)}
+                      className="mt-2 text-lg"
+                      autoFocus
+                    />
+                    {errors.whatsapp && (
+                      <p className="text-red-500 text-sm mt-1">{errors.whatsapp}</p>
+                    )}
+                  </div>
+                  <Button
+                    onClick={handleWhatsAppContinue}
+                    disabled={whatsapp.replace(/\D/g, '').length !== 11}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-6 text-lg"
+                  >
+                    Confirmar WhatsApp
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
+          {step === 'CONFIRM' && (
+            <motion.div
+              key="confirm"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={transition}
+            >
+              <Card className="p-6 shadow-xl text-center">
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Perfeito! Vamos te avisar sobre o pedido pelo WhatsApp. 👍
+                </h2>
+              </Card>
+            </motion.div>
+          )}
+
+          {step === 'REVIEW' && (
+            <motion.div
+              key="review"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={transition}
+            >
+              <Card className="p-6 shadow-xl">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Aqui está o seu pedido, {name}. Tudo certo?
+                </h2>
+                <div className="space-y-4">
+                  {/* Cart items */}
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    {cartState.items.map((item) => (
+                      <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0">
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">{item.name}</p>
+                          <p className="text-sm text-gray-600">R$ {item.price.toFixed(2)} cada</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-gray-900">x{item.quantity}</p>
+                          <p className="text-sm font-bold text-cyan-600">
+                            R$ {(item.price * item.quantity).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Total */}
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-4 flex justify-between items-center">
+                    <span className="font-bold text-xl text-purple-900">Total</span>
+                    <span className="font-bold text-2xl text-purple-900">
+                      R$ {cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="space-y-3 pt-2">
+                    <Button
+                      onClick={() => navigate('/menu')}
+                      variant="outline"
+                      className="w-full py-6 text-lg font-semibold"
+                    >
+                      Editar Pedido
+                    </Button>
+                    <Button
+                      onClick={handleGoToPayment}
+                      disabled={isSubmitting}
+                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-6 text-lg"
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center gap-2">
+                          <span className="animate-spin">⏳</span>
+                          Processando...
+                        </span>
+                      ) : (
+                        "Ir para Pagamento"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
