@@ -271,9 +271,9 @@ const CustomerManagement = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
       {/* Uniform Header */}
       <UniformHeader
-        title="Gerenciar Clientes"
+        title="Clientes"
+        onBack={() => navigate("/admin")}
         onLogout={handleLogout}
-        logoLink="/"
       />
 
       {/* Content */}

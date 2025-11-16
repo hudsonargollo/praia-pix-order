@@ -450,7 +450,7 @@ const WaiterDashboard = () => {
     <div className="min-h-screen bg-gradient-acai">
       {/* Uniform Header */}
       <UniformHeader
-        title="Dashboard do Garçom"
+        title="Garçom"
         onLogout={handleLogout}
       />
 

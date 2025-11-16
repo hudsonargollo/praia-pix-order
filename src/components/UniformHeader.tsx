@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Wifi, WifiOff } from "lucide-react";
+import { LogOut, Wifi, WifiOff, ArrowLeft } from "lucide-react";
 import { useConnectionMonitor } from "@/components/ConnectionMonitor";
 import logo from "@/assets/coco-loko-logo.png";
 
@@ -10,6 +10,7 @@ interface UniformHeaderProps {
   showDiagnostic?: boolean;
   showConnection?: boolean;
   onLogout?: () => void;
+  onBack?: () => void;
   logoLink?: string;
 }
 
@@ -18,6 +19,7 @@ export const UniformHeader = ({
   actions,
   showDiagnostic = false,
   showConnection = false,
+  onBack,
   onLogout,
   logoLink,
 }: UniformHeaderProps) => {
@@ -31,6 +33,16 @@ export const UniformHeader = ({
           <div className="hidden lg:flex items-center justify-between">
             {/* Left: Logo and Title */}
             <div className="flex items-center space-x-3 sm:space-x-4">
+              {onBack && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/20 transition-all"
+                  onClick={onBack}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              )}
               {logoLink ? (
                 <a href={logoLink} className="relative cursor-pointer hover:opacity-80 transition-opacity">
                   <img 
@@ -125,6 +137,16 @@ export const UniformHeader = ({
           <div className="lg:hidden">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center space-x-3 sm:space-x-4 flex-1">
+                {onBack && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/20 transition-all"
+                    onClick={onBack}
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                )}
                 {logoLink ? (
                   <a href={logoLink} className="relative cursor-pointer hover:opacity-80 transition-opacity">
                     <img 

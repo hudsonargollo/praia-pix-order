@@ -335,7 +335,8 @@ export default function WhatsAppAdmin() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
       {/* Uniform Header */}
       <UniformHeader
-        title="WhatsApp Admin"
+        title="WhatsApp"
+        onBack={() => navigate("/admin")}
         actions={
           connectionStatus === 'connected' ? (
             <Badge variant="default" className="bg-green-600 text-white">

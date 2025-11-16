@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ interface DailyStats {
 }
 
 const Reports = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<OrderStats>({
     totalOrders: 0,
@@ -151,7 +153,7 @@ const Reports = () => {
       {/* Uniform Header */}
       <UniformHeader
         title="Relatórios"
-        logoLink="/admin"
+        onBack={() => navigate("/admin")}
       />
 
       <div className="max-w-7xl mx-auto p-4">

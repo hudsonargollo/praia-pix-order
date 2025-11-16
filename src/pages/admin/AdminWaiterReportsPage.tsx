@@ -18,7 +18,8 @@ const AdminWaiterReportsPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
       {/* Uniform Header */}
       <UniformHeader
-        title="Relatórios por Garçom"
+        title="Garçons"
+        onBack={() => navigate("/admin")}
       />
 
       {/* Content */}

@@ -331,7 +331,8 @@ const AdminProducts = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
       {/* Uniform Header */}
       <UniformHeader
-        title="Gerenciar Produtos"
+        title="Produtos"
+        onBack={() => navigate("/admin")}
         actions={
           <Button
             onClick={() => {
