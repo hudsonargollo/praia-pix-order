@@ -141,9 +141,17 @@ export default function WhatsAppAdmin() {
       const qrData = await qrResponse.json();
 
       if (qrData.success && qrData.qrCode) {
-        console.log('QR Code received:', qrData.qrCode.length > 50 ? qrData.qrCode.substring(0, 50) + '...' : qrData.qrCode);
-        // Use QR code as-is since it should already be a proper data URL
-        setQrCode(qrData.qrCode);
+        console.log('QR Code received, length:', qrData.qrCode.length);
+        console.log('QR Code starts with:', qrData.qrCode.substring(0, 100));
+        
+        // Clean up any double prefixes that might exist
+        let cleanQrCode = qrData.qrCode;
+        if (cleanQrCode.startsWith('data:image/png;base64,data:image/png;base64,')) {
+          cleanQrCode = cleanQrCode.replace('data:image/png;base64,data:image/png;base64,', 'data:image/png;base64,');
+          console.log('Removed double prefix, new length:', cleanQrCode.length);
+        }
+        
+        setQrCode(cleanQrCode);
         pollConnectionStatus();
         return;
       }
@@ -156,9 +164,15 @@ export default function WhatsAppAdmin() {
       if (restartResponse.ok) {
         const restartData = await restartResponse.json();
         if (restartData.qrCode) {
-          console.log('QR Code from restart:', restartData.qrCode.length > 50 ? restartData.qrCode.substring(0, 50) + '...' : restartData.qrCode);
-          // Use QR code as-is since it should already be a proper data URL
-          setQrCode(restartData.qrCode);
+          console.log('QR Code from restart, length:', restartData.qrCode.length);
+          
+          // Clean up any double prefixes that might exist
+          let cleanQrCode = restartData.qrCode;
+          if (cleanQrCode.startsWith('data:image/png;base64,data:image/png;base64,')) {
+            cleanQrCode = cleanQrCode.replace('data:image/png;base64,data:image/png;base64,', 'data:image/png;base64,');
+          }
+          
+          setQrCode(cleanQrCode);
           pollConnectionStatus();
           return;
         }
@@ -169,9 +183,15 @@ export default function WhatsAppAdmin() {
       const data = await response.json();
 
       if (data.qrCode) {
-        console.log('QR Code from connect:', data.qrCode.length > 50 ? data.qrCode.substring(0, 50) + '...' : data.qrCode);
-        // Use QR code as-is since it should already be a proper data URL
-        setQrCode(data.qrCode);
+        console.log('QR Code from connect, length:', data.qrCode.length);
+        
+        // Clean up any double prefixes that might exist
+        let cleanQrCode = data.qrCode;
+        if (cleanQrCode.startsWith('data:image/png;base64,data:image/png;base64,')) {
+          cleanQrCode = cleanQrCode.replace('data:image/png;base64,data:image/png;base64,', 'data:image/png;base64,');
+        }
+        
+        setQrCode(cleanQrCode);
         pollConnectionStatus();
       } else if (data.isConnected) {
         setConnectionStatus('connected');
@@ -235,9 +255,15 @@ export default function WhatsAppAdmin() {
         const qrData = await qrResponse.json();
 
         if (qrData.success && qrData.qrCode) {
-          console.log('QR Code from polling:', qrData.qrCode.length > 50 ? qrData.qrCode.substring(0, 50) + '...' : qrData.qrCode);
-          // Use QR code as-is since it should already be a proper data URL
-          setQrCode(qrData.qrCode);
+          console.log('QR Code from polling, length:', qrData.qrCode.length);
+          
+          // Clean up any double prefixes that might exist
+          let cleanQrCode = qrData.qrCode;
+          if (cleanQrCode.startsWith('data:image/png;base64,data:image/png;base64,')) {
+            cleanQrCode = cleanQrCode.replace('data:image/png;base64,data:image/png;base64,', 'data:image/png;base64,');
+          }
+          
+          setQrCode(cleanQrCode);
           clearInterval(qrPollInterval);
           pollConnectionStatus();
           return;
@@ -248,9 +274,15 @@ export default function WhatsAppAdmin() {
         const data = await response.json();
 
         if (data.qrCode) {
-          console.log('QR Code from polling fallback:', data.qrCode.length > 50 ? data.qrCode.substring(0, 50) + '...' : data.qrCode);
-          // Use QR code as-is since it should already be a proper data URL
-          setQrCode(data.qrCode);
+          console.log('QR Code from polling fallback, length:', data.qrCode.length);
+          
+          // Clean up any double prefixes that might exist
+          let cleanQrCode = data.qrCode;
+          if (cleanQrCode.startsWith('data:image/png;base64,data:image/png;base64,')) {
+            cleanQrCode = cleanQrCode.replace('data:image/png;base64,data:image/png;base64,', 'data:image/png;base64,');
+          }
+          
+          setQrCode(cleanQrCode);
           clearInterval(qrPollInterval);
           pollConnectionStatus();
         } else if (data.isConnected) {
