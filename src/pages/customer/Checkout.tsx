@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, ShoppingCart } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import { normalizePhone } from "@/lib/phoneUtils";
@@ -22,21 +22,6 @@ const Checkout = () => {
   const [whatsapp, setWhatsapp] = useState("");
   const [errors, setErrors] = useState({ name: "", whatsapp: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCartLoaded, setIsCartLoaded] = useState(false);
-
-  // Wait for cart to load, then check if empty
-  useEffect(() => {
-    // Give cart context time to load from localStorage
-    const timer = setTimeout(() => {
-      setIsCartLoaded(true);
-      if (cartState.items.length === 0) {
-        console.log('Cart is empty, redirecting to /qr');
-        navigate("/qr");
-      }
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [cartState.items.length, navigate]);
 
   // Animation variants
   const pageVariants = {
@@ -193,18 +178,6 @@ const Checkout = () => {
       setIsSubmitting(false);
     }
   };
-
-  // Show loading while cart is being checked
-  if (!isCartLoaded) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="animate-spin text-4xl mb-4">⏳</div>
-          <p className="text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
