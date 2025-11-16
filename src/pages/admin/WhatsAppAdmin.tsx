@@ -142,11 +142,8 @@ export default function WhatsAppAdmin() {
 
       if (qrData.success && qrData.qrCode) {
         console.log('QR Code received:', qrData.qrCode.length > 50 ? qrData.qrCode.substring(0, 50) + '...' : qrData.qrCode);
-        // Ensure QR code has proper data URL prefix
-        const qrCodeData = qrData.qrCode.startsWith('data:') 
-          ? qrData.qrCode 
-          : `data:image/png;base64,${qrData.qrCode}`;
-        setQrCode(qrCodeData);
+        // Use QR code as-is since it should already be a proper data URL
+        setQrCode(qrData.qrCode);
         pollConnectionStatus();
         return;
       }
@@ -160,10 +157,8 @@ export default function WhatsAppAdmin() {
         const restartData = await restartResponse.json();
         if (restartData.qrCode) {
           console.log('QR Code from restart:', restartData.qrCode.length > 50 ? restartData.qrCode.substring(0, 50) + '...' : restartData.qrCode);
-          const qrCodeData = restartData.qrCode.startsWith('data:') 
-            ? restartData.qrCode 
-            : `data:image/png;base64,${restartData.qrCode}`;
-          setQrCode(qrCodeData);
+          // Use QR code as-is since it should already be a proper data URL
+          setQrCode(restartData.qrCode);
           pollConnectionStatus();
           return;
         }
@@ -175,10 +170,8 @@ export default function WhatsAppAdmin() {
 
       if (data.qrCode) {
         console.log('QR Code from connect:', data.qrCode.length > 50 ? data.qrCode.substring(0, 50) + '...' : data.qrCode);
-        const qrCodeData = data.qrCode.startsWith('data:') 
-          ? data.qrCode 
-          : `data:image/png;base64,${data.qrCode}`;
-        setQrCode(qrCodeData);
+        // Use QR code as-is since it should already be a proper data URL
+        setQrCode(data.qrCode);
         pollConnectionStatus();
       } else if (data.isConnected) {
         setConnectionStatus('connected');
@@ -243,10 +236,8 @@ export default function WhatsAppAdmin() {
 
         if (qrData.success && qrData.qrCode) {
           console.log('QR Code from polling:', qrData.qrCode.length > 50 ? qrData.qrCode.substring(0, 50) + '...' : qrData.qrCode);
-          const qrCodeData = qrData.qrCode.startsWith('data:') 
-            ? qrData.qrCode 
-            : `data:image/png;base64,${qrData.qrCode}`;
-          setQrCode(qrCodeData);
+          // Use QR code as-is since it should already be a proper data URL
+          setQrCode(qrData.qrCode);
           clearInterval(qrPollInterval);
           pollConnectionStatus();
           return;
@@ -258,10 +249,8 @@ export default function WhatsAppAdmin() {
 
         if (data.qrCode) {
           console.log('QR Code from polling fallback:', data.qrCode.length > 50 ? data.qrCode.substring(0, 50) + '...' : data.qrCode);
-          const qrCodeData = data.qrCode.startsWith('data:') 
-            ? data.qrCode 
-            : `data:image/png;base64,${data.qrCode}`;
-          setQrCode(qrCodeData);
+          // Use QR code as-is since it should already be a proper data URL
+          setQrCode(data.qrCode);
           clearInterval(qrPollInterval);
           pollConnectionStatus();
         } else if (data.isConnected) {
