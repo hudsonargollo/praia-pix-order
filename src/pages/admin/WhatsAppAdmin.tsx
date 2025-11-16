@@ -427,7 +427,7 @@ export default function WhatsAppAdmin() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <CardTitle className={`text-lg sm:text-xl font-bold ${connectionStatus === 'connected' ? 'text-green-800' : 'text-orange-800'}`}>
-                    {connectionStatus === 'connected' ? 'Notificações Ativas' : 'Notificações Desativadas'}
+                    {connectionStatus === 'connected' ? 'Notificações Ativas' : 'Notificações por WhatsApp'}
                   </CardTitle>
                   {connectionStatus === 'connected' && connectionInfo?.phoneNumber ? (
                     <CardDescription className="text-green-700 font-medium mt-1 flex items-center gap-1.5 text-sm">
@@ -436,7 +436,7 @@ export default function WhatsAppAdmin() {
                     </CardDescription>
                   ) : (
                     <CardDescription className="text-orange-700 mt-1 text-sm">
-                      Conecte o WhatsApp para enviar notificações
+                      Conecte sua conta para enviar alertas
                     </CardDescription>
                   )}
                 </div>
@@ -450,7 +450,7 @@ export default function WhatsAppAdmin() {
                     className="border-red-200 text-red-700 hover:bg-red-50 h-10 text-sm w-full sm:w-auto"
                   >
                     <WifiOff className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Desconectar WhatsApp
+                    Desconectar
                   </Button>
                 ) : (
                   <Button
@@ -459,7 +459,7 @@ export default function WhatsAppAdmin() {
                     className="bg-green-600 hover:bg-green-700 h-10 text-sm w-full sm:w-auto"
                   >
                     <Wifi className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Conectar WhatsApp
+                    Conectar Agora
                   </Button>
                 )}
               </div>
