@@ -21,7 +21,6 @@ const Checkout = () => {
     phone: ""
   });
   const [orderNotes, setOrderNotes] = useState("");
-  const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isWaiter, setIsWaiter] = useState(false);
   const [waiterId, setWaiterId] = useState<string | null>(null);
 
@@ -41,7 +40,6 @@ const Checkout = () => {
         setIsWaiter(true);
         setWaiterId(user.id);
         // Waiter-assisted orders require customer info collection
-        setIsEditingInfo(true);
         setCustomerInfo({ name: "", phone: "" });
       } else {
         setIsWaiter(false);
@@ -54,10 +52,7 @@ const Checkout = () => {
             setCustomerInfo(parsed);
           } catch (error) {
             console.error("Error parsing customer info:", error);
-            setIsEditingInfo(true);
           }
-        } else {
-          setIsEditingInfo(true);
         }
       }
     };
@@ -76,23 +71,20 @@ const Checkout = () => {
     }
 
     if (!customerInfo.name?.trim() || !customerInfo.phone?.trim()) {
-      toast.error("Por favor, preencha o nome e WhatsApp do cliente");
-      setIsEditingInfo(true);
+      toast.error("Preencha seu nome e WhatsApp");
       return;
     }
 
     // Validate phone number (should be 11 digits)
     const phoneDigits = customerInfo.phone.replace(/\D/g, '');
     if (phoneDigits.length !== 11) {
-      toast.error("WhatsApp deve ter 11 dígitos (DDD + número)");
-      setIsEditingInfo(true);
+      toast.error("WhatsApp deve ter 11 dígitos");
       return;
     }
 
     // Validate name length
     if (customerInfo.name.trim().length < 2) {
-      toast.error("Nome deve ter pelo menos 2 caracteres");
-      setIsEditingInfo(true);
+      toast.error("Nome muito curto");
       return;
     }
 
@@ -254,53 +246,10 @@ const Checkout = () => {
         </Card>
 
         {/* Customer Info */}
-        {isEditingInfo || !customerInfo.name || !customerInfo.phone ? (
-          <>
-            <CustomerInfoForm
-              onCustomerInfoChange={setCustomerInfo}
-              initialData={customerInfo}
-            />
-            {/* Confirm button to exit editing mode */}
-            {customerInfo.name && customerInfo.phone && customerInfo.phone.replace(/\D/g, '').length === 11 && (
-              <Button
-                onClick={() => setIsEditingInfo(false)}
-                size="lg"
-                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-98"
-              >
-                ✓ Confirmar Dados
-              </Button>
-            )}
-          </>
-        ) : (
-          <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 sm:p-6">
-              <h2 className="font-bold text-lg sm:text-xl text-white">
-                {isWaiter ? "Cliente" : "Contato"}
-              </h2>
-            </div>
-            <div className="p-4 sm:p-6 space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <Label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Nome</Label>
-                <p className="text-base sm:text-lg font-semibold text-gray-900 mt-1">{customerInfo.name}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <Label className="text-xs font-medium text-gray-600 uppercase tracking-wide">WhatsApp</Label>
-                <p className="text-base sm:text-lg font-semibold text-gray-900 mt-1">+55 {customerInfo.phone}</p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditingInfo(true)}
-                className="w-full sm:w-auto border-2 hover:bg-gray-50"
-              >
-                ✏️ Editar Dados
-              </Button>
-              <p className="text-xs sm:text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                💬 Atualizações via WhatsApp
-              </p>
-            </div>
-          </Card>
-        )}
+        <CustomerInfoForm
+          onCustomerInfoChange={setCustomerInfo}
+          initialData={customerInfo}
+        />
 
         {/* Order Notes - Only for waiter orders */}
         {isWaiter && (
@@ -311,7 +260,7 @@ const Checkout = () => {
         )}
 
         {/* Order Action Button */}
-        {(!isEditingInfo && customerInfo.name && customerInfo.phone) && (
+        {customerInfo.name && customerInfo.phone && customerInfo.phone.replace(/\D/g, '').length === 11 && (
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-2xl p-4 sm:relative sm:border-0 sm:shadow-none sm:p-0 z-20">
             <div className="max-w-2xl mx-auto">
               <Card className="shadow-xl border-0 bg-gradient-to-br from-green-50 to-emerald-50 sm:shadow-lg">
