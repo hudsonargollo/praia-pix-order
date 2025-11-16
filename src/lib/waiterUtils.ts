@@ -21,29 +21,27 @@ export async function fetchWaiterInfo(waiterId: string): Promise<WaiterInfo | nu
   }
 
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      console.error('No session available to fetch waiter info');
-      return null;
-    }
-
-    // Call the list-waiters edge function to get waiter details
-    const { data, error } = await supabase.functions.invoke('list-waiters', {
-      headers: {
-        Authorization: `Bearer ${session.access_token}`
-      }
-    });
+    // Query profiles table directly for waiter information
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, display_name')
+      .eq('id', waiterId)
+      .eq('role', 'waiter')
+      .single();
 
     if (error) {
       console.error('Error fetching waiter info:', error);
       return null;
     }
 
-    // Find the specific waiter
-    const waiter = data?.waiters?.find((w: WaiterInfo) => w.id === waiterId);
-    
-    if (waiter) {
+    if (data) {
+      const waiter: WaiterInfo = {
+        id: data.id,
+        full_name: data.full_name || data.email,
+        email: data.email,
+        display_name: data.display_name
+      };
+      
       // Cache the result
       waiterCache.set(waiterId, waiter);
       return waiter;
@@ -61,25 +59,24 @@ export async function fetchWaiterInfo(waiterId: string): Promise<WaiterInfo | nu
  */
 export async function fetchAllWaiters(): Promise<WaiterInfo[]> {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      console.error('No session available to fetch waiters');
-      return [];
-    }
-
-    const { data, error } = await supabase.functions.invoke('list-waiters', {
-      headers: {
-        Authorization: `Bearer ${session.access_token}`
-      }
-    });
+    // Query profiles table directly for all waiters
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, display_name')
+      .eq('role', 'waiter')
+      .order('full_name');
 
     if (error) {
       console.error('Error fetching waiters:', error);
       return [];
     }
 
-    const waiters = data?.waiters || [];
+    const waiters: WaiterInfo[] = (data || []).map(w => ({
+      id: w.id,
+      full_name: w.full_name || w.email,
+      email: w.email,
+      display_name: w.display_name
+    }));
     
     // Cache all waiters
     waiters.forEach((waiter: WaiterInfo) => {
