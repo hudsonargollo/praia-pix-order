@@ -427,45 +427,39 @@ export default function WhatsAppAdmin() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <CardTitle className={`text-lg sm:text-xl font-bold ${connectionStatus === 'connected' ? 'text-green-800' : 'text-orange-800'}`}>
-                    WhatsApp {connectionStatus === 'connected' ? 'Conectado' : 'Desconectado'}
+                    {connectionStatus === 'connected' ? 'Notificações Ativas' : 'Notificações Desativadas'}
                   </CardTitle>
-                  {connectionStatus === 'connected' && connectionInfo?.phoneNumber && (
+                  {connectionStatus === 'connected' && connectionInfo?.phoneNumber ? (
                     <CardDescription className="text-green-700 font-medium mt-1 flex items-center gap-1.5 text-sm">
                       <Smartphone className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
                       <span className="truncate">{connectionInfo.phoneNumber}</span>
                     </CardDescription>
+                  ) : (
+                    <CardDescription className="text-orange-700 mt-1 text-sm">
+                      Conecte o WhatsApp para enviar notificações
+                    </CardDescription>
                   )}
                 </div>
               </div>
-              <div className="flex gap-2 flex-shrink-0 self-start sm:self-center">
-                <Button
-                  onClick={checkConnectionStatus}
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9 sm:h-10 sm:w-10"
-                  title="Atualizar Status"
-                >
-                  <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
+              <div className="flex-shrink-0 self-start sm:self-center">
                 {connectionStatus === 'connected' ? (
                   <Button
                     onClick={handleDisconnect}
                     variant="outline"
                     size="default"
-                    className="border-red-200 text-red-700 hover:bg-red-50 h-9 sm:h-10 text-sm"
+                    className="border-red-200 text-red-700 hover:bg-red-50 h-10 text-sm w-full sm:w-auto"
                   >
-                    <WifiOff className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
-                    <span className="hidden sm:inline">Desconectar</span>
-                    <span className="sm:hidden">Sair</span>
+                    <WifiOff className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    Desconectar WhatsApp
                   </Button>
                 ) : (
                   <Button
                     onClick={handleConnectWhatsApp}
                     size="default"
-                    className="bg-green-600 hover:bg-green-700 h-9 sm:h-10 text-sm"
+                    className="bg-green-600 hover:bg-green-700 h-10 text-sm w-full sm:w-auto"
                   >
-                    <Wifi className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
-                    Conectar
+                    <Wifi className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    Conectar WhatsApp
                   </Button>
                 )}
               </div>
