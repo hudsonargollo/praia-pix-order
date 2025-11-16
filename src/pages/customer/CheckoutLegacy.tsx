@@ -27,7 +27,7 @@ const CheckoutLegacy = () => {
   useEffect(() => {
     // Redirect if cart is empty
     if (cartState.items.length === 0) {
-      navigate("/menu");
+      navigate("/qr");
       return;
     }
 
@@ -164,8 +164,8 @@ const CheckoutLegacy = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="p-6 text-center max-w-md">
           <p className="text-muted-foreground mb-4">Carrinho vazio</p>
-          <Button onClick={() => navigate("/menu")}>
-            Voltar ao Cardápio
+          <Button onClick={() => navigate("/qr")}>
+            Voltar ao Início
           </Button>
         </Card>
       </div>

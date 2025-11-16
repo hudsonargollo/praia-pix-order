@@ -26,7 +26,7 @@ const Checkout = () => {
   // Redirect if cart is empty
   useEffect(() => {
     if (cartState.items.length === 0) {
-      navigate("/menu");
+      navigate("/qr");
     }
   }, [cartState.items.length, navigate]);
 
