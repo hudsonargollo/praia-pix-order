@@ -114,36 +114,28 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
 
   return (
     <Card className={`p-6 shadow-lg border-2 border-cyan-100 rounded-2xl ${className || ''}`}>
-      <h2 className="font-bold text-xl mb-2 text-purple-900">Informe seu nome e telefone</h2>
-      <p className="text-sm text-muted-foreground mb-4">💬 Atualizações via WhatsApp</p>
+      <h2 className="font-bold text-xl mb-6 text-purple-900">Seus dados</h2>
       
       <div className="space-y-4">
         <div className="relative">
-          <div className="absolute left-3 top-3 text-xl leading-none flex items-center h-10">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl">
             👤
-          </div>
+          </span>
           <Input
             id="customer-name"
             type="text"
             placeholder="Digite seu nome"
             value={customerInfo.name}
             onChange={(e) => updateCustomerInfo('name', e.target.value)}
-            className={`pl-12 h-10 ${errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-            aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? "name-error" : undefined}
+            className="pl-14 h-12 text-base"
             aria-label="Nome"
           />
-          {errors.name && (
-            <p id="name-error" className="text-sm font-medium text-red-600 mt-1">
-              {errors.name}
-            </p>
-          )}
         </div>
 
         <div className="relative">
-          <div className="absolute left-3 top-3 text-xl leading-none flex items-center h-10">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl">
             📱
-          </div>
+          </span>
           <Input
             id="customer-phone"
             type="tel"
@@ -151,16 +143,16 @@ const CustomerInfoForm = ({ onCustomerInfoChange, initialData, className }: Cust
             value={customerInfo.phone}
             onChange={handlePhoneChange}
             maxLength={11}
-            className={`pl-12 h-10 ${errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-            aria-invalid={!!errors.phone}
-            aria-describedby={errors.phone ? "phone-error" : undefined}
+            className="pl-14 h-12 text-base"
             aria-label="WhatsApp"
           />
-          {errors.phone && (
-            <p id="phone-error" className="text-sm font-medium text-red-600 mt-1">
-              {errors.phone}
-            </p>
-          )}
+        </div>
+        
+        <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+          <span className="text-lg flex-shrink-0 mt-0.5">💬</span>
+          <p className="text-sm text-gray-700">
+            Enviaremos atualizações do seu pedido via WhatsApp
+          </p>
         </div>
 
         {/* Validation status indicator (hidden, for programmatic access) */}
