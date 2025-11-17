@@ -36,12 +36,9 @@ export function OrderCardInfo({
   };
 
   return (
-    <div className="flex-1 space-y-1.5 sm:space-y-3">
-      {/* Order Number */}
-      <h3 className="font-bold text-base sm:text-2xl text-gray-900 leading-tight">Pedido #{orderNumber}</h3>
-      
+    <div className="space-y-1 sm:space-y-2">
       {/* Customer Info */}
-      <div className="space-y-0.5 sm:space-y-1">
+      <div className="space-y-0.5">
         <p className="text-sm sm:text-lg font-medium text-gray-700 leading-tight">
           {customerName}
         </p>
