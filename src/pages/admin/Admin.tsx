@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, ShoppingBag, BarChart3, ChefHat } from "lucide-react";
+import { Users, ShoppingBag, BarChart3, ChefHat, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UniformHeader } from "@/components/UniformHeader";
@@ -29,6 +29,8 @@ const Admin = () => {
     { title: "Produtos", icon: ShoppingBag, path: "/admin/products", description: "Gerenciar cardápio" },
     { title: "Relatórios", icon: BarChart3, path: "/reports", description: "Análises e métricas" },
     { title: "Garçons", icon: Users, path: "/waiter-management", description: "Gerenciar equipe" },
+    { title: "Clientes", icon: Users, path: "/customers", description: "Gerenciar clientes" },
+    { title: "WhatsApp", icon: MessageCircle, path: "/whatsapp-config", description: "Configurar WhatsApp" },
   ];
 
   return (
@@ -42,8 +44,8 @@ const Admin = () => {
       {/* Enhanced Content */}
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Responsive Grid - 2x2 on mobile, 1 line on desktop */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-6xl mx-auto">
+          {/* Responsive Grid - 2x2 on mobile, 2 lines on desktop */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 max-w-6xl mx-auto">
             {adminMenuItems.map((item) => (
               <Card
                 key={item.title}

@@ -164,6 +164,8 @@ const WaiterManagement = () => {
         return;
       }
 
+      console.log('🔵 Calling delete-waiter function with token length:', session.access_token.length);
+
       const { data, error } = await supabase.functions.invoke('delete-waiter', {
         body: { waiterId },
         headers: {
@@ -171,10 +173,19 @@ const WaiterManagement = () => {
         }
       });
 
+      console.log('🔵 Delete response:', { data, error });
+
       if (error) {
+        console.error('❌ Function error:', error);
         throw new Error(error.message || "Erro ao deletar conta de garçom.");
       }
 
+      if (data?.error) {
+        console.error('❌ Data error:', data.error);
+        throw new Error(data.error);
+      }
+
+      console.log('✅ Waiter deleted successfully');
       toast.success("✅ Garçom deletado com sucesso!");
       fetchWaiters();
 
@@ -196,72 +207,72 @@ const WaiterManagement = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
       <UniformHeader
-        title="Gestão de Garçons"
+        title="Garçons"
         onBack={handleBack}
       />
 
-      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto p-3 sm:p-6">
         {/* Action Buttons */}
-        <div className="flex justify-end gap-2 mb-4">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 mb-4">
           <Button
             onClick={fetchWaiters}
             variant="outline"
-            size="sm"
-            className="bg-white"
+            size="default"
+            className="bg-white w-full sm:w-auto"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
           <Button
             onClick={openCreateDialog}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-            size="sm"
+            className="bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto"
+            size="default"
           >
             <Plus className="mr-2 h-4 w-4" />
             Novo Garçom
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm shadow-lg">
-            <TabsTrigger value="list" className="flex items-center gap-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm shadow-lg h-auto">
+            <TabsTrigger value="list" className="flex items-center gap-1 sm:gap-2 py-3">
               <Users className="w-4 h-4" />
-              Lista de Garçons
+              <span className="text-xs sm:text-sm">Lista</span>
             </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-2">
+            <TabsTrigger value="reports" className="flex items-center gap-1 sm:gap-2 py-3">
               <BarChart3 className="w-4 h-4" />
-              Relatórios
+              <span className="text-xs sm:text-sm">Relatórios</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="list" className="space-y-6">
+          <TabsContent value="list" className="space-y-4 sm:space-y-6">
             <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center justify-between">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <div className="flex items-center">
                     <Users className="w-5 h-5 mr-2 text-purple-600" />
-                    Equipe de Garçons
+                    <span>Equipe de Garçons</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs sm:text-sm">
                       {waiters.length} {waiters.length === 1 ? 'garçom' : 'garçons'}
                     </Badge>
                     {loading && <Loader2 className="w-4 h-4 animate-spin text-purple-600" />}
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 sm:p-6">
                 {loading ? (
-                  <div className="text-center py-12">
+                  <div className="text-center py-8 sm:py-12">
                     <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-600" />
-                    <p className="text-gray-600">Carregando lista de garçons...</p>
+                    <p className="text-sm sm:text-base text-gray-600">Carregando lista de garçons...</p>
                   </div>
                 ) : waiters.length === 0 ? (
-                  <div className="text-center py-12">
-                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhum garçom cadastrado</h3>
-                    <p className="text-gray-600 mb-4">Comece adicionando o primeiro garçom da sua equipe.</p>
-                    <Button onClick={openCreateDialog} className="bg-purple-600 hover:bg-purple-700">
+                  <div className="text-center py-8 sm:py-12 px-4">
+                    <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">Nenhum garçom cadastrado</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-4">Comece adicionando o primeiro garçom da sua equipe.</p>
+                    <Button onClick={openCreateDialog} className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto">
                       <Plus className="w-4 h-4 mr-2" />
                       Adicionar Primeiro Garçom
                     </Button>
@@ -269,34 +280,37 @@ const WaiterManagement = () => {
                 ) : (
                   <>
                     {/* Mobile Card Layout */}
-                    <div className="block md:hidden space-y-4">
+                    <div className="block md:hidden space-y-3">
                       {waiters.map((waiter) => (
-                        <div key={waiter.id} className="bg-gray-50 rounded-2xl p-4 space-y-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-gray-900 text-lg mb-1">{waiter.full_name}</h3>
-                              <p className="text-sm text-gray-600 break-all">{waiter.email}</p>
+                        <div key={waiter.id} className="bg-gradient-to-br from-white to-purple-50/30 rounded-xl p-4 space-y-3 shadow-md border border-purple-100">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-gray-900 text-base mb-1 truncate">{waiter.full_name}</h3>
+                              <p className="text-xs text-gray-600 break-all">{waiter.email}</p>
                             </div>
                             <Button 
                               variant="destructive" 
                               size="sm"
-                              className="ml-2 rounded-full w-10 h-10 p-0"
+                              className="shrink-0 rounded-full w-9 h-9 p-0 shadow-lg"
                               onClick={() => handleDeleteWaiter(waiter.id, waiter.full_name)}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
-                          <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                            <span className="text-xs text-gray-500">Criado em</span>
-                            <span className="text-sm font-medium text-gray-700">
-                              {new Date(waiter.created_at).toLocaleDateString("pt-BR")}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">Status</span>
-                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                              Ativo
-                            </span>
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200">
+                            <div className="space-y-1">
+                              <span className="text-xs text-gray-500 block">Criado em</span>
+                              <span className="text-xs font-medium text-gray-700 block">
+                                {new Date(waiter.created_at).toLocaleDateString("pt-BR")}
+                              </span>
+                            </div>
+                            <div className="space-y-1 text-right">
+                              <span className="text-xs text-gray-500 block">Status</span>
+                              <Badge variant="default" className="bg-green-100 text-green-700 text-xs">
+                                <UserCheck className="w-3 h-3 mr-1" />
+                                Ativo
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -347,15 +361,15 @@ const WaiterManagement = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="reports" className="space-y-6">
+          <TabsContent value="reports" className="space-y-4 sm:space-y-6">
             <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
                   <TrendingUp className="w-5 h-5 mr-2 text-purple-600" />
-                  Relatórios de Performance
+                  <span>Relatórios de Performance</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 sm:p-6">
                 <AdminWaiterReports />
               </CardContent>
             </Card>
@@ -364,9 +378,9 @@ const WaiterManagement = () => {
 
         {/* Create Waiter Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
+              <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <Users className="w-5 h-5 text-purple-600" />
                 Adicionar Novo Garçom
               </DialogTitle>
@@ -374,17 +388,18 @@ const WaiterManagement = () => {
             <form onSubmit={handleCreateWaiter}>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="full_name">Nome Completo</Label>
+                  <Label htmlFor="full_name" className="text-sm">Nome Completo</Label>
                   <Input
                     id="full_name"
                     placeholder="Digite o nome completo"
                     value={currentWaiter.full_name || ''}
                     onChange={(e) => setCurrentWaiter({ ...currentWaiter, full_name: e.target.value })}
                     required
+                    className="text-base"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-sm">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -392,10 +407,11 @@ const WaiterManagement = () => {
                     value={currentWaiter.email || ''}
                     onChange={(e) => setCurrentWaiter({ ...currentWaiter, email: e.target.value })}
                     required
+                    className="text-base"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password" className="text-sm">Senha</Label>
                   <Input
                     id="password"
                     type="password"
@@ -403,19 +419,25 @@ const WaiterManagement = () => {
                     value={currentWaiter.password || ''}
                     onChange={(e) => setCurrentWaiter({ ...currentWaiter, password: e.target.value })}
                     required
+                    className="text-base"
                   />
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => setIsDialogOpen(false)}
                   disabled={isSubmitting}
+                  className="w-full sm:w-auto"
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
+                >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />

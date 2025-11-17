@@ -4,7 +4,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Users, QrCode, Search, Lock } from "lucide-react";
+import { QrCode, Search, Lock } from "lucide-react";
 import logo from "@/assets/coco-loko-logo.png";
 
 const Index = () => {
@@ -131,18 +131,10 @@ const Index = () => {
             <Button
               size="lg"
               onClick={() => navigate("/auth")}
-              className="h-auto py-6 sm:py-8 flex flex-col bg-yellow-500 text-purple-900 hover:bg-yellow-400 shadow-lg hover:shadow-xl transition-all rounded-2xl min-h-[120px] sm:min-h-[140px]"
+              className="h-auto py-6 sm:py-8 flex flex-col bg-yellow-500 text-purple-900 hover:bg-yellow-400 shadow-lg hover:shadow-xl transition-all rounded-2xl min-h-[120px] sm:min-h-[140px] col-span-2"
             >
               <Lock className="h-8 w-8 sm:h-10 sm:w-10 mb-2 sm:mb-3" />
               <span className="font-bold text-sm sm:text-base text-center">Área Restrita</span>
-            </Button>
-            <Button
-              size="lg"
-              onClick={() => navigate("/customers")}
-              className="h-auto py-6 sm:py-8 flex flex-col bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg hover:shadow-xl transition-all rounded-2xl min-h-[120px] sm:min-h-[140px]"
-            >
-              <Users className="h-8 w-8 sm:h-10 sm:w-10 mb-2 sm:mb-3" />
-              <span className="font-bold text-sm sm:text-base text-center">Clientes</span>
             </Button>
           </div>
         </div>
@@ -163,20 +155,33 @@ const Index = () => {
             aria-label="Como Funciona carousel"
           >
             <div className="flex touch-pan-y -mx-2 sm:-mx-3">
-              {/* Slide 1 - Cliente */}
+              {/* Slide 1 - Fazer Pedido */}
               <div className="flex-[0_0_90%] sm:flex-[0_0_85%] min-w-0 px-2 sm:px-3">
                 <Card className="p-6 sm:p-8 text-center shadow-lg hover:shadow-xl transition-all border-2 border-purple-100 rounded-2xl">
                   <div className="bg-purple-900 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
+                    <QrCode className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
                   </div>
-                  <h3 className="font-bold text-lg sm:text-xl mb-3 text-purple-900">Cliente</h3>
+                  <h3 className="font-bold text-lg sm:text-xl mb-3 text-purple-900">Fazer Pedido</h3>
                   <p className="text-sm text-gray-600 leading-relaxed">
                     Escaneia QR Code, informa nome e WhatsApp, faz o pedido, paga com PIX e recebe notificações
                   </p>
                 </Card>
               </div>
 
-              {/* Slide 2 - Área Restrita */}
+              {/* Slide 2 - Consultar Pedido */}
+              <div className="flex-[0_0_90%] sm:flex-[0_0_85%] min-w-0 px-2 sm:px-3">
+                <Card className="p-6 sm:p-8 text-center shadow-lg hover:shadow-xl transition-all border-2 border-cyan-100 rounded-2xl">
+                  <div className="bg-cyan-500 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
+                  </div>
+                  <h3 className="font-bold text-lg sm:text-xl mb-3 text-purple-900">Consultar Pedido</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Acompanhe o status do seu pedido em tempo real
+                  </p>
+                </Card>
+              </div>
+
+              {/* Slide 3 - Área Restrita */}
               <div className="flex-[0_0_90%] sm:flex-[0_0_85%] min-w-0 px-2 sm:px-3">
                 <Card className="p-6 sm:p-8 text-center shadow-lg hover:shadow-xl transition-all border-2 border-yellow-100 rounded-2xl">
                   <div className="bg-yellow-500 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -185,19 +190,6 @@ const Index = () => {
                   <h3 className="font-bold text-lg sm:text-xl mb-3 text-purple-900">Área Restrita</h3>
                   <p className="text-sm text-gray-600 leading-relaxed">
                     Acesso para garçons e gerentes gerenciarem pedidos e operações
-                  </p>
-                </Card>
-              </div>
-
-              {/* Slide 3 - Clientes */}
-              <div className="flex-[0_0_90%] sm:flex-[0_0_85%] min-w-0 px-2 sm:px-3">
-                <Card className="p-6 sm:p-8 text-center shadow-lg hover:shadow-xl transition-all border-2 border-indigo-100 rounded-2xl">
-                  <div className="bg-indigo-600 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-                  </div>
-                  <h3 className="font-bold text-lg sm:text-xl mb-3 text-purple-900">Clientes</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Gerenciamento completo de clientes com importação e exportação CSV
                   </p>
                 </Card>
               </div>
