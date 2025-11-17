@@ -288,14 +288,14 @@ const OrderLookup = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/')}
-            className="w-full py-4 text-base font-bold border-2 border-green-300 text-green-700 hover:bg-green-50 hover:border-green-500 transition-all duration-300 transform hover:scale-105 rounded-xl shadow-lg"
+            className="w-full py-4 text-base font-bold border-2 border-green-300 text-green-700 hover:bg-green-50 hover:border-green-500 hover:text-green-800 transition-all duration-300 transform hover:scale-105 rounded-xl shadow-lg"
           >
             🛒 Fazer Novo Pedido
           </Button>
           <Button
             variant="outline"
             onClick={() => navigate('/menu')}
-            className="w-full py-4 text-base font-bold border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-500 transition-all duration-300 transform hover:scale-105 rounded-xl shadow-lg"
+            className="w-full py-4 text-base font-bold border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-500 hover:text-purple-800 transition-all duration-300 transform hover:scale-105 rounded-xl shadow-lg"
           >
             📋 Ver Cardápio
           </Button>
