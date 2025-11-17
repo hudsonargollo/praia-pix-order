@@ -36,39 +36,49 @@ export function OrderCardInfo({
   };
 
   return (
-    <div className="flex-1">
-      <h3 className="font-bold text-lg sm:text-xl mb-1">Pedido #{orderNumber}</h3>
-      <p className="text-sm sm:text-base text-muted-foreground mb-2">
-        {customerName}
-      </p>
+    <div className="flex-1 space-y-3">
+      {/* Order Number */}
+      <h3 className="font-bold text-xl sm:text-2xl text-gray-900">Pedido #{orderNumber}</h3>
+      
+      {/* Customer Info */}
+      <div className="space-y-1.5">
+        <p className="text-base sm:text-lg font-medium text-gray-700">
+          {customerName}
+        </p>
+        <p className="text-sm sm:text-base text-gray-600 flex items-center gap-1.5">
+          <span className="text-base">📱</span>
+          {formatPhoneNumber(customerPhone)}
+        </p>
+      </div>
+
+      {/* Waiter Badge */}
       {waiterId && (
-        <div className="flex items-center gap-2 mb-2">
-          <Badge variant="secondary" className="text-xs">
-            <User className="mr-1 h-3 w-3" />
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs sm:text-sm bg-purple-100 text-purple-700 border-purple-200">
+            <User className="mr-1.5 h-3.5 w-3.5" />
             {getWaiterName(waiterId)}
           </Badge>
         </div>
       )}
-      <p className="text-sm text-muted-foreground mb-2">
-        📱 {formatPhoneNumber(customerPhone)}
-      </p>
-      <div className="mt-2 space-y-1">
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          Criado: {formatTimestamp(createdAt)}
+
+      {/* Timestamps */}
+      <div className="pt-2 border-t border-gray-200 space-y-1">
+        <p className="text-xs sm:text-sm text-gray-500">
+          <span className="font-medium">Criado:</span> {formatTimestamp(createdAt)}
         </p>
         {paymentConfirmedAt && (
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Pago: {formatTimestamp(paymentConfirmedAt)}
+          <p className="text-xs sm:text-sm text-green-600">
+            <span className="font-medium">Confirmado:</span> {formatTimestamp(paymentConfirmedAt)}
           </p>
         )}
         {kitchenNotifiedAt && (
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Cozinha notificada: {formatTimestamp(kitchenNotifiedAt)}
+          <p className="text-xs sm:text-sm text-gray-500">
+            <span className="font-medium">Cozinha notificada:</span> {formatTimestamp(kitchenNotifiedAt)}
           </p>
         )}
         {readyAt && (
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Pronto: {formatTimestamp(readyAt)}
+          <p className="text-xs sm:text-sm text-gray-500">
+            <span className="font-medium">Pronto:</span> {formatTimestamp(readyAt)}
           </p>
         )}
       </div>
