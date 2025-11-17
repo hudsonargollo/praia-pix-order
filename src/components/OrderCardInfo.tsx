@@ -48,18 +48,6 @@ export function OrderCardInfo({
         </p>
       </div>
 
-      {/* Timestamps - Only on desktop */}
-      <div className="hidden sm:block space-y-1 text-sm">
-        <p className="text-gray-500">
-          <span className="font-medium">Criado:</span> {formatTimestamp(createdAt)}
-        </p>
-        {paymentConfirmedAt && (
-          <p className="text-green-600">
-            <span className="font-medium">Confirmado:</span> {formatTimestamp(paymentConfirmedAt)}
-          </p>
-        )}
-      </div>
-
       {/* Waiter Badge - Compact on mobile */}
       {waiterId && (
         <div className="pt-0.5 sm:pt-1">
