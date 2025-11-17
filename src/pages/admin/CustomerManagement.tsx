@@ -227,9 +227,14 @@ const CustomerManagement = () => {
   const handleViewOrders = async (customer: Customer) => {
     setSelectedCustomer(customer);
     setIsOrdersDialogOpen(true);
-    setLoadingOrders(true);
+    setLoadingOrders(false);
     
     try {
+      setLoadingOrders(true);
+      
+      // Extract phone number without country code for matching
+      const phoneWithoutCode = customer.whatsapp.replace(/^\+55/, "");
+      
       const { data, error } = await supabase
         .from("orders")
         .select(`
@@ -251,7 +256,7 @@ const CustomerManagement = () => {
             )
           )
         `)
-        .eq("customer_whatsapp", customer.whatsapp)
+        .eq("customer_phone", phoneWithoutCode)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
 
@@ -502,9 +507,20 @@ const CustomerManagement = () => {
                       <TableCell className="font-semibold text-gray-900">{customer.name}</TableCell>
                       <TableCell className="text-gray-700 font-mono text-sm">{customer.whatsapp}</TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 font-semibold">
-                          {customer.total_orders}
-                        </Badge>
+                        <div className="flex items-center justify-end gap-2">
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-700 font-semibold">
+                            {customer.total_orders}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleViewOrders(customer)}
+                            className="h-7 w-7 p-0 hover:bg-purple-100 rounded-lg"
+                            title="Ver pedidos"
+                          >
+                            <Eye className="h-4 w-4 text-purple-600" />
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right font-bold text-green-600">
                         R$ {customer.total_spent.toFixed(2)}
@@ -514,15 +530,6 @@ const CustomerManagement = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewOrders(customer)}
-                            className="border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 rounded-lg"
-                            title="Ver pedidos"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
