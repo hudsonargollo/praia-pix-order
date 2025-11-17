@@ -24,7 +24,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { z } from "zod";
-import logo from "@/assets/coco-loko-logo.png";
+import { UniformHeader } from "@/components/UniformHeader";
 import { AdminWaiterReports } from "@/components";
 
 interface Waiter {
@@ -195,53 +195,31 @@ const WaiterManagement = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
-      {/* Enhanced Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4 sm:py-6">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleBack}
-                className="text-white hover:bg-white/20 transition-all duration-300"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div className="relative">
-                <img 
-                  src={logo} 
-                  alt="Coco Loko Açaiteria" 
-                  className="h-12 sm:h-14 w-auto drop-shadow-lg"
-                />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold">
-                  Gestão de Garçons
-                </h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={fetchWaiters}
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/20 transition-all duration-300"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={openCreateDialog}
-                className="bg-white text-purple-600 hover:bg-white/90"
-                size="sm"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Novo</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <UniformHeader
+        title="Gestão de Garçons"
+        onBack={handleBack}
+        actions={
+          <>
+            <Button
+              onClick={fetchWaiters}
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/20"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Atualizar
+            </Button>
+            <Button
+              onClick={openCreateDialog}
+              className="bg-white text-purple-600 hover:bg-white/90"
+              size="sm"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Novo
+            </Button>
+          </>
+        }
+      />
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

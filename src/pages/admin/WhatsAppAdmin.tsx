@@ -129,9 +129,6 @@ export default function WhatsAppAdmin() {
         setConnectionStatus('disconnected');
         setConnectionInfo(null);
         // Set default number if disconnected and no number is set
-        if (!testPhoneNumber) {
-          setTestPhoneNumber('5573987387231');
-        }
       }
     } catch (error) {
       console.error('Failed to check connection status:', error);
