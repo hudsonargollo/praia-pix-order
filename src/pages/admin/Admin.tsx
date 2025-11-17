@@ -30,7 +30,7 @@ const Admin = () => {
     { title: "Relatórios", icon: BarChart3, path: "/reports", description: "Análises e métricas" },
     { title: "Garçons", icon: Users, path: "/waiter-management", description: "Gerenciar equipe" },
     { title: "Clientes", icon: Users, path: "/customers", description: "Gerenciar clientes" },
-    { title: "WhatsApp", icon: MessageCircle, path: "/whatsapp-config", description: "Configurar WhatsApp" },
+    { title: "WhatsApp", icon: MessageCircle, path: "/whatsapp-admin", description: "Configurar WhatsApp" },
   ];
 
   return (
