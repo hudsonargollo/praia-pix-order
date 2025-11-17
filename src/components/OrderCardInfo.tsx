@@ -36,44 +36,39 @@ export function OrderCardInfo({
   };
 
   return (
-    <div className="flex-1 space-y-2 sm:space-y-3">
+    <div className="flex-1 space-y-1.5 sm:space-y-3">
       {/* Order Number */}
-      <h3 className="font-bold text-lg sm:text-2xl text-gray-900 leading-tight">Pedido #{orderNumber}</h3>
+      <h3 className="font-bold text-base sm:text-2xl text-gray-900 leading-tight">Pedido #{orderNumber}</h3>
       
       {/* Customer Info */}
-      <div className="space-y-1">
-        <p className="text-sm sm:text-lg font-medium text-gray-700 leading-snug">
+      <div className="space-y-0.5 sm:space-y-1">
+        <p className="text-sm sm:text-lg font-medium text-gray-700 leading-tight">
           {customerName}
         </p>
-        <p className="text-xs sm:text-base text-gray-600 flex items-center gap-1">
-          <span className="text-sm">📱</span>
+        <p className="text-xs sm:text-base text-gray-600 flex items-center gap-1 leading-tight">
+          <span className="text-xs sm:text-sm">📱</span>
           <span className="break-all">{formatPhoneNumber(customerPhone)}</span>
         </p>
       </div>
 
-      {/* Timestamps - Compact on mobile */}
-      <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm">
-        <p className="text-gray-500 leading-tight">
+      {/* Timestamps - Only on desktop */}
+      <div className="hidden sm:block space-y-1 text-sm">
+        <p className="text-gray-500">
           <span className="font-medium">Criado:</span> {formatTimestamp(createdAt)}
         </p>
         {paymentConfirmedAt && (
-          <p className="text-green-600 leading-tight">
+          <p className="text-green-600">
             <span className="font-medium">Confirmado:</span> {formatTimestamp(paymentConfirmedAt)}
           </p>
         )}
       </div>
 
-      {/* ID - Compact display */}
-      <p className="text-xs text-gray-400 font-mono truncate">
-        ID: {createdAt.split('T')[0].replace(/-/g, '')}...
-      </p>
-
-      {/* Waiter Badge - Bottom on mobile */}
+      {/* Waiter Badge - Compact on mobile */}
       {waiterId && (
-        <div className="pt-1">
-          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
+        <div className="pt-0.5 sm:pt-1">
+          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200 py-0">
             <User className="mr-1 h-3 w-3" />
-            {getWaiterName(waiterId)}
+            <span className="text-xs">{getWaiterName(waiterId)}</span>
           </Badge>
         </div>
       )}
