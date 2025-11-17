@@ -198,30 +198,30 @@ const WaiterManagement = () => {
       <UniformHeader
         title="Gestão de Garçons"
         onBack={handleBack}
-        actions={
-          <>
-            <Button
-              onClick={fetchWaiters}
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/20"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Atualizar
-            </Button>
-            <Button
-              onClick={openCreateDialog}
-              className="bg-white text-purple-600 hover:bg-white/90"
-              size="sm"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Novo
-            </Button>
-          </>
-        }
       />
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-2 mb-4">
+          <Button
+            onClick={fetchWaiters}
+            variant="outline"
+            size="sm"
+            className="bg-white"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+          <Button
+            onClick={openCreateDialog}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+            size="sm"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Garçom
+          </Button>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm shadow-lg">
             <TabsTrigger value="list" className="flex items-center gap-2">

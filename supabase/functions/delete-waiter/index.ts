@@ -12,7 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
+    // Create Supabase client with service role for admin operations
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
@@ -23,31 +24,39 @@ serve(async (req) => {
       }
     )
 
-    // Get the authorization header from the request
-    const authHeader = req.headers.get('Authorization')
-    console.log('Auth header:', authHeader ? 'Present' : 'Missing')
+    // Get JWT from Authorization header
+    const authHeader = req.headers.get('Authorization') || req.headers.get('authorization')
+    console.log('Auth header present:', !!authHeader)
     
     if (!authHeader) {
+      console.error('No authorization header found')
       throw new Error('Missing authorization header')
     }
 
-    // Verify the user is authenticated and is an admin
-    const token = authHeader.replace('Bearer ', '')
-    console.log('Token extracted, length:', token.length)
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
+    // Extract and verify JWT token
+    const jwt = authHeader.replace('Bearer ', '').replace('bearer ', '')
+    console.log('JWT length:', jwt.length)
+    
+    // Verify the user is authenticated using the admin client
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(jwt)
+    console.log('User verification:', user ? `User ${user.id}` : 'No user')
 
     if (userError || !user) {
+      console.error('User verification failed:', userError)
       throw new Error('Unauthorized')
     }
 
     // Check if user is admin
-    const { data: profile, error: profileError } = await supabaseClient
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
+    console.log('Profile check:', profile ? `Role: ${profile.role}` : 'No profile')
+
     if (profileError || profile?.role !== 'admin') {
+      console.error('Admin check failed:', profileError || 'Not admin')
       throw new Error('Only admins can delete waiters')
     }
 
@@ -61,7 +70,7 @@ serve(async (req) => {
     console.log('Deleting waiter:', waiterId)
 
     // Delete the waiter user from auth.users using admin API
-    const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(waiterId)
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(waiterId)
 
     if (deleteError) {
       console.error('Error deleting waiter:', deleteError)
