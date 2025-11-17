@@ -65,6 +65,8 @@ serve(async (req) => {
 
     const payment = await paymentResponse.json();
     console.log('Payment status:', payment.status);
+    console.log('Payment type:', payment.payment_type_id);
+    console.log('Payment method:', payment.payment_method_id);
     console.log('Payment metadata:', payment.metadata);
 
     // Extract order ID from payment metadata
@@ -77,6 +79,10 @@ serve(async (req) => {
       );
     }
 
+    // Extract payment method (payment_type_id from MercadoPago)
+    // This will be: credit_card, debit_card, pix, bank_transfer, ticket, account_money
+    const paymentMethod = payment.payment_type_id || 'pix'; // Default to pix if not specified
+
     // Initialize Supabase client with service role key
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -84,26 +90,31 @@ serve(async (req) => {
 
     // Determine order status based on payment status
     let orderStatus = 'pending_payment';
+    let paymentStatus = 'pending';
     let paymentConfirmedAt = null;
 
     if (payment.status === 'approved') {
       orderStatus = 'paid';
+      paymentStatus = 'confirmed';
       paymentConfirmedAt = new Date().toISOString();
-      console.log('Payment approved, updating order to paid');
+      console.log('Payment approved, updating order to paid via', paymentMethod);
     } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
       orderStatus = 'cancelled';
-      console.log('Payment rejected/cancelled, updating order to cancelled');
+      paymentStatus = 'failed';
+      console.log('Payment rejected/cancelled');
     } else {
       console.log('Payment status not final:', payment.status);
     }
 
-    // Update order status
+    // Update order status with payment method
     const { data: updatedOrder, error: updateError } = await supabase
       .from('orders')
       .update({
         status: orderStatus,
+        payment_status: paymentStatus,
         payment_confirmed_at: paymentConfirmedAt,
         mercadopago_payment_id: paymentId,
+        payment_method: paymentMethod,
       })
       .eq('id', orderId)
       .select()

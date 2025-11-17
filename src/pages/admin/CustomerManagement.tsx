@@ -21,9 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Upload, Download, Search, Users, TrendingUp, ShoppingBag } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Download, Search, Users, TrendingUp, ShoppingBag, Eye, CreditCard, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { UniformHeader } from "@/components/UniformHeader";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Customer {
   id: string;
@@ -36,6 +37,28 @@ interface Customer {
   created_at: string;
 }
 
+interface OrderItem {
+  id: string;
+  menu_item_id: string;
+  quantity: number;
+  unit_price: number;
+  menu_items: {
+    name: string;
+  };
+}
+
+interface CustomerOrder {
+  id: string;
+  order_number: string;
+  status: string;
+  payment_status: string;
+  payment_method: string | null;
+  total_amount: number;
+  created_at: string;
+  payment_confirmed_at: string | null;
+  order_items: OrderItem[];
+}
+
 const CustomerManagement = () => {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -44,7 +67,10 @@ const CustomerManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isOrdersDialogOpen, setIsOrdersDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerOrders, setCustomerOrders] = useState<CustomerOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const [formData, setFormData] = useState({ name: "", whatsapp: "" });
   const [stats, setStats] = useState({
     totalCustomers: 0,
@@ -196,6 +222,73 @@ const CustomerManagement = () => {
       console.error("Error deleting customer:", error);
       toast.error("Erro ao remover cliente");
     }
+  };
+
+  const handleViewOrders = async (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setIsOrdersDialogOpen(true);
+    setLoadingOrders(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(`
+          id,
+          order_number,
+          status,
+          payment_status,
+          payment_method,
+          total_amount,
+          created_at,
+          payment_confirmed_at,
+          order_items (
+            id,
+            menu_item_id,
+            quantity,
+            unit_price,
+            menu_items (
+              name
+            )
+          )
+        `)
+        .eq("customer_whatsapp", customer.whatsapp)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setCustomerOrders(data || []);
+    } catch (error) {
+      console.error("Error loading customer orders:", error);
+      toast.error("Erro ao carregar pedidos do cliente");
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; className: string }> = {
+      pending: { label: "Pendente", className: "bg-yellow-100 text-yellow-700" },
+      paid: { label: "Pago", className: "bg-green-100 text-green-700" },
+      preparing: { label: "Preparando", className: "bg-blue-100 text-blue-700" },
+      ready: { label: "Pronto", className: "bg-purple-100 text-purple-700" },
+      delivered: { label: "Entregue", className: "bg-gray-100 text-gray-700" },
+      cancelled: { label: "Cancelado", className: "bg-red-100 text-red-700" },
+    };
+    
+    const config = statusConfig[status] || { label: status, className: "bg-gray-100 text-gray-700" };
+    return <Badge className={`${config.className} font-semibold`}>{config.label}</Badge>;
+  };
+
+  const getPaymentMethodLabel = (method: string | null) => {
+    const methodLabels: Record<string, string> = {
+      pix: "PIX",
+      credit_card: "Cartão de Crédito",
+      debit_card: "Cartão de Débito",
+      bank_transfer: "Transferência",
+      ticket: "Boleto",
+      account_money: "Saldo em Conta",
+    };
+    return method ? methodLabels[method] || method : "N/A";
   };
 
   const handleExportCSV = () => {
@@ -424,8 +517,18 @@ const CustomerManagement = () => {
                           <Button
                             size="sm"
                             variant="outline"
+                            onClick={() => handleViewOrders(customer)}
+                            className="border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 rounded-lg"
+                            title="Ver pedidos"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
                             onClick={() => handleEdit(customer)}
                             className="border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-lg"
+                            title="Editar cliente"
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -434,6 +537,7 @@ const CustomerManagement = () => {
                             variant="outline"
                             onClick={() => handleDelete(customer)}
                             className="border-2 border-gray-200 hover:border-red-500 hover:bg-red-50 text-red-600 hover:text-red-700 rounded-lg"
+                            title="Remover cliente"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -540,6 +644,111 @@ const CustomerManagement = () => {
               className="bg-red-600 hover:bg-red-700 shadow-lg hover:shadow-xl transition-all rounded-xl h-11 px-6"
             >
               Remover Cliente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Customer Orders Dialog */}
+      <Dialog open={isOrdersDialogOpen} onOpenChange={setIsOrdersDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] bg-white/95 backdrop-blur-sm border-2 border-purple-200 rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900">
+              Pedidos de {selectedCustomer?.name}
+            </DialogTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              {selectedCustomer?.whatsapp} • {selectedCustomer?.total_orders} pedidos • R$ {selectedCustomer?.total_spent.toFixed(2)} total
+            </p>
+          </DialogHeader>
+          
+          <ScrollArea className="max-h-[calc(90vh-200px)] pr-4">
+            {loadingOrders ? (
+              <div className="text-center py-12">
+                <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600 font-medium">Carregando pedidos...</p>
+              </div>
+            ) : customerOrders.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ShoppingBag className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-600 font-medium">Nenhum pedido encontrado</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {customerOrders.map((order) => (
+                  <Card key={order.id} className="p-4 border-2 border-gray-100 hover:border-purple-200 transition-colors">
+                    {/* Order Header */}
+                    <div className="flex items-start justify-between mb-3 pb-3 border-b border-gray-100">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-bold text-lg text-gray-900">#{order.order_number}</h3>
+                          {getStatusBadge(order.status)}
+                        </div>
+                        <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {new Date(order.created_at).toLocaleString("pt-BR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                          {order.payment_method && (
+                            <div className="flex items-center gap-1">
+                              <CreditCard className="w-4 h-4" />
+                              {getPaymentMethodLabel(order.payment_method)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-green-600">
+                          R$ {order.total_amount.toFixed(2)}
+                        </p>
+                        {order.payment_confirmed_at && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Pago em {new Date(order.payment_confirmed_at).toLocaleString("pt-BR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Order Items */}
+                    <div className="space-y-2">
+                      {order.order_items.map((item) => (
+                        <div key={item.id} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary" className="bg-purple-100 text-purple-700 font-bold">
+                              {item.quantity}x
+                            </Badge>
+                            <span className="font-medium text-gray-900">{item.menu_items.name}</span>
+                          </div>
+                          <span className="font-semibold text-gray-700">
+                            R$ {(item.quantity * item.unit_price).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+
+          <DialogFooter>
+            <Button 
+              onClick={() => setIsOrdersDialogOpen(false)}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all rounded-xl h-11 px-6"
+            >
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>
