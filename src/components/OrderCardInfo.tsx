@@ -36,52 +36,47 @@ export function OrderCardInfo({
   };
 
   return (
-    <div className="flex-1 space-y-3">
+    <div className="flex-1 space-y-2 sm:space-y-3">
       {/* Order Number */}
-      <h3 className="font-bold text-xl sm:text-2xl text-gray-900">Pedido #{orderNumber}</h3>
+      <h3 className="font-bold text-lg sm:text-2xl text-gray-900 leading-tight">Pedido #{orderNumber}</h3>
       
       {/* Customer Info */}
-      <div className="space-y-1.5">
-        <p className="text-base sm:text-lg font-medium text-gray-700">
+      <div className="space-y-1">
+        <p className="text-sm sm:text-lg font-medium text-gray-700 leading-snug">
           {customerName}
         </p>
-        <p className="text-sm sm:text-base text-gray-600 flex items-center gap-1.5">
-          <span className="text-base">📱</span>
-          {formatPhoneNumber(customerPhone)}
+        <p className="text-xs sm:text-base text-gray-600 flex items-center gap-1">
+          <span className="text-sm">📱</span>
+          <span className="break-all">{formatPhoneNumber(customerPhone)}</span>
         </p>
       </div>
 
-      {/* Waiter Badge */}
+      {/* Timestamps - Compact on mobile */}
+      <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm">
+        <p className="text-gray-500 leading-tight">
+          <span className="font-medium">Criado:</span> {formatTimestamp(createdAt)}
+        </p>
+        {paymentConfirmedAt && (
+          <p className="text-green-600 leading-tight">
+            <span className="font-medium">Confirmado:</span> {formatTimestamp(paymentConfirmedAt)}
+          </p>
+        )}
+      </div>
+
+      {/* ID - Compact display */}
+      <p className="text-xs text-gray-400 font-mono truncate">
+        ID: {createdAt.split('T')[0].replace(/-/g, '')}...
+      </p>
+
+      {/* Waiter Badge - Bottom on mobile */}
       {waiterId && (
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-xs sm:text-sm bg-purple-100 text-purple-700 border-purple-200">
-            <User className="mr-1.5 h-3.5 w-3.5" />
+        <div className="pt-1">
+          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
+            <User className="mr-1 h-3 w-3" />
             {getWaiterName(waiterId)}
           </Badge>
         </div>
       )}
-
-      {/* Timestamps */}
-      <div className="pt-2 border-t border-gray-200 space-y-1">
-        <p className="text-xs sm:text-sm text-gray-500">
-          <span className="font-medium">Criado:</span> {formatTimestamp(createdAt)}
-        </p>
-        {paymentConfirmedAt && (
-          <p className="text-xs sm:text-sm text-green-600">
-            <span className="font-medium">Confirmado:</span> {formatTimestamp(paymentConfirmedAt)}
-          </p>
-        )}
-        {kitchenNotifiedAt && (
-          <p className="text-xs sm:text-sm text-gray-500">
-            <span className="font-medium">Cozinha notificada:</span> {formatTimestamp(kitchenNotifiedAt)}
-          </p>
-        )}
-        {readyAt && (
-          <p className="text-xs sm:text-sm text-gray-500">
-            <span className="font-medium">Pronto:</span> {formatTimestamp(readyAt)}
-          </p>
-        )}
-      </div>
     </div>
   );
 }
