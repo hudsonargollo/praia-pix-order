@@ -235,11 +235,18 @@ const CustomerManagement = () => {
       // Extract phone number without country code for matching
       const phoneWithoutCode = customer.whatsapp.replace(/^\+55/, "");
       
+      console.log("Searching orders for customer:", {
+        originalPhone: customer.whatsapp,
+        phoneWithoutCode,
+        customerName: customer.name
+      });
+      
       const { data, error } = await supabase
         .from("orders")
         .select(`
           id,
           order_number,
+          customer_phone,
           status,
           payment_status,
           payment_method,
@@ -259,6 +266,8 @@ const CustomerManagement = () => {
         .eq("customer_phone", phoneWithoutCode)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
+
+      console.log("Orders query result:", { data, error, count: data?.length });
 
       if (error) throw error;
       setCustomerOrders(data || []);
