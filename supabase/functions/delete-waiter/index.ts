@@ -25,12 +25,15 @@ serve(async (req) => {
 
     // Get the authorization header from the request
     const authHeader = req.headers.get('Authorization')
+    console.log('Auth header:', authHeader ? 'Present' : 'Missing')
+    
     if (!authHeader) {
       throw new Error('Missing authorization header')
     }
 
     // Verify the user is authenticated and is an admin
     const token = authHeader.replace('Bearer ', '')
+    console.log('Token extracted, length:', token.length)
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
 
     if (userError || !user) {
