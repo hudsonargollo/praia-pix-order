@@ -72,8 +72,7 @@ serve(async (req) => {
       }
     );
 
-    // Update auth user - split into two operations if password is provided
-    // First update email and metadata
+    // Update email and metadata first (without password)
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.updateUserById(
       waiterId,
       {
@@ -84,26 +83,33 @@ serve(async (req) => {
 
     if (authError) {
       console.error('❌ Auth update error:', authError);
+      console.error('❌ Error details:', JSON.stringify(authError, null, 2));
       throw new Error(`Failed to update waiter: ${authError.message}`);
     }
 
     console.log('✅ Auth user email and metadata updated');
 
-    // If password is provided, update it separately
-    if (password && password.trim()) {
+    // If password is provided, update it in a completely separate call
+    if (password && password.trim().length > 0) {
+      console.log('🔵 Updating password separately...');
+      
       const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(
         waiterId,
         {
-          password: password
+          password: password.trim()
         }
       );
 
       if (passwordError) {
         console.error('❌ Password update error:', passwordError);
-        throw new Error(`Failed to update password: ${passwordError.message}`);
+        console.error('❌ Password error details:', JSON.stringify(passwordError, null, 2));
+        // Don't throw here - email was updated successfully
+        console.log('⚠️ Warning: Email updated but password update failed');
+      } else {
+        console.log('✅ Password updated successfully');
       }
-
-      console.log('✅ Password updated');
+    } else {
+      console.log('🔵 No password update requested');
     }
 
     // Update profile
