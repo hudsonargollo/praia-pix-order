@@ -302,11 +302,10 @@ const Payment = () => {
   };
 
   const handleBack = () => {
-    // First attempt: use browser history
-    if (window.history.length > 1) {
-      window.history.back();
+    // Navigate to order status page
+    if (orderId) {
+      navigate(`/order-status/${orderId}`);
     } else {
-      // Fallback: navigate to menu
       navigate('/menu');
     }
   };

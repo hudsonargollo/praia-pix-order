@@ -207,9 +207,9 @@ const Checkout = () => {
       // Clear cart after successful order creation
       clearCart();
 
-      // Navigate to payment with orderId
+      // Navigate to order status page
       toast.success("Pedido criado com sucesso!");
-      navigate(`/payment/${order.id}`);
+      navigate(`/order-status/${order.id}`);
       
     } catch (error) {
       console.error('Exception in handleGoToPayment:', error);
