@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Bell, MessageSquare, AlertCircle, CheckCircle, Clock, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { notificationTriggers } from '@/integrations/whatsapp';
+import { notificationTriggers, getNotificationTypeLabel, getNotificationStatusLabel } from '@/integrations/whatsapp';
 import { evolutionClient } from '@/integrations/whatsapp/evolution-client';
 import type { NotificationHistory } from '@/hooks/useNotificationHistory';
 
@@ -96,11 +96,13 @@ export function NotificationControls({
       );
     }
 
+    const statusLabel = getNotificationStatusLabel(lastNotification.status);
+
     if (lastNotification.status === 'sent') {
       return (
         <Badge variant="default" className="text-xs bg-green-500">
           <CheckCircle className="mr-1 h-3 w-3" />
-          Enviada
+          {statusLabel}
         </Badge>
       );
     }
@@ -109,7 +111,7 @@ export function NotificationControls({
       return (
         <Badge variant="destructive" className="text-xs">
           <AlertCircle className="mr-1 h-3 w-3" />
-          Falhou
+          {statusLabel}
         </Badge>
       );
     }
@@ -118,7 +120,7 @@ export function NotificationControls({
       return (
         <Badge variant="secondary" className="text-xs">
           <Clock className="mr-1 h-3 w-3" />
-          Pendente
+          {statusLabel}
         </Badge>
       );
     }
@@ -150,7 +152,7 @@ export function NotificationControls({
             <p>Última enviada: {formatTimestamp(lastNotification.sent_at)}</p>
           )}
           {lastNotification.notification_type && (
-            <p>Tipo: {lastNotification.notification_type}</p>
+            <p>Tipo: {getNotificationTypeLabel(lastNotification.notification_type)}</p>
           )}
           {lastNotification.attempts > 1 && (
             <p>Tentativas: {lastNotification.attempts}</p>
