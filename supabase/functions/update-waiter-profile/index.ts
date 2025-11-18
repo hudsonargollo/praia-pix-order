@@ -72,15 +72,22 @@ serve(async (req) => {
       }
     );
 
+    // Build update object
+    const updateData: any = {
+      email,
+      full_name,
+      updated_at: new Date().toISOString()
+    };
+
+    // Only include phone_number if provided
+    if (phone_number !== undefined && phone_number !== null) {
+      updateData.phone_number = phone_number;
+    }
+
     // Update profile using admin client (bypasses RLS)
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
-      .update({ 
-        email,
-        full_name,
-        phone_number,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', waiterId);
 
     if (updateError) {
