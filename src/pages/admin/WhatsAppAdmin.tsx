@@ -426,7 +426,6 @@ export default function WhatsAppAdmin() {
       {/* Uniform Header */}
       <UniformHeader
         title="WhatsApp"
-        onBack={() => navigate("/admin")}
       />
 
       {/* Main Content */}

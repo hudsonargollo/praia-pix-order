@@ -373,7 +373,6 @@ const CustomerManagement = () => {
       {/* Uniform Header */}
       <UniformHeader
         title="Clientes"
-        onBack={() => navigate("/admin")}
         onLogout={handleLogout}
       />
 

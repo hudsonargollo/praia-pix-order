@@ -332,7 +332,6 @@ const AdminProducts = () => {
       {/* Uniform Header */}
       <UniformHeader
         title="Produtos"
-        onBack={() => navigate("/admin")}
         actions={
           <Button
             onClick={() => {

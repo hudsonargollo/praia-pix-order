@@ -19,7 +19,6 @@ const AdminWaiterReportsPage = () => {
       {/* Uniform Header */}
       <UniformHeader
         title="Garçons"
-        onBack={() => navigate("/admin")}
       />
 
       {/* Content */}
