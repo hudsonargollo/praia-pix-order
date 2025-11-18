@@ -28,6 +28,7 @@ const Checkout = () => {
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [errors, setErrors] = useState({ name: "", whatsapp: "" });
+  const [touched, setTouched] = useState({ name: false, whatsapp: false });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [dialogView, setDialogView] = useState<'cart' | 'menu'>('cart');
@@ -46,25 +47,31 @@ const Checkout = () => {
   const transition = { duration: 0.3 };
 
   // Validation functions
-  const validateName = (value: string): boolean => {
+  const validateName = (value: string, showError: boolean = true): boolean => {
     const trimmed = value.trim();
     if (trimmed.length < 2) {
-      setErrors(prev => ({ ...prev, name: "Nome deve ter pelo menos 2 caracteres" }));
+      if (showError) {
+        setErrors(prev => ({ ...prev, name: "Nome deve ter pelo menos 2 caracteres" }));
+      }
       return false;
     }
     setErrors(prev => ({ ...prev, name: "" }));
     return true;
   };
 
-  const validateWhatsApp = (value: string): boolean => {
+  const validateWhatsApp = (value: string, showError: boolean = true): boolean => {
     const digits = value.replace(/\D/g, '');
     if (digits.length !== 11) {
-      setErrors(prev => ({ ...prev, whatsapp: "WhatsApp deve ter 11 dígitos (DDD + número)" }));
+      if (showError) {
+        setErrors(prev => ({ ...prev, whatsapp: "WhatsApp deve ter 11 dígitos (DDD + número)" }));
+      }
       return false;
     }
     const ddd = parseInt(digits.substring(0, 2));
     if (ddd < 11 || ddd > 99) {
-      setErrors(prev => ({ ...prev, whatsapp: "DDD inválido" }));
+      if (showError) {
+        setErrors(prev => ({ ...prev, whatsapp: "DDD inválido" }));
+      }
       return false;
     }
     setErrors(prev => ({ ...prev, whatsapp: "" }));
@@ -288,13 +295,21 @@ const Checkout = () => {
                       type="text"
                       placeholder="Ex: João Silva"
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      onBlur={() => validateName(name)}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        if (touched.name) {
+                          validateName(e.target.value, true);
+                        }
+                      }}
+                      onBlur={() => {
+                        setTouched(prev => ({ ...prev, name: true }));
+                        validateName(name, true);
+                      }}
                       onKeyPress={(e) => e.key === 'Enter' && handleNameContinue()}
                       className="mt-2 text-lg h-14 border-2 focus:border-purple-500"
                       autoFocus
                     />
-                    {errors.name && (
+                    {touched.name && errors.name && (
                       <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
                         <span>⚠️</span> {errors.name}
                       </p>
@@ -341,14 +356,22 @@ const Checkout = () => {
                       type="tel"
                       placeholder="(71) 98765-4321"
                       value={whatsapp}
-                      onChange={(e) => handleWhatsAppInput(e.target.value)}
-                      onBlur={() => validateWhatsApp(whatsapp)}
+                      onChange={(e) => {
+                        handleWhatsAppInput(e.target.value);
+                        if (touched.whatsapp) {
+                          validateWhatsApp(e.target.value, true);
+                        }
+                      }}
+                      onBlur={() => {
+                        setTouched(prev => ({ ...prev, whatsapp: true }));
+                        validateWhatsApp(whatsapp, true);
+                      }}
                       onKeyPress={(e) => e.key === 'Enter' && handleWhatsAppContinue()}
                       className="mt-2 text-lg h-14 border-2 focus:border-green-500"
                       autoFocus
                     />
                     <p className="text-xs text-gray-500 mt-1">Digite apenas números (DDD + número)</p>
-                    {errors.whatsapp && (
+                    {touched.whatsapp && errors.whatsapp && (
                       <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
                         <span>⚠️</span> {errors.whatsapp}
                       </p>
