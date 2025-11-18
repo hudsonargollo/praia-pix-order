@@ -252,77 +252,79 @@ export function OrderEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Editar Pedido</DialogTitle>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-purple-600 to-indigo-600">
+          <DialogTitle className="text-2xl font-bold text-white">✏️ Editar Pedido</DialogTitle>
         </DialogHeader>
 
         {loading ? (
-          <div className="py-8 text-center text-muted-foreground">
-            Carregando...
+          <div className="py-12 text-center text-gray-500">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p>Carregando...</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="px-6 py-4 space-y-6 overflow-y-auto max-h-[calc(90vh-200px)]">
             {/* Current Items */}
             <div>
-              <Label className="text-base font-semibold mb-3 block">
-                Itens do Pedido
-              </Label>
-              <div className="space-y-2">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">📋 Itens do Pedido</h3>
+              <div className="space-y-3">
                 {items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhum item no pedido
-                  </p>
+                  <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                    <p className="text-gray-500">Nenhum item no pedido</p>
+                  </div>
                 ) : (
                   items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-3 p-3 border rounded-lg"
+                      className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border-2 border-purple-100 hover:border-purple-200 transition-all"
                     >
                       <div className="flex-1">
-                        <p className="font-medium">{item.item_name}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-semibold text-gray-900">{item.item_name}</p>
+                        <p className="text-sm text-gray-600">
                           R$ {item.unit_price.toFixed(2)} cada
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm">
                         <Button
                           size="icon"
-                          variant="outline"
+                          variant="ghost"
                           type="button"
                           onClick={() => updateQuantity(item.id, -1)}
                           disabled={item.quantity <= 1}
+                          className="h-8 w-8 hover:bg-purple-100 hover:text-purple-700"
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
-                        <span className="w-8 text-center font-semibold">
+                        <span className="w-10 text-center font-bold text-purple-600">
                           {item.quantity}
                         </span>
                         <Button
                           size="icon"
-                          variant="outline"
+                          variant="ghost"
                           type="button"
                           onClick={() => updateQuantity(item.id, 1)}
+                          className="h-8 w-8 hover:bg-purple-100 hover:text-purple-700"
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            removeItem(item.id);
-                          }}
-                          disabled={items.length === 1}
-                          title={items.length === 1 ? "Não é possível remover o último item" : "Remover item"}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
-                      <div className="text-right min-w-[80px]">
-                        <p className="font-bold">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          removeItem(item.id);
+                        }}
+                        disabled={items.length === 1}
+                        title={items.length === 1 ? "Não é possível remover o último item" : "Remover item"}
+                        className="h-9 w-9 hover:bg-red-100 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <div className="text-right min-w-[90px]">
+                        <p className="font-bold text-lg text-purple-600">
                           R$ {(item.quantity * item.unit_price).toFixed(2)}
                         </p>
                       </div>
@@ -334,10 +336,8 @@ export function OrderEditDialog({
 
             {/* Add Items */}
             <div>
-              <Label className="text-base font-semibold mb-3 block">
-                Adicionar Itens
-              </Label>
-              <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-2 border rounded-lg">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">➕ Adicionar Itens</h3>
+              <div className="grid grid-cols-2 gap-3 max-h-[240px] overflow-y-auto p-3 bg-gray-50 rounded-xl border-2 border-gray-200">
                 {menuItems.map((menuItem) => (
                   <Button
                     key={menuItem.id}
@@ -345,11 +345,11 @@ export function OrderEditDialog({
                     size="sm"
                     type="button"
                     onClick={() => addItem(menuItem)}
-                    className="justify-start h-auto py-2"
+                    className="justify-start h-auto py-3 px-4 bg-white hover:bg-purple-50 hover:border-purple-300 border-2 transition-all"
                   >
-                    <div className="text-left">
-                      <p className="font-medium text-sm">{menuItem.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="text-left w-full">
+                      <p className="font-semibold text-sm text-gray-900">{menuItem.name}</p>
+                      <p className="text-xs text-purple-600 font-medium mt-1">
                         R$ {menuItem.price.toFixed(2)}
                       </p>
                     </div>
@@ -359,25 +359,36 @@ export function OrderEditDialog({
             </div>
 
             {/* Total */}
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center text-lg font-bold">
-                <span>Total:</span>
-                <span className="text-primary">R$ {totalAmount.toFixed(2)}</span>
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-5 shadow-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-xl font-bold text-white">💰 Total:</span>
+                <span className="text-3xl font-bold text-white">R$ {totalAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>
         )}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="px-6 py-4 bg-gray-50 border-t gap-3">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            className="flex-1 py-6 text-base font-semibold border-2 hover:bg-gray-100"
+          >
             Cancelar
           </Button>
-          <Button onClick={saveChanges} disabled={saving || items.length === 0}>
+          <Button 
+            onClick={saveChanges} 
+            disabled={saving || items.length === 0}
+            className="flex-1 py-6 text-base font-bold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
+          >
             {saving ? (
-              "Salvando..."
+              <span className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Salvando...
+              </span>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />
+                <Save className="mr-2 h-5 w-5" />
                 Salvar Alterações
               </>
             )}
