@@ -218,9 +218,9 @@ const Checkout = () => {
         // Don't block the flow if notification fails
       }
 
-      // Navigate to order status page
+      // Navigate directly to payment (original behavior)
       toast.success("Pedido criado com sucesso!");
-      navigate(`/order-status/${order.id}`);
+      navigate(`/payment/${order.id}`);
       
     } catch (error) {
       console.error('Exception in handleGoToPayment:', error);
