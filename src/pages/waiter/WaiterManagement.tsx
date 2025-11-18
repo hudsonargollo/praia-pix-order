@@ -168,7 +168,16 @@ const WaiterManagement = () => {
 
       const { email, full_name, phone_number } = validation.data;
 
-      console.log('🔵 Updating waiter:', { id: currentWaiter.id, email, full_name, phone_number });
+      // Clean phone number - remove spaces and special characters
+      const cleanPhone = phone_number ? phone_number.replace(/\D/g, '') : null;
+
+      console.log('🔵 Updating waiter:', { 
+        id: currentWaiter.id, 
+        email, 
+        full_name, 
+        phone_number: phone_number,
+        cleanPhone: cleanPhone 
+      });
 
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -184,7 +193,7 @@ const WaiterManagement = () => {
           waiterId: currentWaiter.id,
           email,
           full_name,
-          phone_number: phone_number || null
+          phone_number: cleanPhone || null
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`
@@ -193,7 +202,14 @@ const WaiterManagement = () => {
 
       if (error) {
         console.error('❌ Update profile error:', error);
+        console.error('❌ Error details:', JSON.stringify(error, null, 2));
         throw new Error(error.message || "Erro ao atualizar garçom.");
+      }
+
+      // Check if there's an error in the response data
+      if (data && data.error) {
+        console.error('❌ Response error:', data.error);
+        throw new Error(data.error);
       }
 
       const hasPhone = phone_number && phone_number.trim().length > 0;
