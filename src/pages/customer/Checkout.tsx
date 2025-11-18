@@ -20,6 +20,25 @@ import { notificationTriggers } from "@/integrations/whatsapp";
 
 type CheckoutStep = 'NAME' | 'WHATSAPP' | 'CONFIRM' | 'REVIEW';
 
+// 15 rotating welcome phrases
+const WELCOME_PHRASES = [
+  "Olá, é uma honra ter você aqui.",
+  "Que alegria ter você conosco!",
+  "Seja muito bem-vindo!",
+  "É um prazer recebê-lo aqui.",
+  "Que bom que você chegou!",
+  "Estamos felizes em te atender!",
+  "Sua presença nos alegra!",
+  "Bem-vindo ao nosso cantinho!",
+  "Que privilégio ter você aqui!",
+  "Ficamos honrados com sua visita!",
+  "É maravilhoso te ver por aqui!",
+  "Sua chegada iluminou nosso dia!",
+  "Que sorte a nossa te receber!",
+  "Estamos radiantes com sua presença!",
+  "Que felicidade ter você conosco!"
+];
+
 const Checkout = () => {
   const navigate = useNavigate();
   const { state: cartState, clearCart, addItem, removeItem } = useCart();
@@ -30,6 +49,10 @@ const Checkout = () => {
   const [errors, setErrors] = useState({ name: "", whatsapp: "" });
   const [touched, setTouched] = useState({ name: false, whatsapp: false });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [welcomePhrase] = useState(() => {
+    // Get a random phrase on component mount
+    return WELCOME_PHRASES[Math.floor(Math.random() * WELCOME_PHRASES.length)];
+  });
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [dialogView, setDialogView] = useState<'cart' | 'menu'>('cart');
   const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -281,7 +304,7 @@ const Checkout = () => {
                     <span className="text-3xl">👋</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    Olá, é uma honra ter você aqui.
+                    {welcomePhrase}
                   </h2>
                   <p className="text-gray-600">Como você gostaria de ser chamado?</p>
                 </div>
