@@ -257,7 +257,7 @@ const OrderStatus = () => {
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-7 text-xl shadow-xl hover:shadow-2xl transition-all"
               >
                 <CreditCard className="w-6 h-6 mr-2" />
-                💳 PAGAR AGORA
+                PAGAR AGORA
               </Button>
             </div>
           </div>
