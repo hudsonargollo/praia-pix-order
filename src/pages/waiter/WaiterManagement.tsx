@@ -178,20 +178,22 @@ const WaiterManagement = () => {
         return;
       }
 
-      // Update profile in database
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ 
+      // Update profile via Edge Function (bypasses RLS recursion issues)
+      const { data, error } = await supabase.functions.invoke('update-waiter-profile', {
+        body: { 
+          waiterId: currentWaiter.id,
           email,
           full_name,
-          phone_number,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', currentWaiter.id);
+          phone_number
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
 
-      if (profileError) {
-        console.error('❌ Update profile error:', profileError);
-        throw new Error(profileError.message || "Erro ao atualizar garçom.");
+      if (error) {
+        console.error('❌ Update profile error:', error);
+        throw new Error(error.message || "Erro ao atualizar garçom.");
       }
 
       toast.success("✅ Garçom atualizado com sucesso! Use 'Redefinir Senha' para alterar a senha.");
