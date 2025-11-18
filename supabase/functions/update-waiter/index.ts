@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -72,19 +72,14 @@ serve(async (req) => {
       }
     );
 
-    // Update auth user
-    const updateData: any = {
-      email,
-      user_metadata: { full_name }
-    };
-
-    if (password && password.trim()) {
-      updateData.password = password;
-    }
-
+    // Update auth user - split into two operations if password is provided
+    // First update email and metadata
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.updateUserById(
       waiterId,
-      updateData
+      {
+        email,
+        user_metadata: { full_name }
+      }
     );
 
     if (authError) {
@@ -92,7 +87,24 @@ serve(async (req) => {
       throw new Error(`Failed to update waiter: ${authError.message}`);
     }
 
-    console.log('✅ Auth user updated');
+    console.log('✅ Auth user email and metadata updated');
+
+    // If password is provided, update it separately
+    if (password && password.trim()) {
+      const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(
+        waiterId,
+        {
+          password: password
+        }
+      );
+
+      if (passwordError) {
+        console.error('❌ Password update error:', passwordError);
+        throw new Error(`Failed to update password: ${passwordError.message}`);
+      }
+
+      console.log('✅ Password updated');
+    }
 
     // Update profile
     const { error: profileUpdateError } = await supabaseAdmin
