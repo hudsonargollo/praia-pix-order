@@ -88,37 +88,20 @@ export default function WhatsAppAdmin() {
         // Extract phone number from various possible fields
         let phoneNumber = data.phoneNumber || data.phone || data.number;
         
-        console.log('Raw phone number from API:', phoneNumber);
-        console.log('Full API response:', data);
-        
         // If phone number has @s.whatsapp.net suffix, remove it
         if (phoneNumber && phoneNumber.includes('@')) {
           phoneNumber = phoneNumber.split('@')[0];
-          console.log('After removing @suffix:', phoneNumber);
         }
         
-        // Extract from instance data if available
+        // Extract from instance data if available (try ownerJid first as it's the actual connected number)
         if (!phoneNumber && data.instanceData) {
-          console.log('Trying instanceData:', data.instanceData);
-          const instancePhone = data.instanceData.owner || data.instanceData.phoneNumber || data.instanceData.number;
+          const instancePhone = data.instanceData.ownerJid || data.instanceData.owner || data.instanceData.phoneNumber || data.instanceData.number;
           if (instancePhone && instancePhone.includes('@')) {
             phoneNumber = instancePhone.split('@')[0];
           } else {
             phoneNumber = instancePhone;
           }
-          console.log('Phone from instanceData:', phoneNumber);
         }
-        
-        // If still no phone number, try to extract from owner field with @s.whatsapp.net
-        if (!phoneNumber && data.instanceData?.owner) {
-          console.log('Trying owner field:', data.instanceData.owner);
-          if (typeof data.instanceData.owner === 'string' && data.instanceData.owner.includes('@')) {
-            phoneNumber = data.instanceData.owner.split('@')[0];
-            console.log('Extracted from owner:', phoneNumber);
-          }
-        }
-        
-        console.log('Final extracted phone number:', phoneNumber);
         
         setConnectionInfo({
           phoneNumber,
@@ -128,7 +111,6 @@ export default function WhatsAppAdmin() {
         
         // Always update test number with connected number
         if (phoneNumber) {
-          console.log('Updating test number to:', phoneNumber);
           // Clear any old cached value and set the new one
           localStorage.removeItem('whatsapp_test_number');
           setTestPhoneNumber(phoneNumber);

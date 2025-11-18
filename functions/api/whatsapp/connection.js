@@ -43,10 +43,16 @@ export async function onRequest(context) {
             const instance = instances.find(i => i.name === instanceName);
             
             if (instance) {
-              // Extract phone number from owner field (format: 5573189719731@s.whatsapp.net)
-              let phoneNumber = instance.number || null;
-              if (!phoneNumber && instance.owner) {
+              // Extract phone number from ownerJid field (format: 555597145414@s.whatsapp.net)
+              // This is the actual connected WhatsApp number
+              let phoneNumber = null;
+              
+              if (instance.ownerJid) {
+                phoneNumber = instance.ownerJid.split('@')[0];
+              } else if (instance.owner) {
                 phoneNumber = instance.owner.split('@')[0];
+              } else if (instance.number) {
+                phoneNumber = instance.number;
               }
               
               return new Response(JSON.stringify({
