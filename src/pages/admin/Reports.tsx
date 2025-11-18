@@ -5,16 +5,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DollarSign, ShoppingCart, TrendingUp, Calendar as CalendarIcon, Download } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DollarSign, ShoppingCart, TrendingUp, Calendar as CalendarIcon, Download, Users } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { UniformHeader } from "@/components/UniformHeader";
+import { fetchAllWaiters, type WaiterInfo } from "@/lib/waiterUtils";
 
 interface OrderStats {
   totalOrders: number;
   completedOrders: number;
-  cancelledOrders: number;
   totalRevenue: number;
   averageOrderValue: number;
 }
@@ -28,64 +30,56 @@ interface DailyStats {
 const Reports = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("geral");
+  const [waiters, setWaiters] = useState<WaiterInfo[]>([]);
+  const [selectedWaiterId, setSelectedWaiterId] = useState<string>("");
   const [stats, setStats] = useState<OrderStats>({
     totalOrders: 0,
     completedOrders: 0,
-    cancelledOrders: 0,
     totalRevenue: 0,
     averageOrderValue: 0,
   });
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
-    // Try to restore from localStorage
-    const saved = localStorage.getItem('reports_date_range');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return {
-          from: new Date(parsed.from),
-          to: new Date(parsed.to),
-        };
-      } catch (e) {
-        console.error('Failed to parse saved date range:', e);
-      }
-    }
-    // Default to today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return {
-      from: today,
-      to: new Date(),
-    };
+    return { from: today, to: new Date() };
   });
 
   useEffect(() => {
-    loadStats();
-  }, [dateRange]);
+    loadWaiters();
+  }, []);
 
-  // Persist date range to localStorage
   useEffect(() => {
-    localStorage.setItem('reports_date_range', JSON.stringify({
-      from: dateRange.from.toISOString(),
-      to: dateRange.to.toISOString(),
-    }));
-  }, [dateRange]);
+    loadStats();
+  }, [dateRange, selectedWaiterId, activeTab]);
+
+  const loadWaiters = async () => {
+    const waitersList = await fetchAllWaiters();
+    setWaiters(waitersList);
+  };
 
   const loadStats = async () => {
     try {
       setLoading(true);
 
-      const { data: orders, error } = await supabase
+      let query = supabase
         .from("orders")
         .select("*")
         .gte("created_at", dateRange.from.toISOString())
         .lte("created_at", dateRange.to.toISOString())
         .is("deleted_at", null);
 
+      // Filter by waiter if individual report
+      if (activeTab === "individual" && selectedWaiterId) {
+        query = query.eq("waiter_id", selectedWaiterId);
+      }
+
+      const { data: orders, error } = await query;
+
       if (error) throw error;
 
       const completed = orders?.filter((o) => o.status === "completed") || [];
-      const cancelled = orders?.filter((o) => o.status === "cancelled") || [];
       const paid = orders?.filter((o) => o.payment_confirmed_at) || [];
 
       const totalRevenue = paid.reduce((sum, o) => sum + Number(o.total_amount), 0);
@@ -93,7 +87,6 @@ const Reports = () => {
       setStats({
         totalOrders: orders?.length || 0,
         completedOrders: completed.length,
-        cancelledOrders: cancelled.length,
         totalRevenue,
         averageOrderValue: paid.length > 0 ? totalRevenue / paid.length : 0,
       });
@@ -123,6 +116,10 @@ const Reports = () => {
   };
 
   const exportToCSV = () => {
+    const waiterName = selectedWaiterId 
+      ? waiters.find(w => w.id === selectedWaiterId)?.display_name || "garcom"
+      : "geral";
+    
     const headers = ["Data", "Pedidos", "Receita"];
     const rows = dailyStats.map((d) => [
       format(new Date(d.date), "dd/MM/yyyy"),
@@ -135,165 +132,304 @@ const Reports = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `relatorio-${format(dateRange.from, "dd-MM-yyyy")}-${format(dateRange.to, "dd-MM-yyyy")}.csv`;
+    a.download = `relatorio-${waiterName}-${format(dateRange.from, "dd-MM-yyyy")}-${format(dateRange.to, "dd-MM-yyyy")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success("CSV exportado!");
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando relatórios...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Uniform Header */}
-      <UniformHeader
-        title="Relatórios"
-      />
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      <UniformHeader title="Relatórios" />
 
-      <div className="max-w-7xl mx-auto p-4">
-        {/* Date Range Selector */}
-        <Card className="p-4 mb-6">
-          <div className="flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-4">
-            <div className="text-center sm:text-left">
-              <p className="text-sm text-muted-foreground">
-                {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="bg-white hover:bg-gray-50 text-gray-900 border-gray-300 w-full sm:w-auto">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Selecionar Período</span>
-                    <span className="sm:hidden">Período</span>
+      <div className="max-w-7xl mx-auto p-4 space-y-4">
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-12">
+            <TabsTrigger value="geral" className="text-base">Geral</TabsTrigger>
+            <TabsTrigger value="individual" className="text-base">Por Garçom</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="geral" className="space-y-4 mt-4">
+            {/* Date Range & Export */}
+            <Card className="p-4">
+              <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <div className="text-sm font-medium">
+                  {format(dateRange.from, "dd/MM/yyyy")} - {format(dateRange.to, "dd/MM/yyyy")}
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+                        <CalendarIcon className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Período</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="range"
+                        selected={{ from: dateRange.from, to: dateRange.to }}
+                        onSelect={(range) => {
+                          if (range?.from && range?.to) {
+                            setDateRange({ from: range.from, to: range.to });
+                          }
+                        }}
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Button onClick={exportToCSV} variant="outline" size="sm" className="flex-1 sm:flex-none">
+                    <Download className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Exportar</span>
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="range"
-                    selected={{ from: dateRange.from, to: dateRange.to }}
-                    onSelect={(range) => {
-                      if (range?.from && range?.to) {
-                        setDateRange({ from: range.from, to: range.to });
-                      }
-                    }}
-                    locale={ptBR}
-                  />
-                </PopoverContent>
-              </Popover>
-              <Button onClick={exportToCSV} variant="outline" className="bg-white hover:bg-gray-50 text-gray-900 border-gray-300 w-full sm:w-auto">
-                <Download className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Exportar CSV</span>
-                <span className="sm:hidden">Exportar</span>
-              </Button>
-            </div>
-          </div>
-        </Card>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="p-6">
-            <div className="flex items-center space-x-3">
-              <ShoppingCart className="h-8 w-8 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total de Pedidos</p>
-                <p className="text-3xl font-bold">{stats.totalOrders}</p>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center space-x-3">
-              <DollarSign className="h-8 w-8 text-success" />
-              <div>
-                <p className="text-sm text-muted-foreground">Receita Total</p>
-                <p className="text-3xl font-bold text-success">
-                  R$ {stats.totalRevenue.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </Card>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <Card className="p-4 bg-gradient-to-br from-white to-blue-50 border-0 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
+                    <ShoppingCart className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Pedidos</p>
+                    <p className="text-2xl font-bold">{stats.totalOrders}</p>
+                  </div>
+                </div>
+              </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center space-x-3">
-              <TrendingUp className="h-8 w-8 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Ticket Médio</p>
-                <p className="text-3xl font-bold text-blue-500">
-                  R$ {stats.averageOrderValue.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </Card>
+              <Card className="p-4 bg-gradient-to-br from-white to-green-50 border-0 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded-xl flex items-center justify-center">
+                    <DollarSign className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Receita</p>
+                    <p className="text-xl font-bold text-green-600">R$ {stats.totalRevenue.toFixed(0)}</p>
+                  </div>
+                </div>
+              </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                <span className="text-green-600 font-bold text-lg">✓</span>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Concluídos</p>
-                <p className="text-3xl font-bold">{stats.completedOrders}</p>
-              </div>
-            </div>
-          </Card>
-        </div>
+              <Card className="p-4 bg-gradient-to-br from-white to-purple-50 border-0 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center">
+                    <TrendingUp className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Ticket Médio</p>
+                    <p className="text-xl font-bold text-purple-600">R$ {stats.averageOrderValue.toFixed(0)}</p>
+                  </div>
+                </div>
+              </Card>
 
-        {/* Daily Stats Table */}
-        <Card className="p-6">
-          <h3 className="font-bold text-xl mb-4">Vendas Diárias</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4">Data</th>
-                  <th className="text-right py-3 px-4">Pedidos</th>
-                  <th className="text-right py-3 px-4">Receita</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dailyStats.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="text-center py-8 text-muted-foreground">
-                      Nenhum dado disponível para o período selecionado
-                    </td>
-                  </tr>
-                ) : (
-                  dailyStats.map((day) => (
-                    <tr key={day.date} className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">
-                        {format(new Date(day.date), "dd/MM/yyyy (EEEE)", { locale: ptBR })}
-                      </td>
-                      <td className="text-right py-3 px-4 font-semibold">{day.orders}</td>
-                      <td className="text-right py-3 px-4 font-bold text-success">
-                        R$ {day.revenue.toFixed(2)}
-                      </td>
+              <Card className="p-4 bg-gradient-to-br from-white to-indigo-50 border-0 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-xl flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">✓</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Concluídos</p>
+                    <p className="text-2xl font-bold">{stats.completedOrders}</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Daily Table */}
+            <Card className="p-4">
+              <h3 className="font-bold text-lg mb-3">Vendas Diárias</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-2">Data</th>
+                      <th className="text-right py-2 px-2">Pedidos</th>
+                      <th className="text-right py-2 px-2">Receita</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-              {dailyStats.length > 0 && (
-                <tfoot>
-                  <tr className="font-bold bg-muted/30">
-                    <td className="py-3 px-4">Total</td>
-                    <td className="text-right py-3 px-4">
-                      {dailyStats.reduce((sum, d) => sum + d.orders, 0)}
-                    </td>
-                    <td className="text-right py-3 px-4 text-success">
-                      R$ {dailyStats.reduce((sum, d) => sum + d.revenue, 0).toFixed(2)}
-                    </td>
-                  </tr>
-                </tfoot>
-              )}
-            </table>
-          </div>
-        </Card>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr><td colSpan={3} className="text-center py-8">Carregando...</td></tr>
+                    ) : dailyStats.length === 0 ? (
+                      <tr><td colSpan={3} className="text-center py-8 text-gray-500">Sem dados</td></tr>
+                    ) : (
+                      dailyStats.map((day) => (
+                        <tr key={day.date} className="border-b hover:bg-gray-50">
+                          <td className="py-2 px-2">{format(new Date(day.date), "dd/MM/yyyy (EEE)", { locale: ptBR })}</td>
+                          <td className="text-right py-2 px-2 font-semibold">{day.orders}</td>
+                          <td className="text-right py-2 px-2 font-bold text-green-600">R$ {day.revenue.toFixed(2)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                  {dailyStats.length > 0 && (
+                    <tfoot>
+                      <tr className="font-bold bg-gray-100">
+                        <td className="py-2 px-2">Total</td>
+                        <td className="text-right py-2 px-2">{dailyStats.reduce((sum, d) => sum + d.orders, 0)}</td>
+                        <td className="text-right py-2 px-2 text-green-600">
+                          R$ {dailyStats.reduce((sum, d) => sum + d.revenue, 0).toFixed(2)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="individual" className="space-y-4 mt-4">
+            {/* Waiter Selection */}
+            <Card className="p-4">
+              <div className="flex flex-col sm:flex-row gap-3 items-center">
+                <div className="flex-1 w-full">
+                  <Select value={selectedWaiterId} onValueChange={setSelectedWaiterId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione um garçom..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {waiters.map((waiter) => (
+                        <SelectItem key={waiter.id} value={waiter.id}>
+                          {waiter.display_name || waiter.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+                        <CalendarIcon className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Período</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="range"
+                        selected={{ from: dateRange.from, to: dateRange.to }}
+                        onSelect={(range) => {
+                          if (range?.from && range?.to) {
+                            setDateRange({ from: range.from, to: range.to });
+                          }
+                        }}
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Button onClick={exportToCSV} variant="outline" size="sm" className="flex-1 sm:flex-none" disabled={!selectedWaiterId}>
+                    <Download className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Exportar</span>
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {selectedWaiterId ? (
+              <>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <Card className="p-4 bg-gradient-to-br from-white to-blue-50 border-0 shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
+                        <ShoppingCart className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Pedidos</p>
+                        <p className="text-2xl font-bold">{stats.totalOrders}</p>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4 bg-gradient-to-br from-white to-green-50 border-0 shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded-xl flex items-center justify-center">
+                        <DollarSign className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Receita</p>
+                        <p className="text-xl font-bold text-green-600">R$ {stats.totalRevenue.toFixed(0)}</p>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4 bg-gradient-to-br from-white to-purple-50 border-0 shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center">
+                        <TrendingUp className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Ticket Médio</p>
+                        <p className="text-xl font-bold text-purple-600">R$ {stats.averageOrderValue.toFixed(0)}</p>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4 bg-gradient-to-br from-white to-indigo-50 border-0 shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-xl flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">✓</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Concluídos</p>
+                        <p className="text-2xl font-bold">{stats.completedOrders}</p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Daily Table */}
+                <Card className="p-4">
+                  <h3 className="font-bold text-lg mb-3">Vendas Diárias</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 px-2">Data</th>
+                          <th className="text-right py-2 px-2">Pedidos</th>
+                          <th className="text-right py-2 px-2">Receita</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {loading ? (
+                          <tr><td colSpan={3} className="text-center py-8">Carregando...</td></tr>
+                        ) : dailyStats.length === 0 ? (
+                          <tr><td colSpan={3} className="text-center py-8 text-gray-500">Sem dados</td></tr>
+                        ) : (
+                          dailyStats.map((day) => (
+                            <tr key={day.date} className="border-b hover:bg-gray-50">
+                              <td className="py-2 px-2">{format(new Date(day.date), "dd/MM/yyyy (EEE)", { locale: ptBR })}</td>
+                              <td className="text-right py-2 px-2 font-semibold">{day.orders}</td>
+                              <td className="text-right py-2 px-2 font-bold text-green-600">R$ {day.revenue.toFixed(2)}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                      {dailyStats.length > 0 && (
+                        <tfoot>
+                          <tr className="font-bold bg-gray-100">
+                            <td className="py-2 px-2">Total</td>
+                            <td className="text-right py-2 px-2">{dailyStats.reduce((sum, d) => sum + d.orders, 0)}</td>
+                            <td className="text-right py-2 px-2 text-green-600">
+                              R$ {dailyStats.reduce((sum, d) => sum + d.revenue, 0).toFixed(2)}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      )}
+                    </table>
+                  </div>
+                </Card>
+              </>
+            ) : (
+              <Card className="p-12 text-center">
+                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-600 font-medium">Selecione um garçom para ver o relatório</p>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
