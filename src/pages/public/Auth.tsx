@@ -167,10 +167,10 @@ const Auth = () => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
 
-      <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm relative z-10">
-        <CardHeader className="text-center space-y-6 pt-10 pb-6 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-t-lg">
+      <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm relative z-10 rounded-2xl">
+        <CardHeader className="text-center space-y-8 pt-12 pb-8 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-t-2xl">
           <div className="flex justify-center">
-            <div className="bg-white p-4 rounded-2xl shadow-lg">
+            <div className="bg-white p-5 rounded-2xl shadow-lg ring-4 ring-purple-100">
               <img 
                 src={logo} 
                 alt="Coco Loko Açaiteria" 
@@ -178,21 +178,22 @@ const Auth = () => {
               />
             </div>
           </div>
-          <div>
-            <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="space-y-3">
+            <CardTitle className="text-3xl font-bold text-gray-900">
               Bem-vindo de volta! 👋
             </CardTitle>
-            <CardDescription className="text-gray-600 text-base">
+            <CardDescription className="text-gray-600 text-base leading-relaxed px-4">
               Entre com suas credenciais para acessar o sistema
             </CardDescription>
           </div>
         </CardHeader>
         
-        <CardContent className="px-8 py-8">
-          <form onSubmit={handleAuth} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
-                📧 Email
+        <CardContent className="px-8 py-10">
+          <form onSubmit={handleAuth} className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="email" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <span className="text-lg">📧</span>
+                Email
               </Label>
               <Input
                 id="email"
@@ -202,13 +203,14 @@ const Auth = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 maxLength={255}
-                className="h-12 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500 rounded-lg transition-all"
+                className="h-14 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl transition-all px-4"
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
-                🔒 Senha
+            <div className="space-y-3">
+              <Label htmlFor="password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <span className="text-lg">🔒</span>
+                Senha
               </Label>
               <Input
                 id="password"
@@ -219,22 +221,25 @@ const Auth = () => {
                 required
                 minLength={6}
                 maxLength={100}
-                className="h-12 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500 rounded-lg transition-all"
+                className="h-14 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl transition-all px-4"
               />
             </div>
             
             <Button 
               type="submit" 
-              className="w-full h-14 text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all mt-8 rounded-lg" 
+              className="w-full h-14 text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 mt-8 rounded-xl" 
               disabled={loading}
             >
               {loading ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-3">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Processando...
+                  <span>Processando...</span>
                 </span>
               ) : (
-                "🚀 Entrar"
+                <span className="flex items-center justify-center gap-2">
+                  <span className="text-xl">🚀</span>
+                  <span>Entrar</span>
+                </span>
               )}
             </Button>
           </form>

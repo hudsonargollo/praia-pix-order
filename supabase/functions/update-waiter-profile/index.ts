@@ -84,6 +84,8 @@ serve(async (req) => {
       updateData.phone_number = phone_number || null;
     }
 
+    console.log('🔵 Update data:', updateData);
+
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
       .update(updateData)
@@ -91,6 +93,37 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('❌ Profile update error:', updateError);
+      console.error('❌ Error details:', JSON.stringify(updateError, null, 2));
+      
+      // If phone_number column doesn't exist, try without it
+      if (updateError.message?.includes('phone_number') || updateError.code === '42703') {
+        console.log('⚠️ phone_number column not found, retrying without it...');
+        const { phone_number: _, ...dataWithoutPhone } = updateData;
+        
+        const { error: retryError } = await supabaseAdmin
+          .from('profiles')
+          .update(dataWithoutPhone)
+          .eq('id', waiterId);
+        
+        if (retryError) {
+          console.error('❌ Retry failed:', retryError);
+          throw new Error(`Failed to update profile: ${retryError.message}`);
+        }
+        
+        console.log('⚠️ Profile updated without phone_number. Please apply database migration.');
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            message: 'Waiter profile updated (phone number not saved - migration needed)',
+            warning: 'Database migration required for phone_number support'
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          }
+        );
+      }
+      
       throw new Error(`Failed to update profile: ${updateError.message}`);
     }
 
