@@ -315,6 +315,45 @@ The application requires these environment variables:
 
 **Important**: The `VITE_MERCADOPAGO_ACCESS_TOKEN` must be available in both frontend and backend environments for the credit card payment feature to work properly.
 
+## Supabase Edge Functions
+
+The application uses several Supabase Edge Functions for backend operations:
+
+### Waiter Management Functions
+
+1. **create-waiter** - Creates new waiter accounts
+   - Requires admin authentication
+   - Creates auth user and profile entry
+   - Sets role to 'waiter'
+
+2. **list-waiters** - Lists all waiter accounts
+   - Requires admin authentication
+   - Returns waiter details from profiles table
+
+3. **delete-waiter** - Deletes waiter accounts
+   - Requires admin authentication
+   - Removes auth user and profile entry
+   - Cascades to related data
+
+4. **update-waiter** - Updates waiter information
+   - Requires admin authentication
+   - Updates email, name, and optionally password
+   - Syncs auth user and profile data
+
+### Deploying Edge Functions
+
+```bash
+# Deploy all functions
+supabase functions deploy create-waiter
+supabase functions deploy list-waiters
+supabase functions deploy delete-waiter
+supabase functions deploy update-waiter
+supabase functions deploy mercadopago-webhook
+
+# Or deploy all at once
+supabase functions deploy
+```
+
 ## Database Schema Changes
 
 ### Waiter Payment Workflow (v20251114000004)

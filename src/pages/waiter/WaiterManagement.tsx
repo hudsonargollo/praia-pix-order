@@ -8,24 +8,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { 
   Plus, 
   Edit, 
   Trash2, 
   Loader2, 
-  ArrowLeft, 
   Users, 
-  TrendingUp,
   UserCheck,
   AlertCircle,
-  RefreshCw,
-  BarChart3
+  RefreshCw
 } from "lucide-react";
 import { z } from "zod";
 import { UniformHeader } from "@/components/UniformHeader";
-import { AdminWaiterReports } from "@/components";
 
 interface Waiter {
   id: string;
@@ -40,6 +35,12 @@ const waiterSchema = z.object({
   full_name: z.string().min(1, { message: "Nome completo é obrigatório" }).max(255),
 });
 
+const waiterEditSchema = z.object({
+  email: z.string().trim().email({ message: "Email inválido" }).max(255),
+  full_name: z.string().min(1, { message: "Nome completo é obrigatório" }).max(255),
+  password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }).max(100).optional(),
+});
+
 const WaiterManagement = () => {
   const navigate = useNavigate();
   const [waiters, setWaiters] = useState<Waiter[]>([]);
@@ -47,7 +48,7 @@ const WaiterManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentWaiter, setCurrentWaiter] = useState<Partial<Waiter> & { password?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("list");
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Check if bypass parameter is present
   const urlParams = new URLSearchParams(window.location.search);
@@ -150,6 +151,66 @@ const WaiterManagement = () => {
     }
   };
 
+  const handleUpdateWaiter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const validation = waiterEditSchema.safeParse(currentWaiter);
+      if (!validation.success) {
+        toast.error(validation.error.errors[0].message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { email, full_name, password } = validation.data;
+
+      console.log('🔵 Updating waiter:', { id: currentWaiter.id, email, full_name });
+
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate('/auth');
+        return;
+      }
+
+      const body: any = { 
+        waiterId: currentWaiter.id, 
+        email, 
+        full_name 
+      };
+      
+      if (password && password.trim()) {
+        body.password = password;
+      }
+
+      const { data, error } = await supabase.functions.invoke('update-waiter', {
+        body,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) {
+        console.error('❌ Update waiter error:', error);
+        throw new Error(error.message || "Erro ao atualizar garçom.");
+      }
+
+      toast.success("✅ Garçom atualizado com sucesso!");
+      setIsDialogOpen(false);
+      setCurrentWaiter({});
+      setIsEditMode(false);
+      fetchWaiters();
+
+    } catch (error: any) {
+      console.error('❌ Update waiter error:', error);
+      toast.error(error.message || "Erro desconhecido ao atualizar garçom.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDeleteWaiter = async (waiterId: string, waiterName: string) => {
     if (!window.confirm(`Tem certeza que deseja deletar o garçom "${waiterName}"? Esta ação é irreversível.`)) return;
 
@@ -197,6 +258,13 @@ const WaiterManagement = () => {
 
   const openCreateDialog = () => {
     setCurrentWaiter({ full_name: '', email: '', password: '' });
+    setIsEditMode(false);
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (waiter: Waiter) => {
+    setCurrentWaiter({ ...waiter, password: '' });
+    setIsEditMode(true);
     setIsDialogOpen(true);
   };
 
@@ -232,19 +300,7 @@ const WaiterManagement = () => {
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm shadow-lg h-auto">
-            <TabsTrigger value="list" className="flex items-center gap-1 sm:gap-2 py-3">
-              <Users className="w-4 h-4" />
-              <span className="text-xs sm:text-sm">Lista</span>
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-1 sm:gap-2 py-3">
-              <BarChart3 className="w-4 h-4" />
-              <span className="text-xs sm:text-sm">Relatórios</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="list" className="space-y-4 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
               <CardHeader className="p-4 sm:p-6">
                 <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -287,14 +343,24 @@ const WaiterManagement = () => {
                               <h3 className="font-semibold text-gray-900 text-base mb-1 truncate">{waiter.full_name}</h3>
                               <p className="text-xs text-gray-600 break-all">{waiter.email}</p>
                             </div>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              className="shrink-0 rounded-full w-9 h-9 p-0 shadow-lg"
-                              onClick={() => handleDeleteWaiter(waiter.id, waiter.full_name)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex gap-2 shrink-0">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="rounded-full w-9 h-9 p-0 shadow-lg border-purple-200 hover:bg-purple-50"
+                                onClick={() => openEditDialog(waiter)}
+                              >
+                                <Edit className="w-4 h-4 text-purple-600" />
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                className="rounded-full w-9 h-9 p-0 shadow-lg"
+                                onClick={() => handleDeleteWaiter(waiter.id, waiter.full_name)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200">
                             <div className="space-y-1">
@@ -341,6 +407,14 @@ const WaiterManagement = () => {
                               </TableCell>
                               <TableCell className="text-right space-x-2">
                                 <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => openEditDialog(waiter)}
+                                  className="hover:bg-purple-50 border-purple-200"
+                                >
+                                  <Edit className="w-4 h-4 text-purple-600" />
+                                </Button>
+                                <Button 
                                   variant="destructive" 
                                   size="sm" 
                                   onClick={() => handleDeleteWaiter(waiter.id, waiter.full_name)}
@@ -358,33 +432,18 @@ const WaiterManagement = () => {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+        </div>
 
-          <TabsContent value="reports" className="space-y-4 sm:space-y-6">
-            <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2 text-purple-600" />
-                  <span>Relatórios de Performance</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6">
-                <AdminWaiterReports />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Create Waiter Dialog */}
+        {/* Create/Edit Waiter Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Users className="w-5 h-5 text-purple-600" />
-                Adicionar Novo Garçom
+                {isEditMode ? <Edit className="w-5 h-5 text-purple-600" /> : <Users className="w-5 h-5 text-purple-600" />}
+                {isEditMode ? 'Editar Garçom' : 'Adicionar Novo Garçom'}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleCreateWaiter}>
+            <form onSubmit={isEditMode ? handleUpdateWaiter : handleCreateWaiter}>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="full_name" className="text-sm">Nome Completo</Label>
@@ -410,14 +469,16 @@ const WaiterManagement = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm">Senha</Label>
+                  <Label htmlFor="password" className="text-sm">
+                    {isEditMode ? 'Nova Senha (opcional)' : 'Senha'}
+                  </Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Digite a senha (mínimo 6 caracteres)"
+                    placeholder={isEditMode ? "Deixe em branco para manter a senha atual" : "Digite a senha (mínimo 6 caracteres)"}
                     value={currentWaiter.password || ''}
                     onChange={(e) => setCurrentWaiter({ ...currentWaiter, password: e.target.value })}
-                    required
+                    required={!isEditMode}
                     className="text-base"
                   />
                 </div>
@@ -440,12 +501,12 @@ const WaiterManagement = () => {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Criando...
+                      {isEditMode ? 'Atualizando...' : 'Criando...'}
                     </>
                   ) : (
                     <>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar Garçom
+                      {isEditMode ? <Edit className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                      {isEditMode ? 'Atualizar Garçom' : 'Criar Garçom'}
                     </>
                   )}
                 </Button>
