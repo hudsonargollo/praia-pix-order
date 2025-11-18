@@ -432,8 +432,8 @@ const CustomerManagement = () => {
         {/* Main Card */}
         <Card className="p-6 shadow-xl border-0 bg-white/95 backdrop-blur-sm">
           {/* Actions Bar */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
-            <div className="flex-1 relative">
+          <div className="flex flex-col gap-3 mb-6">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 placeholder="Buscar por nome ou WhatsApp..."
@@ -442,28 +442,28 @@ const CustomerManagement = () => {
                 className="pl-10 h-11 border-2 border-gray-200 focus:border-purple-500 rounded-xl"
               />
             </div>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2">
               <Button 
                 onClick={handleAdd} 
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all rounded-xl h-11 px-6"
+                className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all rounded-xl h-11 px-4"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Adicionar</span>
               </Button>
               <Button 
                 onClick={handleExportCSV} 
                 variant="outline"
-                className="border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 rounded-xl h-11 px-6"
+                className="flex-1 border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 rounded-xl h-11 px-4"
               >
-                <Download className="h-4 w-4 mr-2" />
-                Exportar
+                <Download className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Exportar</span>
               </Button>
               <Button 
                 variant="outline" 
-                className="relative border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl h-11 px-6"
+                className="flex-1 relative border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl h-11 px-4"
               >
-                <Upload className="h-4 w-4 mr-2" />
-                Importar
+                <Upload className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Importar</span>
                 <input
                   type="file"
                   accept=".csv"
