@@ -35,17 +35,34 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    console.log('🔵 Authenticated user:', user.email);
+    console.log('🔵 Authenticated user:', user.email, 'ID:', user.id);
 
-    // Check if user is admin
+    // Check if user is admin - try profiles table first
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile || profile.role !== 'admin') {
-      console.error('❌ Not an admin:', profile);
+    console.log('🔵 Profile query result:', { profile, profileError });
+
+    let isAdmin = profile?.role === 'admin';
+
+    // If not found in profiles, try user_roles table
+    if (!isAdmin) {
+      console.log('🔵 Checking user_roles table...');
+      const { data: userRole, error: roleError } = await supabaseClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      
+      console.log('🔵 User role query result:', { userRole, roleError });
+      isAdmin = userRole?.role === 'admin';
+    }
+
+    if (!isAdmin) {
+      console.error('❌ Not an admin. Profile:', profile, 'User ID:', user.id);
       throw new Error('Forbidden: Admin access required');
     }
 
