@@ -432,7 +432,6 @@ const Cashier = () => {
       <ConnectionMonitor />
       {/* Uniform Header */}
       <UniformHeader
-        title="Caixa"
         actions={
           <>
             <Button
@@ -462,7 +461,6 @@ const Cashier = () => {
           </>
         }
         showDiagnostic={true}
-        showConnection={true}
         onLogout={handleLogout}
       />
 

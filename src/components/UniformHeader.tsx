@@ -5,7 +5,7 @@ import { useConnectionMonitor } from "@/components/ConnectionMonitor";
 import logo from "@/assets/coco-loko-logo.png";
 
 interface UniformHeaderProps {
-  title?: string; // Made optional since we're removing it
+  title?: string;
   actions?: ReactNode;
   showDiagnostic?: boolean;
   showConnection?: boolean;
@@ -14,6 +14,7 @@ interface UniformHeaderProps {
 }
 
 export const UniformHeader = ({
+  title,
   actions,
   showDiagnostic = false,
   showConnection = false,
@@ -28,7 +29,7 @@ export const UniformHeader = ({
         <div className="py-3 sm:py-4">
           {/* Desktop Layout - Single Line */}
           <div className="hidden lg:flex items-center justify-between gap-4">
-            {/* Left: Back Button and Logo */}
+            {/* Left: Back Button, Logo and Title */}
             <div className="flex items-center gap-3">
               {onBack && (
                 <Button
@@ -48,6 +49,9 @@ export const UniformHeader = ({
                 />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
               </a>
+              {title && (
+                <h1 className="text-xl sm:text-2xl font-bold">{title}</h1>
+              )}
             </div>
 
             {/* Center: Actions */}
@@ -119,18 +123,18 @@ export const UniformHeader = ({
           {/* Mobile/Tablet Layout - Single Line */}
           <div className="lg:hidden">
             <div className="flex justify-between items-center gap-2">
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
                 {onBack && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-white hover:bg-white/20 transition-all"
+                    className="text-white hover:bg-white/20 transition-all flex-shrink-0"
                     onClick={onBack}
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                 )}
-                <a href="/admin" className="relative cursor-pointer hover:opacity-80 transition-opacity">
+                <a href="/admin" className="relative cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
                   <img 
                     src={logo} 
                     alt="Coco Loko" 
@@ -138,6 +142,9 @@ export const UniformHeader = ({
                   />
                   <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></div>
                 </a>
+                {title && (
+                  <h1 className="text-base sm:text-lg font-bold truncate">{title}</h1>
+                )}
               </div>
               
               {/* Actions and Buttons */}
