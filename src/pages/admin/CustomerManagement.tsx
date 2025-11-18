@@ -232,18 +232,10 @@ const CustomerManagement = () => {
     try {
       setLoadingOrders(true);
       
-      // Try multiple phone formats
+      // Try multiple phone formats to match database
       const phoneWithoutCode = customer.whatsapp.replace(/^\+55/, "");
-      const phoneWithPlus = customer.whatsapp; // +5573988033739
-      const phoneJustDigits = customer.whatsapp.replace(/\D/g, ""); // 5573988033739
-      
-      console.log("Searching orders for customer:", {
-        originalPhone: customer.whatsapp,
-        phoneWithoutCode,
-        phoneWithPlus,
-        phoneJustDigits,
-        customerName: customer.name
-      });
+      const phoneWithPlus = customer.whatsapp;
+      const phoneJustDigits = customer.whatsapp.replace(/\D/g, "");
       
       // Try to find orders with any of these phone formats
       const { data, error } = await supabase
@@ -251,8 +243,6 @@ const CustomerManagement = () => {
         .select(`
           id,
           order_number,
-          customer_phone,
-          customer_name,
           status,
           payment_status,
           payment_method,
@@ -272,13 +262,6 @@ const CustomerManagement = () => {
         .or(`customer_phone.eq.${phoneWithoutCode},customer_phone.eq.${phoneWithPlus},customer_phone.eq.${phoneJustDigits}`)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
-
-      console.log("Orders query result:", { 
-        data, 
-        error, 
-        count: data?.length,
-        samplePhone: data?.[0]?.customer_phone 
-      });
 
       if (error) throw error;
       setCustomerOrders(data || []);
