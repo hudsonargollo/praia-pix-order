@@ -68,11 +68,12 @@ serve(async (req) => {
     console.log('[create-waiter] Authenticated user creating waiter')
 
     // Get request body
-    const { email, password, full_name } = await req.json()
+    const { email, password, full_name, phone_number } = await req.json()
 
     console.log('[create-waiter] Request to create waiter:', {
       email,
       full_name,
+      phone_number,
       hasPassword: !!password,
     })
 
@@ -146,7 +147,8 @@ serve(async (req) => {
       .rpc('create_waiter_user', {
         p_email: email,
         p_password: password,
-        p_full_name: full_name
+        p_full_name: full_name,
+        p_phone_number: phone_number || null
       })
 
     if (createError) {

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase Connection Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Supabase Database Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const SUPABASE_URL = 'https://sntxekdwdllwkszclpiq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudHhla2R3ZGxsd2tzemNscGlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMDQ1ODksImV4cCI6MjA3Nzc4MDU4OX0.aPQeASkYkf7jl3Sl-1GFHH7B8VU-pOtn5sYJKMs9u8I';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const results = document.getElementById('results');
+        
+        async function runTests() {
+            results.innerHTML = '<p>Running tests...</p>';
+            
+            // Test 1: Check auth status
+            const { data: { user } } = await supabase.auth.getUser();
+            results.innerHTML += `<h2>Auth Status:</h2><pre>${JSON.stringify(user, null, 2)}</pre>`;
+            
+            // Test 2: Check categories
+            const { data: categories, error: catError } = await supabase
+                .from('menu_categories')
+                .select('*');
+            results.innerHTML += `<h2>Categories (${categories?.length || 0}):</h2>`;
+            if (catError) {
+                results.innerHTML += `<pre style="color: red">Error: ${JSON.stringify(catError, null, 2)}</pre>`;
+            } else {
+                results.innerHTML += `<pre>${JSON.stringify(categories, null, 2)}</pre>`;
+            }
+            
+            // Test 3: Check menu items
+            const { data: items, error: itemsError } = await supabase
+                .from('menu_items')
+                .select('*');
+            results.innerHTML += `<h2>Menu Items (${items?.length || 0}):</h2>`;
+            if (itemsError) {
+                results.innerHTML += `<pre style="color: red">Error: ${JSON.stringify(itemsError, null, 2)}</pre>`;
+            } else {
+                results.innerHTML += `<pre>${JSON.stringify(items?.slice(0, 3), null, 2)}</pre>`;
+            }
+            
+            // Test 4: Check user role
+            if (user) {
+                const { data: roleData, error: roleError } = await supabase
+                    .rpc('get_user_role', { user_id: user.id });
+                results.innerHTML += `<h2>User Role:</h2>`;
+                if (roleError) {
+                    results.innerHTML += `<pre style="color: red">Error: ${JSON.stringify(roleError, null, 2)}</pre>`;
+                } else {
+                    results.innerHTML += `<pre>${roleData}</pre>`;
+                }
+                
+                // Test 5: Check user_roles table
+                const { data: userRoles, error: userRolesError } = await supabase
+                    .from('user_roles')
+                    .select('*')
+                    .eq('user_id', user.id);
+                results.innerHTML += `<h2>User Roles Table:</h2>`;
+                if (userRolesError) {
+                    results.innerHTML += `<pre style="color: red">Error: ${JSON.stringify(userRolesError, null, 2)}</pre>`;
+                } else {
+                    results.innerHTML += `<pre>${JSON.stringify(userRoles, null, 2)}</pre>`;
+                }
+                
+                // Test 6: Try to insert a test menu item (to check INSERT policy)
+                results.innerHTML += `<h2>Test INSERT Permission:</h2>`;
+                const { data: insertTest, error: insertError } = await supabase
+                    .from('menu_items')
+                    .insert({
+                        name: 'TEST ITEM - DELETE ME',
+                        category_id: categories[0]?.id,
+                        price: 1.00,
+                        available: false
+                    })
+                    .select();
+                
+                if (insertError) {
+                    results.innerHTML += `<pre style="color: red">INSERT FAILED: ${JSON.stringify(insertError, null, 2)}</pre>`;
+                } else {
+                    results.innerHTML += `<pre style="color: green">INSERT SUCCESS! ${JSON.stringify(insertTest, null, 2)}</pre>`;
+                    
+                    // Clean up - delete the test item
+                    if (insertTest && insertTest[0]) {
+                        await supabase.from('menu_items').delete().eq('id', insertTest[0].id);
+                        results.innerHTML += `<p style="color: green">Test item cleaned up</p>`;
+                    }
+                }
+            }
+        }
+        
+        runTests();
+    </script>
+</body>
+</html>

@@ -35,13 +35,13 @@ const waiterSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }).max(255),
   password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }).max(100),
   full_name: z.string().min(1, { message: "Nome completo é obrigatório" }).max(255),
-  phone_number: z.string().min(10, { message: "Telefone deve ter no mínimo 10 dígitos" }).max(20).optional(),
+  phone_number: z.string().min(10, { message: "Telefone deve ter no mínimo 10 dígitos" }).max(20).optional().or(z.literal('')),
 });
 
 const waiterEditSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }).max(255),
   full_name: z.string().min(1, { message: "Nome completo é obrigatório" }).max(255),
-  phone_number: z.string().min(10, { message: "Telefone deve ter no mínimo 10 dígitos" }).max(20).optional(),
+  phone_number: z.string().min(10, { message: "Telefone deve ter no mínimo 10 dígitos" }).max(20).optional().or(z.literal('')),
 });
 
 const WaiterManagement = () => {
@@ -112,9 +112,9 @@ const WaiterManagement = () => {
         return;
       }
 
-      const { email, password, full_name } = validation.data;
+      const { email, password, full_name, phone_number } = validation.data;
 
-      console.log('🔵 Creating waiter:', { email, full_name });
+      console.log('🔵 Creating waiter:', { email, full_name, phone_number });
 
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -125,7 +125,7 @@ const WaiterManagement = () => {
       }
 
       const { data, error } = await supabase.functions.invoke('create-waiter', {
-        body: { email, password, full_name },
+        body: { email, password, full_name, phone_number: phone_number || null },
         headers: {
           Authorization: `Bearer ${session.access_token}`
         }
@@ -184,7 +184,7 @@ const WaiterManagement = () => {
           waiterId: currentWaiter.id,
           email,
           full_name,
-          phone_number
+          phone_number: phone_number || null
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`
@@ -196,7 +196,12 @@ const WaiterManagement = () => {
         throw new Error(error.message || "Erro ao atualizar garçom.");
       }
 
-      toast.success("✅ Garçom atualizado com sucesso! Use 'Redefinir Senha' para alterar a senha.");
+      const hasPhone = phone_number && phone_number.trim().length > 0;
+      toast.success(
+        hasPhone 
+          ? "✅ Garçom atualizado! Use o botão 'Redefinir Senha' para enviar link via WhatsApp." 
+          : "✅ Garçom atualizado! Adicione um telefone para habilitar redefinição de senha via WhatsApp."
+      );
       setIsDialogOpen(false);
       setCurrentWaiter({});
       setIsEditMode(false);
@@ -421,6 +426,19 @@ const WaiterManagement = () => {
                               </Badge>
                             </div>
                           </div>
+                          {waiter.phone_number && (
+                            <div className="pt-2 border-t border-gray-200">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleResetPassword(waiter)}
+                                className="w-full hover:bg-blue-50 border-blue-200"
+                              >
+                                <Key className="w-4 h-4 mr-2 text-blue-600" />
+                                Redefinir Senha via WhatsApp
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -525,8 +543,11 @@ const WaiterManagement = () => {
                     className="text-base"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="phone_number" className="text-sm">WhatsApp {isEditMode ? '(recomendado)' : '(opcional)'}</Label>
+                  <Label htmlFor="phone_number" className="text-sm">
+                    Telefone WhatsApp {isEditMode && '(opcional)'}
+                  </Label>
                   <Input
                     id="phone_number"
                     type="tel"
@@ -535,11 +556,14 @@ const WaiterManagement = () => {
                     onChange={(e) => setCurrentWaiter({ ...currentWaiter, phone_number: e.target.value })}
                     className="text-base"
                   />
-                  <p className="text-xs text-gray-500">Formato: código do país + DDD + número (ex: 5511999999999)</p>
-                  {isEditMode && (
-                    <p className="text-xs text-purple-600">Necessário para redefinição de senha via WhatsApp</p>
-                  )}
+                  <p className="text-xs text-gray-500">
+                    {isEditMode 
+                      ? 'Necessário para enviar link de redefinição de senha via WhatsApp'
+                      : 'Formato: código do país + DDD + número (ex: 5511999999999)'
+                    }
+                  </p>
                 </div>
+
                 {!isEditMode && (
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-sm">Senha</Label>
