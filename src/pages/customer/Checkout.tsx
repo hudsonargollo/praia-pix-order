@@ -16,6 +16,7 @@ import { CheckCircle, ArrowLeft, Plus, Minus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import { normalizePhone } from "@/lib/phoneUtils";
+import { notificationTriggers } from "@/integrations/whatsapp";
 
 type CheckoutStep = 'NAME' | 'WHATSAPP' | 'CONFIRM' | 'REVIEW';
 
@@ -206,6 +207,16 @@ const Checkout = () => {
 
       // Clear cart after successful order creation
       clearCart();
+
+      // Send WhatsApp notification with order details and links
+      try {
+        const baseUrl = window.location.origin;
+        await notificationTriggers.onOrderCreatedWithLinks(order.id, baseUrl);
+        console.log('✅ WhatsApp notification triggered for order:', order.id);
+      } catch (notifError) {
+        console.error('❌ Failed to trigger WhatsApp notification:', notifError);
+        // Don't block the flow if notification fails
+      }
 
       // Navigate to order status page
       toast.success("Pedido criado com sucesso!");

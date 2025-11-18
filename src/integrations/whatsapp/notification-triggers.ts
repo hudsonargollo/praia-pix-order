@@ -10,6 +10,75 @@ import { NotificationRequest, OrderData } from './types';
 
 export class NotificationTriggerService {
   /**
+   * Trigger notification when order is created with payment links
+   */
+  async onOrderCreatedWithLinks(orderId: string, baseUrl: string): Promise<void> {
+    try {
+      console.log('Order created with links trigger:', { orderId, baseUrl });
+      
+      // Get order data
+      const orderData = await this.getOrderData(orderId);
+      if (!orderData) {
+        console.error('Order not found for creation notification:', orderId);
+        return;
+      }
+
+      // Check if notification was already sent to prevent duplicates
+      const { data: existingNotifications } = await supabase
+        .from('whatsapp_notifications')
+        .select('id')
+        .eq('order_id', orderId)
+        .eq('notification_type', 'order_created')
+        .eq('status', 'sent')
+        .limit(1);
+
+      if (existingNotifications && existingNotifications.length > 0) {
+        console.log('Order creation notification already sent, skipping:', { orderId });
+        return;
+      }
+
+      // Build message with order details and links
+      const orderStatusUrl = `${baseUrl}/order-status/${orderId}`;
+      const paymentUrl = `${baseUrl}/payment/${orderId}`;
+      
+      const itemsList = orderData.items
+        .map(item => `• ${item.quantity}x ${item.itemName} - R$ ${(item.quantity * item.unitPrice).toFixed(2)}`)
+        .join('\n');
+
+      const message = `🎉 *Pedido #${orderData.orderNumber} Criado!*\n\n` +
+        `Olá ${orderData.customerName}! Seu pedido foi criado com sucesso.\n\n` +
+        `📋 *Itens do Pedido:*\n${itemsList}\n\n` +
+        `💰 *Total: R$ ${orderData.totalAmount.toFixed(2)}*\n\n` +
+        `🔗 *Links Úteis:*\n` +
+        `📱 Ver Pedido: ${orderStatusUrl}\n` +
+        `💳 Ir para Pagamento: ${paymentUrl}\n\n` +
+        `Você pode visualizar seu pedido, editá-lo ou prosseguir com o pagamento através dos links acima.`;
+
+      // Queue order creation notification with custom message
+      const notification: NotificationRequest = {
+        orderId: orderData.id,
+        customerPhone: orderData.customerPhone,
+        customerName: orderData.customerName,
+        notificationType: 'order_created',
+        orderDetails: orderData,
+        customMessage: message,
+      };
+
+      await queueManager.enqueue(notification);
+      console.log('Order creation notification queued:', { orderId });
+    } catch (error) {
+      console.error('Error triggering order creation notification:', error);
+      // Log error for tracking
+      await errorLogger.logError(error as Error, {
+        operation: 'trigger_order_creation',
+        orderId,
+        additionalData: { notificationType: 'order_created' }
+      });
+      // Don't throw - notification failures shouldn't break the order flow
+    }
+  }
+
+  /**
    * Trigger notification when payment is confirmed
    */
   async onPaymentConfirmed(orderId: string): Promise<void> {

@@ -67,7 +67,7 @@ export interface WhatsAppError {
 }
 
 // Notification System Types
-export type NotificationType = 'payment_confirmed' | 'preparing' | 'ready' | 'custom';
+export type NotificationType = 'payment_confirmed' | 'preparing' | 'ready' | 'custom' | 'order_created';
 
 export interface NotificationRequest {
   orderId: string;
