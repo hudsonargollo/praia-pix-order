@@ -188,7 +188,7 @@ const Auth = () => {
           </div>
         </CardHeader>
         
-        <CardContent className="px-8 py-10">
+        <CardContent className="px-8 py-8">
           <form onSubmit={handleAuth} className="space-y-6">
             <div className="space-y-3">
               <Label htmlFor="email" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
