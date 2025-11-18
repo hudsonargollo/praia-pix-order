@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, CreditCard, Clock, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { OrderEditDialog } from "@/components/OrderEditDialog";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 
 interface OrderItem {
   id: string;
@@ -136,7 +137,7 @@ const OrderStatus = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg">
-        <div className="max-w-2xl mx-auto px-4 py-4">
+        <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -147,9 +148,11 @@ const OrderStatus = () => {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold">Seu Pedido</h1>
-              <p className="text-white/90 text-sm mt-0.5">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                Acompanhe seu Pedido
+              </h1>
+              <p className="text-white/90 text-base sm:text-lg mt-1 font-medium">
                 Pedido #{order.order_number}
               </p>
             </div>
@@ -184,7 +187,9 @@ const OrderStatus = () => {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-600">WhatsApp</span>
-              <span className="text-sm font-semibold text-gray-900">{order.customer_phone}</span>
+              <span className="text-sm font-semibold text-gray-900 font-mono">
+                {formatPhoneNumber(order.customer_phone)}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-600">Data</span>
