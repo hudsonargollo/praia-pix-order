@@ -160,43 +160,71 @@ const OrderStatus = () => {
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Status Card */}
-        <Card className="p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Status do Pedido</h2>
+        <Card className="p-6 sm:p-8 shadow-xl border-2 border-purple-100">
+          <div className="text-center mb-6">
+            <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+              order.payment_status === 'confirmed' 
+                ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
+                : 'bg-gradient-to-br from-yellow-500 to-orange-600'
+            }`}>
+              {order.payment_status === 'confirmed' ? (
+                <CheckCircle className="w-8 h-8 text-white" />
+              ) : (
+                <Clock className="w-8 h-8 text-white" />
+              )}
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Status do Pedido</h2>
             {getStatusBadge()}
           </div>
           
-          <div className="space-y-2 text-sm text-gray-600">
-            <p><span className="font-medium">Cliente:</span> {order.customer_name}</p>
-            <p><span className="font-medium">WhatsApp:</span> {order.customer_phone}</p>
-            <p><span className="font-medium">Data:</span> {new Date(order.created_at).toLocaleString('pt-BR')}</p>
+          <div className="space-y-3 bg-gray-50 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-600">Cliente</span>
+              <span className="text-sm font-semibold text-gray-900">{order.customer_name}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-600">WhatsApp</span>
+              <span className="text-sm font-semibold text-gray-900">{order.customer_phone}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-600">Data</span>
+              <span className="text-sm font-semibold text-gray-900">
+                {new Date(order.created_at).toLocaleString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </span>
+            </div>
           </div>
         </Card>
 
         {/* Order Items */}
-        <Card className="p-6 shadow-lg">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Itens do Pedido</h2>
+        <Card className="p-6 sm:p-8 shadow-xl border-2 border-purple-100">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Itens do Pedido</h2>
           
           <div className="space-y-3">
             {orderItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={item.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{item.item_name}</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="font-semibold text-gray-900 text-base">{item.item_name}</p>
+                  <p className="text-sm text-gray-600 mt-1">
                     {item.quantity}x R$ {item.unit_price.toFixed(2)}
                   </p>
                 </div>
-                <p className="font-semibold text-purple-600">
+                <p className="font-bold text-lg text-purple-600">
                   R$ {(item.quantity * item.unit_price).toFixed(2)}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold text-gray-900">Total</span>
-              <span className="text-2xl font-bold text-purple-600">
+          <div className="mt-6 pt-6 border-t-2 border-purple-200">
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-5 flex items-center justify-between shadow-lg">
+              <span className="text-xl font-bold text-white">Total</span>
+              <span className="text-3xl font-bold text-white">
                 R$ {order.total_amount.toFixed(2)}
               </span>
             </div>
@@ -208,32 +236,34 @@ const OrderStatus = () => {
           <div className="space-y-3">
             <Button
               onClick={handleGoToPayment}
-              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-6 text-lg shadow-lg"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-7 text-xl shadow-xl hover:shadow-2xl transition-all"
             >
-              <CreditCard className="w-5 h-5 mr-2" />
-              Ir para Pagamento
+              <CreditCard className="w-6 h-6 mr-2" />
+              💳 Ir para Pagamento
             </Button>
             
             <Button
               onClick={handleEditOrder}
               variant="outline"
-              className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 py-6 text-lg"
+              className="w-full border-2 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 py-6 text-lg font-semibold transition-colors"
             >
               <Edit className="w-5 h-5 mr-2" />
-              Editar Pedido
+              ✏️ Editar Pedido
             </Button>
           </div>
         )}
 
         {order.payment_status === 'confirmed' && (
-          <Card className="p-6 bg-green-50 border-green-200">
+          <Card className="p-8 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 shadow-xl">
             <div className="text-center">
-              <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-green-900 mb-2">
-                Pagamento Confirmado!
+              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                <CheckCircle className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-green-900 mb-3">
+                Pagamento Confirmado! ✨
               </h3>
-              <p className="text-green-700">
-                Seu pedido está sendo preparado. Você receberá uma notificação no WhatsApp quando estiver pronto.
+              <p className="text-lg text-green-700 leading-relaxed">
+                Seu pedido está sendo preparado com carinho. Você receberá uma notificação no WhatsApp quando estiver pronto para retirada!
               </p>
             </div>
           </Card>
