@@ -36,24 +36,21 @@ export function OrderCardInfo({
   };
 
   return (
-    <div className="space-y-1 sm:space-y-2">
+    <div className="space-y-1">
       {/* Customer Info */}
-      <div className="space-y-0.5">
-        <p className="text-sm sm:text-lg font-medium text-gray-700 leading-tight">
-          {customerName}
-        </p>
-        <p className="text-xs sm:text-base text-gray-600 flex items-center gap-1 leading-tight">
-          <span className="text-xs sm:text-sm">📱</span>
-          <span className="break-all">{formatPhoneNumber(customerPhone)}</span>
-        </p>
+      <div className="text-sm text-gray-700">
+        <span className="font-bold">Cliente:</span> {customerName}
+      </div>
+      <div className="text-sm text-gray-700">
+        <span className="font-bold">Telefone:</span> {formatPhoneNumber(customerPhone)}
       </div>
 
-      {/* Waiter Badge - Compact on mobile */}
+      {/* Waiter Badge - Compact */}
       {waiterId && (
-        <div className="pt-0.5 sm:pt-1">
-          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200 py-0">
+        <div className="pt-1">
+          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200 h-5 px-2">
             <User className="mr-1 h-3 w-3" />
-            <span className="text-xs">{getWaiterName(waiterId)}</span>
+            {getWaiterName(waiterId)}
           </Badge>
         </div>
       )}

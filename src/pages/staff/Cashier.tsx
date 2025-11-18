@@ -676,27 +676,30 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft">
                     {/* Order Number + Status/Price Row */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-bold text-base sm:text-2xl text-gray-900 leading-tight">
-                        Pedido #{order.order_number}
-                      </h3>
-                      <div className="flex gap-2 items-start shrink-0">
-                        <StatusBadge 
-                          orderStatus={order.status as OrderStatus}
-                          paymentStatus={order.payment_status as PaymentStatus}
-                          showBoth={true}
-                          compact={false}
-                        />
-                        <div className="text-right">
-                          <p className="font-bold text-xl sm:text-2xl text-primary whitespace-nowrap leading-tight">
-                            R$ {Number(order.total_amount).toFixed(2)}
-                          </p>
-                          {paymentStatus.timestamp && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {paymentStatus.status === 'pending' ? 'Expira:' : 'Confirmado:'} {formatTimestamp(paymentStatus.timestamp)}
-                            </p>
-                          )}
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight mb-2">
+                          Pedido #{order.order_number}
+                        </h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          <StatusBadge 
+                            orderStatus={order.status as OrderStatus}
+                            paymentStatus={order.payment_status as PaymentStatus}
+                            showBoth={true}
+                            compact={true}
+                          />
                         </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap leading-tight">
+                          R$ {Number(order.total_amount).toFixed(2)}
+                        </p>
+                        {paymentStatus.timestamp && (
+                          <p className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
+                            {paymentStatus.status === 'pending' ? 'Expira' : 'Pago'}<br/>
+                            {formatTimestamp(paymentStatus.timestamp)?.split(' ')[1]}
+                          </p>
+                        )}
                       </div>
                     </div>
                     
@@ -840,22 +843,24 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft">
                     {/* Order Number + Status/Price Row */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-bold text-base sm:text-2xl text-gray-900 leading-tight">
-                        Pedido #{order.order_number}
-                      </h3>
-                      <div className="flex gap-2 items-start shrink-0">
-                        <StatusBadge 
-                          orderStatus={order.status as OrderStatus}
-                          paymentStatus={order.payment_status as PaymentStatus}
-                          showBoth={!!order.payment_status}
-                          compact={false}
-                        />
-                        <div className="text-right">
-                          <p className="font-bold text-xl sm:text-2xl text-primary whitespace-nowrap leading-tight">
-                            R$ {Number(order.total_amount).toFixed(2)}
-                          </p>
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight mb-2">
+                          Pedido #{order.order_number}
+                        </h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          <StatusBadge 
+                            orderStatus={order.status as OrderStatus}
+                            paymentStatus={order.payment_status as PaymentStatus}
+                            showBoth={!!order.payment_status}
+                            compact={true}
+                          />
                         </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap leading-tight">
+                          R$ {Number(order.total_amount).toFixed(2)}
+                        </p>
                       </div>
                     </div>
                     
@@ -1012,22 +1017,24 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-success">
                     {/* Order Number + Status/Price Row */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-bold text-base sm:text-2xl text-gray-900 leading-tight">
-                        Pedido #{order.order_number}
-                      </h3>
-                      <div className="flex gap-2 items-start shrink-0">
-                        <StatusBadge 
-                          orderStatus={order.status as OrderStatus}
-                          paymentStatus={order.payment_status as PaymentStatus}
-                          showBoth={!!order.payment_status}
-                          compact={false}
-                        />
-                        <div className="text-right">
-                          <p className="font-bold text-xl sm:text-2xl text-primary whitespace-nowrap leading-tight">
-                            R$ {Number(order.total_amount).toFixed(2)}
-                          </p>
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight mb-2">
+                          Pedido #{order.order_number}
+                        </h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          <StatusBadge 
+                            orderStatus={order.status as OrderStatus}
+                            paymentStatus={order.payment_status as PaymentStatus}
+                            showBoth={!!order.payment_status}
+                            compact={true}
+                          />
                         </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap leading-tight">
+                          R$ {Number(order.total_amount).toFixed(2)}
+                        </p>
                       </div>
                     </div>
                     
@@ -1196,22 +1203,24 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-muted">
                     {/* Order Number + Status/Price Row */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-bold text-base sm:text-2xl text-gray-900 leading-tight">
-                        Pedido #{order.order_number}
-                      </h3>
-                      <div className="flex gap-2 items-start shrink-0">
-                        <StatusBadge 
-                          orderStatus={order.status as OrderStatus}
-                          paymentStatus={order.payment_status as PaymentStatus}
-                          showBoth={!!order.payment_status}
-                          compact={false}
-                        />
-                        <div className="text-right">
-                          <p className="font-bold text-xl sm:text-2xl text-primary whitespace-nowrap leading-tight">
-                            R$ {Number(order.total_amount).toFixed(2)}
-                          </p>
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight mb-2">
+                          Pedido #{order.order_number}
+                        </h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          <StatusBadge 
+                            orderStatus={order.status as OrderStatus}
+                            paymentStatus={order.payment_status as PaymentStatus}
+                            showBoth={!!order.payment_status}
+                            compact={true}
+                          />
                         </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap leading-tight">
+                          R$ {Number(order.total_amount).toFixed(2)}
+                        </p>
                       </div>
                     </div>
                     
