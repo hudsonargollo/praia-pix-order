@@ -432,7 +432,7 @@ const Checkout = () => {
           setItemQuantity(1);
         }
       }}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               {dialogView === 'menu' && (
