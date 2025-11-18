@@ -5,34 +5,31 @@ import { useConnectionMonitor } from "@/components/ConnectionMonitor";
 import logo from "@/assets/coco-loko-logo.png";
 
 interface UniformHeaderProps {
-  title: string;
+  title?: string; // Made optional since we're removing it
   actions?: ReactNode;
   showDiagnostic?: boolean;
   showConnection?: boolean;
   onLogout?: () => void;
   onBack?: () => void;
-  logoLink?: string;
 }
 
 export const UniformHeader = ({
-  title,
   actions,
   showDiagnostic = false,
   showConnection = false,
   onBack,
   onLogout,
-  logoLink,
 }: UniformHeaderProps) => {
   const { connectionStatus, reconnect } = useConnectionMonitor();
 
   return (
     <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white shadow-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-4 sm:py-6">
-          {/* Desktop Layout */}
-          <div className="hidden lg:flex items-center justify-between">
-            {/* Left: Logo and Title */}
-            <div className="flex items-center space-x-3 sm:space-x-4">
+        <div className="py-3 sm:py-4">
+          {/* Desktop Layout - Single Line */}
+          <div className="hidden lg:flex items-center justify-between gap-4">
+            {/* Left: Back Button and Logo */}
+            <div className="flex items-center gap-3">
               {onBack && (
                 <Button
                   variant="ghost"
@@ -43,28 +40,14 @@ export const UniformHeader = ({
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               )}
-              {logoLink ? (
-                <a href={logoLink} className="relative cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
-                  <img 
-                    src={logo} 
-                    alt="Coco Loko" 
-                    className="h-10 sm:h-12 w-auto drop-shadow-lg"
-                  />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                </a>
-              ) : (
-                <div className="relative flex-shrink-0">
-                  <img 
-                    src={logo} 
-                    alt="Coco Loko" 
-                    className="h-10 sm:h-12 w-auto drop-shadow-lg"
-                  />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                </div>
-              )}
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold truncate">{title}</h1>
-              </div>
+              <a href="/admin" className="relative cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
+                <img 
+                  src={logo} 
+                  alt="Coco Loko" 
+                  className="h-10 sm:h-12 w-auto drop-shadow-lg"
+                />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+              </a>
             </div>
 
             {/* Center: Actions */}
@@ -133,107 +116,90 @@ export const UniformHeader = ({
             </div>
           </div>
 
-          {/* Mobile/Tablet Layout */}
+          {/* Mobile/Tablet Layout - Single Line */}
           <div className="lg:hidden">
-            <div className="flex justify-between items-center gap-2 mb-3">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="flex justify-between items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 {onBack && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-white hover:bg-white/20 transition-all flex-shrink-0"
+                    className="text-white hover:bg-white/20 transition-all"
                     onClick={onBack}
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                 )}
-                {logoLink ? (
-                  <a href={logoLink} className="relative cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
-                    <img 
-                      src={logo} 
-                      alt="Coco Loko" 
-                      className="h-8 w-auto drop-shadow-lg"
-                    />
-                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></div>
-                  </a>
-                ) : (
-                  <div className="relative flex-shrink-0">
-                    <img 
-                      src={logo} 
-                      alt="Coco Loko" 
-                      className="h-8 w-auto drop-shadow-lg"
-                    />
-                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></div>
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-base sm:text-lg font-bold truncate">{title}</h1>
-                </div>
+                <a href="/admin" className="relative cursor-pointer hover:opacity-80 transition-opacity">
+                  <img 
+                    src={logo} 
+                    alt="Coco Loko" 
+                    className="h-8 w-auto drop-shadow-lg"
+                  />
+                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></div>
+                </a>
               </div>
               
-              {/* Connection Status */}
-              {showConnection && (
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {connectionStatus === 'connected' ? (
-                    <div className="flex items-center gap-1.5 bg-green-500/20 px-2 py-1 rounded-full backdrop-blur-sm">
-                      <Wifi className="h-3.5 w-3.5 text-green-200" />
-                      <span className="text-xs text-green-200 font-medium hidden sm:inline">Online</span>
-                    </div>
-                  ) : connectionStatus === 'connecting' ? (
-                    <div className="flex items-center gap-1.5 bg-yellow-500/20 px-2 py-1 rounded-full backdrop-blur-sm">
-                      <Wifi className="h-3.5 w-3.5 animate-pulse text-yellow-200" />
-                      <span className="text-xs text-yellow-200 font-medium hidden sm:inline">Conectando...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex items-center gap-1.5 bg-red-500/20 px-2 py-1 rounded-full backdrop-blur-sm">
-                        <WifiOff className="h-3.5 w-3.5 text-red-200" />
-                        <span className="text-xs text-red-200 font-medium hidden sm:inline">Offline</span>
+              {/* Actions and Buttons */}
+              <div className="flex items-center gap-2 flex-1 justify-end">
+                {actions}
+                {showDiagnostic && (
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => window.location.href = "/waiter-diagnostic"} 
+                    className="text-white hover:bg-white/20 transition-all h-8 px-2"
+                    size="sm"
+                    title="System Diagnostics"
+                  >
+                    🔧
+                  </Button>
+                )}
+                
+                {/* Connection Status */}
+                {showConnection && (
+                  <>
+                    {connectionStatus === 'connected' ? (
+                      <div className="flex items-center gap-1.5 bg-green-500/20 px-2 py-1 rounded-full backdrop-blur-sm">
+                        <Wifi className="h-3.5 w-3.5 text-green-200" />
+                        <span className="text-xs text-green-200 font-medium hidden sm:inline">Online</span>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={reconnect}
-                        className="text-xs text-white border-white/30 hover:bg-white/10 backdrop-blur-sm h-7 px-2"
-                      >
-                        Reconectar
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {/* Action Buttons */}
-            {(actions || showDiagnostic || onLogout) && (
-              <div className="flex flex-wrap gap-2 justify-between items-center">
-                <div className="flex flex-wrap gap-2">
-                  {showDiagnostic && (
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => window.location.href = "/waiter-diagnostic"} 
-                      className="text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 backdrop-blur-sm h-8"
-                      size="sm"
-                      title="System Diagnostics"
-                    >
-                      🔧
-                    </Button>
-                  )}
-                  {actions}
-                </div>
+                    ) : connectionStatus === 'connecting' ? (
+                      <div className="flex items-center gap-1.5 bg-yellow-500/20 px-2 py-1 rounded-full backdrop-blur-sm">
+                        <Wifi className="h-3.5 w-3.5 animate-pulse text-yellow-200" />
+                        <span className="text-xs text-yellow-200 font-medium hidden sm:inline">Conectando...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-1.5 bg-red-500/20 px-2 py-1 rounded-full backdrop-blur-sm">
+                          <WifiOff className="h-3.5 w-3.5 text-red-200" />
+                          <span className="text-xs text-red-200 font-medium hidden sm:inline">Offline</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={reconnect}
+                          className="text-xs text-white border-white/30 hover:bg-white/10 backdrop-blur-sm h-7 px-2"
+                        >
+                          Reconectar
+                        </Button>
+                      </>
+                    )}
+                  </>
+                )}
+                
                 {onLogout && (
                   <Button
                     onClick={onLogout}
                     variant="outline"
-                    className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105 h-8"
+                    className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm transition-all h-8"
                     size="sm"
                   >
-                    <LogOut className="mr-1.5 h-3.5 w-3.5" />
+                    <LogOut className="h-3.5 w-3.5 sm:mr-1.5" />
                     <span className="hidden sm:inline">Sair</span>
                   </Button>
                 )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
