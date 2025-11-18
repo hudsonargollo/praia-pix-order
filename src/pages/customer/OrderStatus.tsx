@@ -134,7 +134,7 @@ const OrderStatus = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 pb-24">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg">
         <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6">
@@ -207,7 +207,20 @@ const OrderStatus = () => {
 
         {/* Order Items */}
         <Card className="p-6 sm:p-8 shadow-xl border-2 border-purple-100">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Itens do Pedido</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Itens do Pedido</h2>
+            {order.payment_status === 'pending' && (
+              <Button
+                onClick={handleEditOrder}
+                variant="ghost"
+                size="icon"
+                className="text-purple-600 hover:bg-purple-50 hover:text-purple-700 transition-colors"
+                aria-label="Editar Pedido"
+              >
+                <Edit className="w-5 h-5" />
+              </Button>
+            )}
+          </div>
           
           <div className="space-y-3">
             {orderItems.map((item) => (
@@ -235,25 +248,18 @@ const OrderStatus = () => {
           </div>
         </Card>
 
-        {/* Actions */}
+        {/* Sticky Payment Button */}
         {order.payment_status === 'pending' && (
-          <div className="space-y-3">
-            <Button
-              onClick={handleGoToPayment}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-7 text-xl shadow-xl hover:shadow-2xl transition-all"
-            >
-              <CreditCard className="w-6 h-6 mr-2" />
-              💳 Ir para Pagamento
-            </Button>
-            
-            <Button
-              onClick={handleEditOrder}
-              variant="outline"
-              className="w-full border-2 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 py-6 text-lg font-semibold transition-colors"
-            >
-              <Edit className="w-5 h-5 mr-2" />
-              ✏️ Editar Pedido
-            </Button>
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-purple-200 shadow-2xl p-4 z-50">
+            <div className="max-w-2xl mx-auto">
+              <Button
+                onClick={handleGoToPayment}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-7 text-xl shadow-xl hover:shadow-2xl transition-all"
+              >
+                <CreditCard className="w-6 h-6 mr-2" />
+                💳 PAGAR AGORA
+              </Button>
+            </div>
           </div>
         )}
 
