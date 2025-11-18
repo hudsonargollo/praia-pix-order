@@ -7,7 +7,20 @@ import { templateManager } from './template-manager';
  */
 export class WhatsAppTemplates {
   /**
-   * Generate order confirmation message
+   * Generate order created message (when order is first placed)
+   */
+  static async generateOrderCreated(orderData: OrderData, orderStatusUrl?: string, paymentUrl?: string): Promise<string> {
+    try {
+      const template = await templateManager.getTemplate('order_created');
+      return templateManager.renderTemplate(template, orderData);
+    } catch (error) {
+      console.warn('Failed to load order_created template, using fallback:', error);
+      return this.generateOrderCreatedFallback(orderData, orderStatusUrl, paymentUrl);
+    }
+  }
+
+  /**
+   * Generate order confirmation message (when payment is confirmed)
    */
   static async generateOrderConfirmation(orderData: OrderData): Promise<string> {
     try {
@@ -83,6 +96,34 @@ export class WhatsAppTemplates {
   }
 
   // Fallback methods (hardcoded templates)
+  
+  private static generateOrderCreatedFallback(orderData: OrderData, orderStatusUrl?: string, paymentUrl?: string): string {
+    const itemsList = orderData.items
+      .map(item => {
+        const itemTotal = item.quantity * item.unitPrice;
+        return `• ${item.quantity}x ${item.itemName} - R$ ${itemTotal.toFixed(2)}`;
+      })
+      .join('\n');
+
+    // Get first name for personalization
+    const firstName = orderData.customerName.split(' ')[0];
+
+    let message = `🎉 *Pedido #${orderData.orderNumber} Criado!*\n\n` +
+      `Olá *${firstName}*! Recebemos o seu pedido!\n\n` +
+      `📋 *Itens do Pedido:*\n${itemsList}\n\n` +
+      `💰 *Total: R$ ${orderData.totalAmount.toFixed(2)}*`;
+
+    if (orderStatusUrl && paymentUrl) {
+      message += `\n\n🔗 *Links Úteis:*\n` +
+        `📱 Ver Pedido: ${orderStatusUrl}\n` +
+        `💳 Ir para Pagamento: ${paymentUrl}\n\n` +
+        `Você pode visualizar seu pedido, editá-lo ou prosseguir com o pagamento através dos links acima.`;
+    } else {
+      message += `\n\nEm breve você receberá mais informações sobre o seu pedido! 😊`;
+    }
+
+    return message;
+  }
   
   private static generateOrderConfirmationFallback(orderData: OrderData): string {
     const itemsList = orderData.items

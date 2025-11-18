@@ -531,7 +531,7 @@ export class NotificationQueueManager {
     // Generate message based on type
     switch (notificationType) {
       case 'order_created':
-        return await WhatsAppTemplates.generateOrderConfirmation(orderData);
+        return await WhatsAppTemplates.generateOrderCreated(orderData);
       case 'payment_confirmed':
         return await WhatsAppTemplates.generateOrderConfirmation(orderData);
       case 'preparing':
