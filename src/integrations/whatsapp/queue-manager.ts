@@ -492,8 +492,15 @@ export class NotificationQueueManager {
       };
     }
 
+    // If custom message is provided, use it directly
+    if (notification.customMessage) {
+      return notification.customMessage;
+    }
+
     // Generate message based on type
     switch (notification.notificationType) {
+      case 'order_created':
+        return await WhatsAppTemplates.generateOrderConfirmation(orderData);
       case 'payment_confirmed':
         return await WhatsAppTemplates.generateOrderConfirmation(orderData);
       case 'preparing':
