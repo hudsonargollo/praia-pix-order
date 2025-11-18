@@ -100,6 +100,7 @@ export class WhatsAppComplianceChecker {
    */
   static isNotificationTypeAllowed(notificationType: string): boolean {
     const allowedTypes = [
+      'order_created',
       'payment_confirmed',
       'preparing',
       'ready',
