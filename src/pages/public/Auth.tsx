@@ -159,26 +159,40 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-acai p-4">
-      <Card className="w-full max-w-md shadow-lg border-0 bg-white">
-        <CardHeader className="text-center space-y-6 pt-8 pb-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
+      <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm relative z-10">
+        <CardHeader className="text-center space-y-6 pt-10 pb-6 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-t-lg">
           <div className="flex justify-center">
-            <img 
-              src={logo} 
-              alt="Coco Loko Açaiteria" 
-              className="h-20 w-auto"
-            />
+            <div className="bg-white p-4 rounded-2xl shadow-lg">
+              <img 
+                src={logo} 
+                alt="Coco Loko Açaiteria" 
+                className="h-20 w-auto"
+              />
+            </div>
           </div>
-          <CardDescription className="text-gray-600">
-            Entre com suas credenciais para acessar o sistema
-          </CardDescription>
+          <div>
+            <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
+              Bem-vindo de volta! 👋
+            </CardTitle>
+            <CardDescription className="text-gray-600 text-base">
+              Entre com suas credenciais para acessar o sistema
+            </CardDescription>
+          </div>
         </CardHeader>
         
-        <CardContent className="px-8 pb-8">
-          <form onSubmit={handleAuth} className="space-y-4">
+        <CardContent className="px-8 py-8">
+          <form onSubmit={handleAuth} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
+              <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                📧 Email
               </Label>
               <Input
                 id="email"
@@ -188,13 +202,13 @@ const Auth = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 maxLength={255}
-                className="h-11 text-sm"
+                className="h-12 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500 rounded-lg transition-all"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Senha
+              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+                🔒 Senha
               </Label>
               <Input
                 id="password"
@@ -205,16 +219,23 @@ const Auth = () => {
                 required
                 minLength={6}
                 maxLength={100}
-                className="h-11 text-sm"
+                className="h-12 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500 rounded-lg transition-all"
               />
             </div>
             
             <Button 
               type="submit" 
-              className="w-full h-11 text-sm font-medium bg-purple-600 hover:bg-purple-700 mt-6" 
+              className="w-full h-14 text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all mt-8 rounded-lg" 
               disabled={loading}
             >
-              {loading ? "Processando..." : "Entrar"}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Processando...
+                </span>
+              ) : (
+                "🚀 Entrar"
+              )}
             </Button>
           </form>
         </CardContent>
