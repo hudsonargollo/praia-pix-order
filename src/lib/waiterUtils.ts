@@ -67,7 +67,10 @@ export async function fetchAllWaiters(): Promise<WaiterInfo[]> {
       .order('full_name');
 
     if (error) {
-      console.error('Error fetching waiters:', error);
+      // Silently handle RLS permission errors - not critical for cashier functionality
+      if (error.code !== 'PGRST301') {
+        console.warn('Unable to fetch waiters list:', error.message);
+      }
       return [];
     }
 
@@ -85,7 +88,7 @@ export async function fetchAllWaiters(): Promise<WaiterInfo[]> {
 
     return waiters;
   } catch (error) {
-    console.error('Error fetching waiters:', error);
+    // Silently handle errors - waiter list is optional for cashier
     return [];
   }
 }
