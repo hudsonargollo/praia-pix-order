@@ -45,6 +45,12 @@ export async function onRequest(context: { request: Request; env: Env }) {
       textLength: body.text?.length,
     });
 
+    // Ensure number has + prefix for Evolution API
+    let phoneNumber = body.number;
+    if (!phoneNumber.startsWith('+')) {
+      phoneNumber = '+' + phoneNumber.replace(/\D/g, '');
+    }
+
     // Forward to Evolution API
     const response = await fetch(
       `${apiUrl}/message/sendText/${instanceName}`,
@@ -55,7 +61,7 @@ export async function onRequest(context: { request: Request; env: Env }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          number: body.number,
+          number: phoneNumber,
           text: body.text,
           delay: body.delay || 0,
         }),

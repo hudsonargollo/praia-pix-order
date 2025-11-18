@@ -149,9 +149,22 @@ export class EvolutionAPIClient {
    */
   async sendTextMessage(params: SendTextMessageParams): Promise<EvolutionAPIResponse> {
     // Validate phone number format
-    const cleanNumber = params.number.replace(/\D/g, '');
-    if (cleanNumber.length < 10 || cleanNumber.length > 15) {
-      throw new Error('Invalid phone number format. Must be 10-15 digits.');
+    let phoneNumber = params.number.trim();
+    
+    // If number doesn't start with +, add it
+    if (!phoneNumber.startsWith('+')) {
+      // Remove all non-digits first
+      const cleanNumber = phoneNumber.replace(/\D/g, '');
+      // Add + prefix
+      phoneNumber = '+' + cleanNumber;
+    } else {
+      // Keep the + but remove other non-digit characters except +
+      phoneNumber = '+' + phoneNumber.substring(1).replace(/\D/g, '');
+    }
+    
+    // Validate length (should be +55XXXXXXXXXXX = 14 characters for Brazil)
+    if (phoneNumber.length < 12 || phoneNumber.length > 16) {
+      throw new Error(`Invalid phone number format: ${phoneNumber}. Must be +[country code][number]`);
     }
 
     // Validate message text
@@ -160,7 +173,7 @@ export class EvolutionAPIClient {
     }
 
     const payload = {
-      number: cleanNumber,
+      number: phoneNumber,
       text: params.text.trim(),
       delay: params.delay || 0,
     };
