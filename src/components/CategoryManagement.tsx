@@ -166,14 +166,14 @@ export function CategoryManagement({ categories, onCategoriesChange }: CategoryM
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Gerenciar Categorias</h3>
-        <Button onClick={() => handleOpenDialog()} size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Categoria
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <Button 
+        onClick={() => handleOpenDialog()} 
+        className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 h-12"
+      >
+        <Plus className="w-5 h-5 mr-2" />
+        Adicionar Categoria
+      </Button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categories.map((category) => (

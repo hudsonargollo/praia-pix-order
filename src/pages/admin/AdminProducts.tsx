@@ -358,12 +358,18 @@ const AdminProducts = () => {
       {/* Tabs for Products and Categories */}
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
-            <TabsTrigger value="products" className="flex items-center gap-2">
+          <TabsList className="inline-flex h-11 items-center justify-center rounded-xl bg-white/80 backdrop-blur-sm p-1 text-muted-foreground shadow-lg border border-purple-100 mb-6">
+            <TabsTrigger 
+              value="products" 
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-purple-50 gap-2"
+            >
               <ShoppingBag className="w-4 h-4" />
               Produtos
             </TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="categories" 
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-purple-50 gap-2"
+            >
               <FolderOpen className="w-4 h-4" />
               Categorias
             </TabsTrigger>
