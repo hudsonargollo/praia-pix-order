@@ -1,14 +1,14 @@
-# 🥥 Coco Loko Açaiteria - Digital Ordering System
+# Digital Ordering & Payment System
 
-A complete digital ordering and payment system for an açaí shop by the beach. This modern, mobile-first application streamlines the entire order lifecycle from menu browsing to payment confirmation and kitchen preparation, providing a seamless experience for customers to order via QR codes at tables, make payments through PIX, and receive WhatsApp notifications.
+A complete digital ordering and payment system for restaurants and food service businesses. This modern, mobile-first application streamlines the entire order lifecycle from menu browsing to payment confirmation and kitchen preparation, providing a seamless experience for customers to order via QR codes at tables, make payments through PIX and credit cards, and receive WhatsApp notifications.
 
-## 🌴 Overview
+## Overview
 
-Coco Loko Açaiteria is a comprehensive digital ordering platform designed specifically for beachside açaí shops. The system eliminates traditional paper menus and manual payment processes, replacing them with a streamlined digital experience that benefits both customers and staff.
+This is a comprehensive digital ordering platform designed for restaurants, cafes, and food service businesses. The system eliminates traditional paper menus and manual payment processes, replacing them with a streamlined digital experience that benefits both customers and staff.
 
-**Problem Solved**: Traditional ordering at beach kiosks involves paper menus, manual order taking, and cash/card payments that slow down service during peak hours.
+**Problem Solved**: Traditional ordering involves paper menus, manual order taking, and cash/card payments that slow down service during peak hours.
 
-**Solution**: QR code-based digital ordering with instant PIX payments, real-time kitchen notifications, and automated WhatsApp updates that keep customers informed while they enjoy the beach.
+**Solution**: QR code-based digital ordering with instant PIX payments, credit card processing, real-time kitchen notifications, and automated WhatsApp updates that keep customers informed.
 
 ### Key Features
 
@@ -23,7 +23,7 @@ Coco Loko Açaiteria is a comprehensive digital ordering platform designed speci
 
 ### Target Users
 
-- **Customers**: People ordering açaí and refreshments
+- **Customers**: Diners ordering food and beverages
 - **Kitchen Staff**: Food preparation team managing order queue
 - **Cashier Staff**: Front-of-house team handling customer service and notifications
 - **Admin Staff**: Management team overseeing products, staff, and reports
@@ -272,7 +272,7 @@ npm run test:production  # Test production deployment
 ### Styling Conventions
 
 - Use Tailwind CSS utility classes for styling
-- Follow the custom design system (purple theme, ocean/sunset/acai gradients)
+- Follow the custom design system (purple theme with gradient variants)
 - Use CSS custom properties for colors and shadows
 - Ensure responsive design (mobile-first approach)
 - Test on multiple screen sizes
@@ -282,7 +282,7 @@ npm run test:production  # Test production deployment
 - Uses `@` alias for src directory imports (e.g., `@/components/ui/button`)
 - Vite configured for IPv6 host (`::`) on port 8080
 - Tailwind configured with custom color system, gradients, and animations
-- Custom purple theme with ocean, sunset, and açaí gradient variants
+- Custom purple theme with multiple gradient variants
 - Responsive design with mobile-first approach
 
 ## 🏗️ Architecture
@@ -498,6 +498,4 @@ For issues, questions, or contributions:
 
 ---
 
-Built with ❤️ for Coco Loko Açaiteria 🥥🌴
-
-**Making beach ordering simple, fast, and delightful!**
+**Making restaurant ordering simple, fast, and delightful!**

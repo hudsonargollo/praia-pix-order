@@ -109,6 +109,15 @@ export default function WhatsAppAdmin() {
           console.log('Phone from instanceData:', phoneNumber);
         }
         
+        // If still no phone number, try to extract from owner field with @s.whatsapp.net
+        if (!phoneNumber && data.instanceData?.owner) {
+          console.log('Trying owner field:', data.instanceData.owner);
+          if (typeof data.instanceData.owner === 'string' && data.instanceData.owner.includes('@')) {
+            phoneNumber = data.instanceData.owner.split('@')[0];
+            console.log('Extracted from owner:', phoneNumber);
+          }
+        }
+        
         console.log('Final extracted phone number:', phoneNumber);
         
         setConnectionInfo({
