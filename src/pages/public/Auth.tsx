@@ -168,7 +168,7 @@ const Auth = () => {
       </div>
 
       <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm relative z-10 rounded-2xl">
-        <CardHeader className="text-center space-y-8 pt-12 pb-8 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-t-2xl">
+        <CardHeader className="text-center space-y-6 pt-10 pb-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-t-2xl">
           <div className="flex justify-center">
             <div className="bg-white p-5 rounded-2xl shadow-lg ring-4 ring-purple-100">
               <img 
@@ -178,7 +178,7 @@ const Auth = () => {
               />
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             <CardTitle className="text-3xl font-bold text-gray-900">
               Bem-vindo de volta! 👋
             </CardTitle>
@@ -188,7 +188,7 @@ const Auth = () => {
           </div>
         </CardHeader>
         
-        <CardContent className="px-8 py-8">
+        <CardContent className="px-8 pt-6 pb-8">
           <form onSubmit={handleAuth} className="space-y-6">
             <div className="space-y-3">
               <Label htmlFor="email" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
