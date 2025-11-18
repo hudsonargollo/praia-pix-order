@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, CreditCard, Clock, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { OrderEditDialog } from "@/components/OrderEditDialog";
 
 interface OrderItem {
   id: string;
@@ -34,6 +35,7 @@ const OrderStatus = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!orderId) {
@@ -89,9 +91,12 @@ const OrderStatus = () => {
   };
 
   const handleEditOrder = () => {
-    // Store order ID for editing
-    sessionStorage.setItem('editingOrderId', orderId!);
-    navigate('/menu');
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditComplete = () => {
+    setIsEditDialogOpen(false);
+    loadOrder(); // Reload order to show updated data
   };
 
   const getStatusBadge = () => {
@@ -234,6 +239,16 @@ const OrderStatus = () => {
           </Card>
         )}
       </div>
+
+      {/* Order Edit Dialog */}
+      {orderId && (
+        <OrderEditDialog
+          orderId={orderId}
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          onSaveComplete={handleEditComplete}
+        />
+      )}
     </div>
   );
 };
