@@ -104,6 +104,16 @@ const Cashier = () => {
     });
   };
 
+  const formatTimeWithAMPM = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    const displayHours = hours % 12 || 12;
+    const displayMinutes = minutes.toString().padStart(2, '0');
+    return `${displayHours}:${displayMinutes}${ampm}`;
+  };
+
   // Real-time order updates
   const handleOrderCreated = useCallback((order: Order) => {
     console.log('New order created:', order);
@@ -730,13 +740,13 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft">
                     {/* Order Number + Status Badges */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <div className="flex items-start justify-between gap-2 mb-3">
                       <h3 className="font-bold text-base sm:text-xl text-gray-900">
                         Pedido #{order.order_number}
                       </h3>
-                      <div className="flex gap-1 items-center flex-wrap sm:flex-nowrap">
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-1.5 py-0.5 whitespace-nowrap">
-                          {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex gap-1.5 items-center flex-wrap justify-end">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-1 whitespace-nowrap">
+                          Criado em: {formatTimeWithAMPM(order.created_at)}
                         </Badge>
                         <StatusBadge 
                           orderStatus={order.status as OrderStatus}
@@ -852,27 +862,32 @@ const Cashier = () => {
           <TabsContent value="progress" className="space-y-4">
             {/* Payment Status Summary */}
             {inProgressOrders.length > 0 && (
-              <Card className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-blue-900">Status de Pagamento</h3>
-                  <div className="flex gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                      <span className="text-blue-900">
-                        Pendente: <strong>{inProgressPaymentBreakdown.pending}</strong>
+              <Card className="p-4 sm:p-6 bg-gradient-to-br from-blue-500 to-blue-600 border-0 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                      <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                    </div>
+                    <h3 className="font-bold text-lg sm:text-xl text-white">Status de Pagamento</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-3 sm:gap-4 text-sm">
+                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                      <div className="w-3 h-3 rounded-full bg-orange-400"></div>
+                      <span className="text-white font-medium">
+                        Pendente: <strong className="text-lg">{inProgressPaymentBreakdown.pending}</strong>
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <span className="text-blue-900">
-                        Confirmado: <strong>{inProgressPaymentBreakdown.confirmed}</strong>
+                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                      <span className="text-white font-medium">
+                        Confirmado: <strong className="text-lg">{inProgressPaymentBreakdown.confirmed}</strong>
                       </span>
                     </div>
                     {inProgressPaymentBreakdown.failed > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <span className="text-blue-900">
-                          Falhou: <strong>{inProgressPaymentBreakdown.failed}</strong>
+                      <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                        <span className="text-white font-medium">
+                          Falhou: <strong className="text-lg">{inProgressPaymentBreakdown.failed}</strong>
                         </span>
                       </div>
                     )}
@@ -899,39 +914,42 @@ const Cashier = () => {
                 
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft">
-                    {/* Order Number + Status/Price Row */}
+                    {/* Order Number + Status Badges */}
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight mb-2">
-                          Pedido #{order.order_number}
-                        </h3>
-                        <div className="flex flex-wrap gap-1.5">
-                          <StatusBadge 
-                            orderStatus={order.status as OrderStatus}
-                            paymentStatus={order.payment_status as PaymentStatus}
-                            showBoth={!!order.payment_status}
-                            compact={true}
-                          />
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap leading-tight">
-                          R$ {Number(order.total_amount).toFixed(2)}
-                        </p>
+                      <h3 className="font-bold text-base sm:text-xl text-gray-900">
+                        Pedido #{order.order_number}
+                      </h3>
+                      <div className="flex gap-1.5 items-center flex-wrap justify-end">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-1 whitespace-nowrap">
+                          Criado em: {formatTimeWithAMPM(order.created_at)}
+                        </Badge>
+                        <StatusBadge 
+                          orderStatus={order.status as OrderStatus}
+                          paymentStatus={order.payment_status as PaymentStatus}
+                          showBoth={false}
+                          compact={true}
+                        />
                       </div>
                     </div>
                     
-                    {/* Customer Info */}
-                    <div className="mb-3 sm:mb-4">
-                      <OrderCardInfo
-                        orderNumber={order.order_number}
-                        customerName={order.customer_name}
-                        customerPhone={order.customer_phone}
-                        waiterId={order.waiter_id}
-                        createdAt={order.created_at}
-                        paymentConfirmedAt={order.payment_confirmed_at}
-                        kitchenNotifiedAt={order.kitchen_notified_at}
-                      />
+                    {/* Customer Info + Total */}
+                    <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
+                      <div className="flex-1">
+                        <OrderCardInfo
+                          orderNumber={order.order_number}
+                          customerName={order.customer_name}
+                          customerPhone={order.customer_phone}
+                          waiterId={order.waiter_id}
+                          createdAt={order.created_at}
+                          paymentConfirmedAt={order.payment_confirmed_at}
+                          kitchenNotifiedAt={order.kitchen_notified_at}
+                        />
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
+                          R$ {Number(order.total_amount).toFixed(2)}
+                        </p>
+                      </div>
                     </div>
                     
                     {/* WhatsApp Error Indicator */}
@@ -1026,27 +1044,32 @@ const Cashier = () => {
           <TabsContent value="ready" className="space-y-4">
             {/* Payment Status Summary */}
             {readyOrders.length > 0 && (
-              <Card className="p-4 bg-gradient-to-r from-green-50 to-green-100 border-green-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-green-900">Status de Pagamento</h3>
-                  <div className="flex gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                      <span className="text-green-900">
-                        Pendente: <strong>{readyPaymentBreakdown.pending}</strong>
+              <Card className="p-4 sm:p-6 bg-gradient-to-br from-green-500 to-green-600 border-0 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                      <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                    </div>
+                    <h3 className="font-bold text-lg sm:text-xl text-white">Status de Pagamento</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-3 sm:gap-4 text-sm">
+                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                      <div className="w-3 h-3 rounded-full bg-orange-400"></div>
+                      <span className="text-white font-medium">
+                        Pendente: <strong className="text-lg">{readyPaymentBreakdown.pending}</strong>
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <span className="text-green-900">
-                        Confirmado: <strong>{readyPaymentBreakdown.confirmed}</strong>
+                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                      <span className="text-white font-medium">
+                        Confirmado: <strong className="text-lg">{readyPaymentBreakdown.confirmed}</strong>
                       </span>
                     </div>
                     {readyPaymentBreakdown.failed > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <span className="text-green-900">
-                          Falhou: <strong>{readyPaymentBreakdown.failed}</strong>
+                      <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                        <span className="text-white font-medium">
+                          Falhou: <strong className="text-lg">{readyPaymentBreakdown.failed}</strong>
                         </span>
                       </div>
                     )}
@@ -1074,13 +1097,13 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-success">
                     {/* Order Number + Status Badges */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <div className="flex items-start justify-between gap-2 mb-3">
                       <h3 className="font-bold text-base sm:text-xl text-gray-900">
                         Pedido #{order.order_number}
                       </h3>
-                      <div className="flex gap-1 items-center flex-wrap sm:flex-nowrap">
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-1.5 py-0.5 whitespace-nowrap">
-                          {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex gap-1.5 items-center flex-wrap justify-end">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-1 whitespace-nowrap">
+                          Criado em: {formatTimeWithAMPM(order.created_at)}
                         </Badge>
                         <StatusBadge 
                           orderStatus={order.status as OrderStatus}
@@ -1217,27 +1240,32 @@ const Cashier = () => {
           <TabsContent value="completed" className="space-y-4">
             {/* Payment Status Summary */}
             {completedOrders.length > 0 && (
-              <Card className="p-4 bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-purple-900">Status de Pagamento</h3>
-                  <div className="flex gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                      <span className="text-purple-900">
-                        Pendente: <strong>{completedPaymentBreakdown.pending}</strong>
+              <Card className="p-4 sm:p-6 bg-gradient-to-br from-purple-500 to-purple-600 border-0 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                      <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                    </div>
+                    <h3 className="font-bold text-lg sm:text-xl text-white">Status de Pagamento</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-3 sm:gap-4 text-sm">
+                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                      <div className="w-3 h-3 rounded-full bg-orange-400"></div>
+                      <span className="text-white font-medium">
+                        Pendente: <strong className="text-lg">{completedPaymentBreakdown.pending}</strong>
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <span className="text-purple-900">
-                        Confirmado: <strong>{completedPaymentBreakdown.confirmed}</strong>
+                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                      <span className="text-white font-medium">
+                        Confirmado: <strong className="text-lg">{completedPaymentBreakdown.confirmed}</strong>
                       </span>
                     </div>
                     {completedPaymentBreakdown.failed > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <span className="text-purple-900">
-                          Falhou: <strong>{completedPaymentBreakdown.failed}</strong>
+                      <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                        <span className="text-white font-medium">
+                          Falhou: <strong className="text-lg">{completedPaymentBreakdown.failed}</strong>
                         </span>
                       </div>
                     )}
@@ -1263,13 +1291,13 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-muted">
                     {/* Order Number + Status Badges */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <div className="flex items-start justify-between gap-2 mb-3">
                       <h3 className="font-bold text-base sm:text-xl text-gray-900">
                         Pedido #{order.order_number}
                       </h3>
-                      <div className="flex gap-1 items-center flex-wrap sm:flex-nowrap">
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-1.5 py-0.5 whitespace-nowrap">
-                          {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex gap-1.5 items-center flex-wrap justify-end">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-1 whitespace-nowrap">
+                          Criado em: {formatTimeWithAMPM(order.created_at)}
                         </Badge>
                         <StatusBadge 
                           orderStatus={order.status as OrderStatus}
