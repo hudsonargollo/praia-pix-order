@@ -152,9 +152,6 @@ const OrderStatus = () => {
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
                 Acompanhe seu Pedido
               </h1>
-              <p className="text-white/90 text-base sm:text-lg mt-1 font-medium">
-                Pedido #{order.order_number}
-              </p>
             </div>
           </div>
         </div>
@@ -176,7 +173,9 @@ const OrderStatus = () => {
                 <Clock className="w-8 h-8 text-white" />
               )}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Status do Pedido</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Pedido #{order.order_number}
+            </h2>
             {getStatusBadge()}
           </div>
           
