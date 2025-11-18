@@ -245,13 +245,67 @@ const Cashier = () => {
     }
   };
 
-  const confirmPayment = async (orderId: string) => {
+  const verifyPayment = async (orderId: string) => {
+    try {
+      toast.loading("Verificando pagamento no MercadoPago...");
+      
+      // Get order with payment ID
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .select("mercadopago_payment_id")
+        .eq("id", orderId)
+        .single();
+
+      if (orderError || !order?.mercadopago_payment_id) {
+        toast.dismiss();
+        // No payment ID, offer manual confirmation
+        if (window.confirm("Não foi possível verificar o pagamento automaticamente. O cliente pagou em dinheiro ou outro método? Deseja confirmar manualmente?")) {
+          await confirmPaymentManually(orderId);
+        }
+        return;
+      }
+
+      // Check payment status with MercadoPago
+      const { mercadoPagoService } = await import("@/integrations/mercadopago");
+      const paymentStatus = await mercadoPagoService.checkPaymentStatus(order.mercadopago_payment_id);
+      
+      toast.dismiss();
+
+      if (paymentStatus.status === 'approved') {
+        // Payment approved, confirm it
+        await confirmPaymentManually(orderId);
+        toast.success("✅ Pagamento verificado e confirmado!");
+      } else if (paymentStatus.status === 'pending') {
+        // Still pending
+        if (window.confirm("Pagamento ainda está pendente no MercadoPago. O cliente pagou em dinheiro ou outro método? Deseja confirmar manualmente?")) {
+          await confirmPaymentManually(orderId);
+        } else {
+          toast.info("Pagamento ainda pendente. Tente novamente em alguns instantes.");
+        }
+      } else {
+        // Rejected or other status
+        if (window.confirm(`Pagamento ${paymentStatus.status} no MercadoPago. O cliente pagou em dinheiro ou outro método? Deseja confirmar manualmente?`)) {
+          await confirmPaymentManually(orderId);
+        }
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      toast.dismiss();
+      // Error checking, offer manual confirmation
+      if (window.confirm("Erro ao verificar pagamento no MercadoPago. O cliente pagou em dinheiro ou outro método? Deseja confirmar manualmente?")) {
+        await confirmPaymentManually(orderId);
+      }
+    }
+  };
+
+  const confirmPaymentManually = async (orderId: string) => {
     try {
       // Update order status to paid and send to kitchen
       const { error } = await supabase
         .from("orders")
         .update({
           status: "in_preparation",
+          payment_status: "confirmed",
           payment_confirmed_at: new Date().toISOString(),
         })
         .eq("id", orderId);
@@ -757,16 +811,16 @@ const Cashier = () => {
                         </AlertDialog>
                       </div>
 
-                      {/* Payment Confirmation Button - Only for customer orders (no waiter_id) */}
+                      {/* Payment Verification Button - Only for customer orders (no waiter_id) */}
                       {!order.waiter_id && (
                         <div className="flex flex-col sm:flex-row gap-2">
                           <Button
                             className="flex-1 min-h-[44px] text-base"
-                            onClick={() => confirmPayment(order.id)}
+                            onClick={() => verifyPayment(order.id)}
                             disabled={paymentStatus.status === 'confirmed'}
                           >
                             <DollarSign className="mr-2 h-4 w-4" />
-                            {paymentStatus.status === 'confirmed' ? 'Pagamento Confirmado' : 'Confirmar Pagamento PIX'}
+                            {paymentStatus.status === 'confirmed' ? 'Pagamento Confirmado' : 'Verificar Pagamento'}
                           </Button>
                           {paymentStatus.status === 'confirmed' && (
                             <Button
