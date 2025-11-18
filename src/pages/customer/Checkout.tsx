@@ -268,35 +268,44 @@ const Checkout = () => {
               exit="exit"
               transition={transition}
             >
-              <Card className="p-6 shadow-xl">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Olá! 👋 Para quem é o pedido?
-                </h2>
+              <Card className="p-6 sm:p-8 shadow-xl border-2 border-purple-100">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-3xl">👋</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                    Olá! Bem-vindo!
+                  </h2>
+                  <p className="text-gray-600">Para começar, qual é o seu nome?</p>
+                </div>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="name" className="text-base">
-                      👤 Seu nome
+                    <Label htmlFor="name" className="text-base font-semibold text-gray-700">
+                      Nome completo
                     </Label>
                     <Input
                       id="name"
                       type="text"
-                      placeholder="Digite seu nome"
+                      placeholder="Ex: João Silva"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       onBlur={() => validateName(name)}
-                      className="mt-2 text-lg"
+                      onKeyPress={(e) => e.key === 'Enter' && handleNameContinue()}
+                      className="mt-2 text-lg h-14 border-2 focus:border-purple-500"
                       autoFocus
                     />
                     {errors.name && (
-                      <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                      <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                        <span>⚠️</span> {errors.name}
+                      </p>
                     )}
                   </div>
                   <Button
                     onClick={handleNameContinue}
                     disabled={name.trim().length < 2}
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-6 text-lg"
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-6 text-lg shadow-lg hover:shadow-xl transition-all"
                   >
-                    Continuar
+                    Continuar →
                   </Button>
                 </div>
               </Card>
@@ -312,35 +321,45 @@ const Checkout = () => {
               exit="exit"
               transition={transition}
             >
-              <Card className="p-6 shadow-xl">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Legal, {name}! E qual o seu WhatsApp com DDD?
-                </h2>
+              <Card className="p-6 sm:p-8 shadow-xl border-2 border-purple-100">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-3xl">📱</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                    Ótimo, {name}!
+                  </h2>
+                  <p className="text-gray-600">Agora precisamos do seu WhatsApp para te avisar quando o pedido estiver pronto</p>
+                </div>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="whatsapp" className="text-base">
-                      📱 WhatsApp
+                    <Label htmlFor="whatsapp" className="text-base font-semibold text-gray-700">
+                      WhatsApp (com DDD)
                     </Label>
                     <Input
                       id="whatsapp"
                       type="tel"
-                      placeholder="71987654321"
+                      placeholder="(71) 98765-4321"
                       value={whatsapp}
                       onChange={(e) => handleWhatsAppInput(e.target.value)}
                       onBlur={() => validateWhatsApp(whatsapp)}
-                      className="mt-2 text-lg"
+                      onKeyPress={(e) => e.key === 'Enter' && handleWhatsAppContinue()}
+                      className="mt-2 text-lg h-14 border-2 focus:border-green-500"
                       autoFocus
                     />
+                    <p className="text-xs text-gray-500 mt-1">Digite apenas números (DDD + número)</p>
                     {errors.whatsapp && (
-                      <p className="text-red-500 text-sm mt-1">{errors.whatsapp}</p>
+                      <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                        <span>⚠️</span> {errors.whatsapp}
+                      </p>
                     )}
                   </div>
                   <Button
                     onClick={handleWhatsAppContinue}
                     disabled={whatsapp.replace(/\D/g, '').length !== 11}
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-6 text-lg"
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-6 text-lg shadow-lg hover:shadow-xl transition-all"
                   >
-                    Confirmar WhatsApp
+                    Confirmar →
                   </Button>
                 </div>
               </Card>
@@ -356,11 +375,16 @@ const Checkout = () => {
               exit="exit"
               transition={transition}
             >
-              <Card className="p-6 shadow-xl text-center">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Perfeito! Vamos te avisar sobre o pedido pelo WhatsApp. 👍
+              <Card className="p-8 shadow-xl text-center border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                  <CheckCircle className="w-12 h-12 text-white" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+                  Tudo certo! ✨
                 </h2>
+                <p className="text-lg text-gray-700">
+                  Vamos te avisar pelo WhatsApp quando seu pedido estiver pronto!
+                </p>
               </Card>
             </motion.div>
           )}
@@ -374,10 +398,13 @@ const Checkout = () => {
               exit="exit"
               transition={transition}
             >
-              <Card className="p-6 shadow-xl">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Aqui está o seu pedido, {name}. Tudo certo?
-                </h2>
+              <Card className="p-6 sm:p-8 shadow-xl border-2 border-purple-100">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                    Aqui está o seu pedido, {name}!
+                  </h2>
+                  <p className="text-gray-600">Confira se está tudo certo antes de prosseguir</p>
+                </div>
                 <div className="space-y-4">
                   {/* Cart items */}
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
@@ -398,26 +425,19 @@ const Checkout = () => {
                   </div>
 
                   {/* Total */}
-                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-4 flex justify-between items-center">
-                    <span className="font-bold text-xl text-purple-900">Total</span>
-                    <span className="font-bold text-2xl text-purple-900">
+                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-5 flex justify-between items-center shadow-lg">
+                    <span className="font-bold text-xl text-white">Total</span>
+                    <span className="font-bold text-3xl text-white">
                       R$ {cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
                     </span>
                   </div>
 
                   {/* Action buttons */}
-                  <div className="space-y-3 pt-2">
-                    <Button
-                      onClick={() => setIsEditDialogOpen(true)}
-                      variant="outline"
-                      className="w-full py-6 text-lg font-semibold"
-                    >
-                      Editar Pedido
-                    </Button>
+                  <div className="space-y-3 pt-4">
                     <Button
                       onClick={handleGoToPayment}
                       disabled={isSubmitting}
-                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-6 text-lg"
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-7 text-xl shadow-lg hover:shadow-xl transition-all"
                     >
                       {isSubmitting ? (
                         <span className="flex items-center gap-2">
@@ -425,8 +445,17 @@ const Checkout = () => {
                           Processando...
                         </span>
                       ) : (
-                        "Ir para Pagamento"
+                        <>
+                          💳 Ir para Pagamento
+                        </>
                       )}
+                    </Button>
+                    <Button
+                      onClick={() => setIsEditDialogOpen(true)}
+                      variant="outline"
+                      className="w-full py-6 text-lg font-semibold border-2 hover:bg-gray-50"
+                    >
+                      ✏️ Editar Pedido
                     </Button>
                   </div>
                 </div>
