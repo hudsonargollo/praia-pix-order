@@ -730,13 +730,13 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft">
                     {/* Order Number + Status Badges */}
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <h3 className="font-bold text-lg sm:text-xl text-gray-900">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                      <h3 className="font-bold text-base sm:text-xl text-gray-900">
                         Pedido #{order.order_number}
                       </h3>
-                      <div className="flex gap-1.5 items-center flex-nowrap">
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-0.5 whitespace-nowrap">
-                          Criado em {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex gap-1 items-center flex-wrap sm:flex-nowrap">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-1.5 py-0.5 whitespace-nowrap">
+                          {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </Badge>
                         <StatusBadge 
                           orderStatus={order.status as OrderStatus}
@@ -1074,13 +1074,13 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-success">
                     {/* Order Number + Status Badges */}
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <h3 className="font-bold text-lg sm:text-xl text-gray-900">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                      <h3 className="font-bold text-base sm:text-xl text-gray-900">
                         Pedido #{order.order_number}
                       </h3>
-                      <div className="flex gap-1.5 items-center flex-nowrap">
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-0.5 whitespace-nowrap">
-                          Criado em {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex gap-1 items-center flex-wrap sm:flex-nowrap">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-1.5 py-0.5 whitespace-nowrap">
+                          {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </Badge>
                         <StatusBadge 
                           orderStatus={order.status as OrderStatus}
@@ -1263,13 +1263,13 @@ const Cashier = () => {
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-muted">
                     {/* Order Number + Status Badges */}
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <h3 className="font-bold text-lg sm:text-xl text-gray-900">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                      <h3 className="font-bold text-base sm:text-xl text-gray-900">
                         Pedido #{order.order_number}
                       </h3>
-                      <div className="flex gap-1.5 items-center flex-nowrap">
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-0.5 whitespace-nowrap">
-                          Criado em {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex gap-1 items-center flex-wrap sm:flex-nowrap">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-1.5 py-0.5 whitespace-nowrap">
+                          {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </Badge>
                         <StatusBadge 
                           orderStatus={order.status as OrderStatus}
