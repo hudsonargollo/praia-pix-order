@@ -241,14 +241,12 @@ const OrderStatus = () => {
       </div>
 
       {/* Order Edit Dialog */}
-      {orderId && (
-        <OrderEditDialog
-          orderId={orderId}
-          isOpen={isEditDialogOpen}
-          onClose={() => setIsEditDialogOpen(false)}
-          onSaveComplete={handleEditComplete}
-        />
-      )}
+      <OrderEditDialog
+        orderId={orderId || null}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onOrderUpdated={handleEditComplete}
+      />
     </div>
   );
 };
