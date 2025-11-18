@@ -69,6 +69,16 @@ const Checkout = () => {
 
   const transition = { duration: 0.3 };
 
+  // Helper function to capitalize first letter of each word
+  const capitalizeName = (name: string): string => {
+    return name
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   // Validation functions
   const validateName = (value: string, showError: boolean = true): boolean => {
     const trimmed = value.trim();
@@ -104,6 +114,8 @@ const Checkout = () => {
   // Step handlers
   const handleNameContinue = () => {
     if (validateName(name)) {
+      // Capitalize the name before moving to next step
+      setName(capitalizeName(name));
       setStep('WHATSAPP');
     }
   };
@@ -159,6 +171,9 @@ const Checkout = () => {
     setIsSubmitting(true);
     
     try {
+      // Capitalize and normalize name
+      const capitalizedName = capitalizeName(name);
+      
       // Normalize phone number
       const normalizedPhone = normalizePhone(whatsapp);
       if (!normalizedPhone) {
@@ -172,7 +187,7 @@ const Checkout = () => {
           .from('customers')
           .upsert({
             whatsapp: normalizedPhone,
-            name: name.trim(),
+            name: capitalizedName,
             last_order_date: new Date().toISOString()
           }, {
             onConflict: 'whatsapp'
@@ -194,7 +209,7 @@ const Checkout = () => {
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
-          customer_name: name.trim(),
+          customer_name: capitalizedName,
           customer_phone: normalizedPhone,
           table_number: '-',
           status: 'pending_payment',
@@ -499,7 +514,7 @@ const Checkout = () => {
                     <Button
                       onClick={() => setIsEditDialogOpen(true)}
                       variant="outline"
-                      className="w-full py-6 text-lg font-semibold border-2 hover:bg-gray-50"
+                      className="w-full py-6 text-lg font-semibold border-2 hover:bg-purple-50 hover:border-purple-300 transition-colors"
                     >
                       ✏️ Editar Pedido
                     </Button>
