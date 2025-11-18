@@ -675,23 +675,34 @@ const Cashier = () => {
                 
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft">
-                    {/* Order Number + Status/Price Row */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight mb-2">
-                          Pedido #{order.order_number}
-                        </h3>
-                        <div className="flex flex-wrap gap-1.5">
-                          <StatusBadge 
-                            orderStatus={order.status as OrderStatus}
-                            paymentStatus={order.payment_status as PaymentStatus}
-                            showBoth={true}
-                            compact={true}
-                          />
-                        </div>
+                    {/* Order Number + Status Badges */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <h3 className="font-bold text-lg sm:text-xl text-gray-900">
+                        Pedido #{order.order_number}
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        <StatusBadge 
+                          orderStatus={order.status as OrderStatus}
+                          paymentStatus={order.payment_status as PaymentStatus}
+                          showBoth={true}
+                          compact={true}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Customer Info + Total/Expiration */}
+                    <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
+                      <div className="flex-1">
+                        <OrderCardInfo
+                          orderNumber={order.order_number}
+                          customerName={order.customer_name}
+                          customerPhone={order.customer_phone}
+                          waiterId={order.waiter_id}
+                          createdAt={order.created_at}
+                        />
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap leading-tight">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
                         {paymentStatus.timestamp && (
@@ -701,17 +712,6 @@ const Cashier = () => {
                           </p>
                         )}
                       </div>
-                    </div>
-                    
-                    {/* Customer Info */}
-                    <div className="mb-3 sm:mb-4">
-                      <OrderCardInfo
-                        orderNumber={order.order_number}
-                        customerName={order.customer_name}
-                        customerPhone={order.customer_phone}
-                        waiterId={order.waiter_id}
-                        createdAt={order.created_at}
-                      />
                     </div>
                     
                     {/* Action Buttons */}
@@ -1016,39 +1016,39 @@ const Cashier = () => {
                 
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-success">
-                    {/* Order Number + Status/Price Row */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight mb-2">
-                          Pedido #{order.order_number}
-                        </h3>
-                        <div className="flex flex-wrap gap-1.5">
-                          <StatusBadge 
-                            orderStatus={order.status as OrderStatus}
-                            paymentStatus={order.payment_status as PaymentStatus}
-                            showBoth={!!order.payment_status}
-                            compact={true}
-                          />
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap leading-tight">
-                          R$ {Number(order.total_amount).toFixed(2)}
-                        </p>
+                    {/* Order Number + Status Badges */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <h3 className="font-bold text-lg sm:text-xl text-gray-900">
+                        Pedido #{order.order_number}
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        <StatusBadge 
+                          orderStatus={order.status as OrderStatus}
+                          paymentStatus={order.payment_status as PaymentStatus}
+                          showBoth={!!order.payment_status}
+                          compact={true}
+                        />
                       </div>
                     </div>
                     
-                    {/* Customer Info */}
-                    <div className="mb-3 sm:mb-4">
-                      <OrderCardInfo
-                        orderNumber={order.order_number}
-                        customerName={order.customer_name}
-                        customerPhone={order.customer_phone}
-                        waiterId={order.waiter_id}
-                        createdAt={order.created_at}
-                        paymentConfirmedAt={order.payment_confirmed_at}
-                        readyAt={order.ready_at}
-                      />
+                    {/* Customer Info + Total */}
+                    <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
+                      <div className="flex-1">
+                        <OrderCardInfo
+                          orderNumber={order.order_number}
+                          customerName={order.customer_name}
+                          customerPhone={order.customer_phone}
+                          waiterId={order.waiter_id}
+                          createdAt={order.created_at}
+                          paymentConfirmedAt={order.payment_confirmed_at}
+                          readyAt={order.ready_at}
+                        />
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
+                          R$ {Number(order.total_amount).toFixed(2)}
+                        </p>
+                      </div>
                     </div>
                     
                     {/* WhatsApp Error Indicator */}
@@ -1202,44 +1202,44 @@ const Cashier = () => {
                 
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-muted">
-                    {/* Order Number + Status/Price Row */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight mb-2">
-                          Pedido #{order.order_number}
-                        </h3>
-                        <div className="flex flex-wrap gap-1.5">
-                          <StatusBadge 
-                            orderStatus={order.status as OrderStatus}
-                            paymentStatus={order.payment_status as PaymentStatus}
-                            showBoth={!!order.payment_status}
-                            compact={true}
-                          />
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap leading-tight">
-                          R$ {Number(order.total_amount).toFixed(2)}
-                        </p>
+                    {/* Order Number + Status Badges */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <h3 className="font-bold text-lg sm:text-xl text-gray-900">
+                        Pedido #{order.order_number}
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        <StatusBadge 
+                          orderStatus={order.status as OrderStatus}
+                          paymentStatus={order.payment_status as PaymentStatus}
+                          showBoth={!!order.payment_status}
+                          compact={true}
+                        />
                       </div>
                     </div>
                     
-                    {/* Customer Info */}
-                    <div className="mb-3 sm:mb-4">
-                      <OrderCardInfo
-                        orderNumber={order.order_number}
-                        customerName={order.customer_name}
-                        customerPhone={order.customer_phone}
-                        waiterId={order.waiter_id}
-                        createdAt={order.created_at}
-                        paymentConfirmedAt={order.payment_confirmed_at}
-                        readyAt={order.ready_at}
-                      />
-                      {order.notified_at && (
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-                          Cliente notificado: {formatTimestamp(order.notified_at)}
+                    {/* Customer Info + Total */}
+                    <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
+                      <div className="flex-1">
+                        <OrderCardInfo
+                          orderNumber={order.order_number}
+                          customerName={order.customer_name}
+                          customerPhone={order.customer_phone}
+                          waiterId={order.waiter_id}
+                          createdAt={order.created_at}
+                          paymentConfirmedAt={order.payment_confirmed_at}
+                          readyAt={order.ready_at}
+                        />
+                        {order.notified_at && (
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+                            Cliente notificado: {formatTimestamp(order.notified_at)}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-lg sm:text-xl text-primary whitespace-nowrap">
+                          R$ {Number(order.total_amount).toFixed(2)}
                         </p>
-                      )}
+                      </div>
                     </div>
                   </Card>
                 );
