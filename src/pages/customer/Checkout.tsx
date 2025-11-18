@@ -258,15 +258,20 @@ const Checkout = () => {
       navigate(`/payment/${order.id}`);
 
       // Send WhatsApp notification asynchronously (don't block navigation)
-      setTimeout(async () => {
-        try {
-          const baseUrl = window.location.origin;
-          await notificationTriggers.onOrderCreatedWithLinks(order.id, baseUrl);
-          console.log('✅ WhatsApp notification triggered for order:', order.id);
-        } catch (notifError) {
-          console.error('❌ Failed to trigger WhatsApp notification:', notifError);
-          // Silently fail - notification is not critical for order flow
-        }
+      // Wrapped in setTimeout to ensure it doesn't interfere with navigation
+      setTimeout(() => {
+        (async () => {
+          try {
+            const baseUrl = window.location.origin;
+            await notificationTriggers.onOrderCreatedWithLinks(order.id, baseUrl);
+            console.log('✅ WhatsApp notification triggered for order:', order.id);
+          } catch (notifError) {
+            console.error('❌ Failed to trigger WhatsApp notification:', notifError);
+            // Silently fail - notification is not critical for order flow
+          }
+        })().catch(err => {
+          console.error('❌ WhatsApp notification error (caught):', err);
+        });
       }, 100);
       
     } catch (error) {
