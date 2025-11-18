@@ -198,12 +198,29 @@ export class NotificationQueueManager {
       // Decrypt phone number before sending
       const decryptedPhone = await decryptPhoneNumberSafe(notification.customer_phone);
 
+      // Generate message content if empty (for database-triggered notifications)
+      let messageContent = notification.message_content;
+      if (!messageContent || messageContent.trim() === '') {
+        console.log(`Generating message content for notification ${notificationId}`);
+        const orderData = await this.getOrderDataForNotification(notification.order_id);
+        if (orderData) {
+          messageContent = await this.generateMessageForType(notification.notification_type, orderData);
+          // Update the notification with generated content
+          await supabase
+            .from('whatsapp_notifications')
+            .update({ message_content: messageContent })
+            .eq('id', notificationId);
+        } else {
+          throw new Error('Could not fetch order data to generate message');
+        }
+      }
+
       // Send the message using Evolution API
       console.log(`Sending notification ${notificationId} to ${decryptedPhone}`);
       
       const response = await evolutionClient.sendTextMessage({
         number: decryptedPhone,
-        text: notification.message_content,
+        text: messageContent,
         delay: 0
       });
       
@@ -456,40 +473,10 @@ export class NotificationQueueManager {
     let orderData = notification.orderDetails;
     
     if (!orderData) {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (
-            id,
-            menu_item_id,
-            item_name,
-            quantity,
-            unit_price
-          )
-        `)
-        .eq('id', notification.orderId)
-        .single();
-
-      if (error || !data) {
+      orderData = await this.getOrderDataForNotification(notification.orderId);
+      if (!orderData) {
         throw new Error('Failed to fetch order data');
       }
-
-      orderData = {
-        id: data.id,
-        orderNumber: data.order_number,
-        customerName: data.customer_name,
-        customerPhone: data.customer_phone,
-        tableNumber: data.table_number,
-        totalAmount: data.total_amount,
-        items: data.order_items.map((item: any) => ({
-          itemName: item.item_name,
-          quantity: item.quantity,
-          unitPrice: item.unit_price,
-        })),
-        status: data.status,
-        createdAt: data.created_at,
-      };
     }
 
     // If custom message is provided, use it directly
@@ -497,8 +484,52 @@ export class NotificationQueueManager {
       return notification.customMessage;
     }
 
+    return await this.generateMessageForType(notification.notificationType, orderData);
+  }
+
+  private async getOrderDataForNotification(orderId: string): Promise<OrderData | null> {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          id,
+          menu_item_id,
+          item_name,
+          quantity,
+          unit_price
+        )
+      `)
+      .eq('id', orderId)
+      .single();
+
+    if (error || !data) {
+      console.error('Failed to fetch order data:', error);
+      return null;
+    }
+
+    return {
+      id: data.id,
+      orderNumber: data.order_number,
+      customerName: data.customer_name,
+      customerPhone: data.customer_phone,
+      tableNumber: data.table_number,
+      totalAmount: data.total_amount,
+      items: data.order_items.map((item: any) => ({
+        itemName: item.item_name,
+        quantity: item.quantity,
+        unitPrice: item.unit_price,
+      })),
+      status: data.status,
+      createdAt: data.created_at,
+      paymentMethod: data.payment_method || 'pix',
+      paymentConfirmedAt: data.payment_confirmed_at,
+    };
+  }
+
+  private async generateMessageForType(notificationType: string, orderData: OrderData): Promise<string> {
     // Generate message based on type
-    switch (notification.notificationType) {
+    switch (notificationType) {
       case 'order_created':
         return await WhatsAppTemplates.generateOrderConfirmation(orderData);
       case 'payment_confirmed':
@@ -508,9 +539,9 @@ export class NotificationQueueManager {
       case 'ready':
         return await WhatsAppTemplates.generateReadyForPickup(orderData);
       case 'custom':
-        return await WhatsAppTemplates.generateCustomMessage(orderData, notification.customMessage || '');
+        return await WhatsAppTemplates.generateCustomMessage(orderData, '');
       default:
-        throw new Error(`Unknown notification type: ${notification.notificationType}`);
+        throw new Error(`Unknown notification type: ${notificationType}`);
     }
   }
 

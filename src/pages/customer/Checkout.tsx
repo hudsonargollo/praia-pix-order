@@ -208,15 +208,8 @@ const Checkout = () => {
       // Clear cart after successful order creation
       clearCart();
 
-      // Send WhatsApp notification with order details and links
-      try {
-        const baseUrl = window.location.origin;
-        await notificationTriggers.onOrderCreatedWithLinks(order.id, baseUrl);
-        console.log('✅ WhatsApp notification triggered for order:', order.id);
-      } catch (notifError) {
-        console.error('❌ Failed to trigger WhatsApp notification:', notifError);
-        // Don't block the flow if notification fails
-      }
+      // WhatsApp notification will be triggered automatically by database trigger
+      console.log('✅ Order created, WhatsApp notification will be sent automatically');
 
       // Navigate directly to payment (original behavior)
       toast.success("Pedido criado com sucesso!");
