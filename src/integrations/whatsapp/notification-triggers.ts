@@ -92,17 +92,24 @@ export class NotificationTriggerService {
         return;
       }
 
-      // Check if notification was already sent to prevent duplicates
-      const { data: existingNotifications } = await supabase
+      // Check if ANY notification was already sent recently (within last 2 minutes) to prevent duplicates
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      const { data: recentNotifications } = await supabase
         .from('whatsapp_notifications')
-        .select('id')
+        .select('id, notification_type, sent_at')
         .eq('order_id', orderId)
-        .eq('notification_type', 'payment_confirmed')
+        .in('notification_type', ['order_created', 'payment_confirmed'])
         .eq('status', 'sent')
+        .gte('sent_at', twoMinutesAgo)
+        .order('sent_at', { ascending: false })
         .limit(1);
 
-      if (existingNotifications && existingNotifications.length > 0) {
-        console.log('Payment confirmation notification already sent, skipping:', { orderId });
+      if (recentNotifications && recentNotifications.length > 0) {
+        console.log('Recent notification already sent, skipping payment confirmation:', { 
+          orderId, 
+          recentType: recentNotifications[0].notification_type,
+          sentAt: recentNotifications[0].sent_at
+        });
         return;
       }
 

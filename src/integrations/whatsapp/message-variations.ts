@@ -19,79 +19,64 @@ export function getPaymentConfirmedMessage(orderData: OrderData): string {
   const firstName = orderData.customerName.split(' ')[0];
   
   const itemsList = orderData.items
-    .map(item => `• ${item.quantity}x ${item.itemName} - R$ ${(item.quantity * item.unitPrice).toFixed(2)}`)
+    .map(item => `• ${item.quantity}x ${item.itemName}`)
     .join('\n');
 
   const variations = [
-    // Variation 1: Direct and enthusiastic
-    `Olá, *${firstName}*! 🎉
+    // Variation 1: Super casual and friendly
+    `E aí, *${firstName}*! 😊
 
-Seu pedido acaba de ser confirmado e já está sendo preparado!
+Seu pedido acabou de ser confirmado e já tá sendo preparado aqui!
 
-📋 *Pedido #${orderData.orderNumber}*
 ${itemsList}
 
-💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
+💰 Total: R$ ${orderData.totalAmount.toFixed(2)}
 
-⏰ Tempo estimado: 15-20 minutos
+Fica tranquilo que em uns 15-20 min tá pronto. Te aviso quando puder buscar! 🥥`,
 
-Você receberá uma notificação quando estiver pronto! 🥥`,
-
-    // Variation 2: Warm and friendly
+    // Variation 2: Warm and conversational
     `Oi, *${firstName}*! 👋
 
-Confirmamos seu pedido e nossa equipe já começou a preparar tudo com muito carinho!
+Confirmado! Já comecei a preparar seu pedido aqui.
 
-📝 *Pedido #${orderData.orderNumber}*
-${itemsList}
-
-💵 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
-
-🕐 Em breve estará pronto (15-20 min)
-
-Te avisamos quando puder retirar! 🌴`,
-
-    // Variation 3: Professional and clear
-    `*${firstName}*, tudo certo! ✅
-
-Pagamento confirmado. Seu pedido está em preparo.
-
-🔖 *#${orderData.orderNumber}*
-${itemsList}
-
-💳 *Pago:* R$ ${orderData.totalAmount.toFixed(2)}
-
-⏱️ Previsão: 15-20 minutos
-
-Aguarde nossa próxima mensagem! 🥥`,
-
-    // Variation 4: Casual and upbeat
-    `E aí, *${firstName}*! 🤙
-
-Pedido confirmado e já tá rolando na cozinha!
-
-🎯 *Pedido #${orderData.orderNumber}*
-${itemsList}
-
-💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
-
-⏰ Fica de olho! Em 15-20 min tá pronto
-
-Logo te chamamos! 🌊`,
-
-    // Variation 5: Concise and efficient
-    `*${firstName}*, pedido confirmado! ✓
-
-Já estamos preparando:
-
-📦 *#${orderData.orderNumber}*
 ${itemsList}
 
 💵 R$ ${orderData.totalAmount.toFixed(2)}
 
-⏰ 15-20 min
+Daqui uns 15-20 minutos tá prontinho. Te mando mensagem quando estiver pronto pra você buscar! 🌴`,
 
-Te avisamos quando estiver pronto! 🥥🌴`
+    // Variation 3: Friendly and direct
+    `Opa, *${firstName}*! ✌️
+
+Recebi seu pedido e já tô fazendo aqui!
+
+${itemsList}
+
+💰 R$ ${orderData.totalAmount.toFixed(2)}
+
+Uns 15-20 min e tá pronto. Te chamo quando puder pegar! 🥥`,
+
+    // Variation 4: Upbeat and casual
+    `Fala, *${firstName}*! 🤙
+
+Beleza, pedido confirmado! Já tô preparando tudo aqui pra você.
+
+${itemsList}
+
+💵 R$ ${orderData.totalAmount.toFixed(2)}
+
+Em 15-20 min tá na mão. Já te aviso! 🌊`,
+
+    // Variation 5: Simple and friendly
+    `Oi, *${firstName}*! 😄
+
+Confirmado! Seu pedido já tá sendo feito.
+
+${itemsList}
+
+💰 R$ ${orderData.totalAmount.toFixed(2)}
+
+15-20 minutos e te chamo pra buscar! 🥥🌴`
   ];
 
   return getRandomVariation(variations);
@@ -108,65 +93,50 @@ export function getOrderReadyMessage(orderData: OrderData): string {
     .join('\n');
 
   const variations = [
-    // Variation 1: Excited and inviting
-    `*${firstName}*, seu pedido está pronto! 🎉
+    // Variation 1: Excited and friendly
+    `*${firstName}*, prontinho! 🎉
 
-Pode vir buscar no balcão!
+Pode vir buscar aqui no balcão!
 
-📋 *Pedido #${orderData.orderNumber}*
 ${itemsList}
 
-💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
+Te espero aqui! 🥥`,
 
-Te esperamos! 🥥`,
-
-    // Variation 2: Friendly and warm
+    // Variation 2: Warm and inviting
     `Oi, *${firstName}*! 👋
 
-Tudo prontinho aqui! Pode vir retirar seu pedido no balcão.
+Seu pedido tá pronto! Vem buscar aqui no balcão.
 
-🎯 *#${orderData.orderNumber}*
 ${itemsList}
-
-💵 R$ ${orderData.totalAmount.toFixed(2)}
 
 Até já! 🌴`,
 
-    // Variation 3: Direct and clear
-    `*${firstName}*, pronto para retirada! ✅
-
-Seu pedido te aguarda no balcão.
-
-📦 *Pedido #${orderData.orderNumber}*
-${itemsList}
-
-💳 R$ ${orderData.totalAmount.toFixed(2)}
-
-Obrigado! 🥥`,
-
-    // Variation 4: Casual and cool
+    // Variation 3: Casual and direct
     `E aí, *${firstName}*! 🤙
 
-Tá pronto! Cola aqui no balcão pra buscar.
+Pronto! Pode vir pegar aqui no balcão.
 
-🔖 *#${orderData.orderNumber}*
 ${itemsList}
 
-💰 R$ ${orderData.totalAmount.toFixed(2)}
+Te aguardo! 🥥`,
+
+    // Variation 4: Friendly and simple
+    `Opa, *${firstName}*! ✌️
+
+Tá pronto! Cola aqui pra buscar.
+
+${itemsList}
 
 Valeu! 🌊`,
 
-    // Variation 5: Professional and efficient
-    `*${firstName}*, pedido pronto! ✓
+    // Variation 5: Warm and welcoming
+    `*${firstName}*, pronto! 😊
 
-Retire no balcão:
+Vem buscar aqui no balcão!
 
-📝 *#${orderData.orderNumber}*
 ${itemsList}
 
-💵 R$ ${orderData.totalAmount.toFixed(2)}
-
-Aguardamos você! 🥥🌴`
+Te espero! 🥥🌴`
   ];
 
   return getRandomVariation(variations);
@@ -183,73 +153,50 @@ export function getOrderPreparingMessage(orderData: OrderData): string {
     .join('\n');
 
   const variations = [
-    // Variation 1: Enthusiastic
-    `*${firstName}*, seu pedido entrou na cozinha! 👨‍🍳
+    // Variation 1: Friendly and reassuring
+    `Oi, *${firstName}*! 👨‍🍳
 
-Estamos preparando tudo com carinho!
+Já tô fazendo seu pedido aqui!
 
-📋 *Pedido #${orderData.orderNumber}*
 ${itemsList}
 
-💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
+Daqui uns 15-20 min tá pronto. Te aviso! 🥥`,
 
-⏰ Em breve estará pronto!
+    // Variation 2: Casual and warm
+    `E aí, *${firstName}*! 👋
 
-Te avisamos! 🥥`,
+Seu pedido já tá sendo feito aqui na cozinha!
 
-    // Variation 2: Warm and friendly
-    `Oi, *${firstName}*! 👋
-
-Seu pedido já está sendo preparado pela nossa equipe!
-
-🎯 *#${orderData.orderNumber}*
 ${itemsList}
 
-💵 R$ ${orderData.totalAmount.toFixed(2)}
+Aguarda aí que logo tá pronto! 🌴`,
 
-🕐 Aguarde mais um pouquinho!
+    // Variation 3: Simple and friendly
+    `Opa, *${firstName}*! 🤙
 
-Logo te chamamos! 🌴`,
+Tô preparando seu pedido!
 
-    // Variation 3: Professional
-    `*${firstName}*, pedido em preparo! 👨‍🍳
-
-Nossa equipe está trabalhando no seu pedido.
-
-📦 *Pedido #${orderData.orderNumber}*
 ${itemsList}
 
-💳 R$ ${orderData.totalAmount.toFixed(2)}
+Uns 15-20 min e te chamo! 🥥`,
 
-⏱️ Tempo estimado: 15-20 min
+    // Variation 4: Warm and conversational
+    `Fala, *${firstName}*! ✌️
 
-Aguarde! 🥥`,
+Já comecei a fazer aqui!
 
-    // Variation 4: Casual
-    `E aí, *${firstName}*! 🤙
-
-Tá rolando na cozinha!
-
-🔖 *#${orderData.orderNumber}*
 ${itemsList}
 
-💰 R$ ${orderData.totalAmount.toFixed(2)}
+Rapidinho tá pronto. Te aviso! 🌊`,
 
-⏰ Já já tá pronto!
+    // Variation 5: Friendly and direct
+    `*${firstName}*! 😊
 
-Aguenta aí! 🌊`,
+Tô fazendo seu pedido agora!
 
-    // Variation 5: Concise
-    `*${firstName}*, em preparo! 👨‍🍳
-
-📝 *#${orderData.orderNumber}*
 ${itemsList}
 
-💵 R$ ${orderData.totalAmount.toFixed(2)}
-
-⏰ 15-20 min
-
-Logo te avisamos! 🥥🌴`
+15-20 min e te chamo! 🥥🌴`
   ];
 
   return getRandomVariation(variations);
