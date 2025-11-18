@@ -13,6 +13,7 @@ export { optOutManager } from './opt-out-manager';
 export { complianceChecker } from './compliance';
 export { deliveryMonitor } from './delivery-monitor';
 export { errorLogger } from './error-logger';
+export { getNotificationTypeLabel, getNotificationStatusLabel } from './message-variations';
 
 // Export types
 export type {

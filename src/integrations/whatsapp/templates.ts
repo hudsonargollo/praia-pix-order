@@ -1,5 +1,10 @@
 import { OrderData } from './types';
 import { templateManager } from './template-manager';
+import { 
+  getPaymentConfirmedMessage, 
+  getOrderReadyMessage, 
+  getOrderPreparingMessage 
+} from './message-variations';
 
 /**
  * WhatsApp message templates with fallback to hardcoded templates
@@ -126,102 +131,18 @@ export class WhatsAppTemplates {
   }
   
   private static generateOrderConfirmationFallback(orderData: OrderData): string {
-    const itemsList = orderData.items
-      .map(item => {
-        const itemTotal = item.quantity * item.unitPrice;
-        return `• ${item.quantity}x ${item.itemName} - R$ ${itemTotal.toFixed(2)}`;
-      })
-      .join('\n');
-
-    // Get first name for personalization
-    const firstName = orderData.customerName.split(' ')[0];
-
-    return `🌴 *Coco Loko Açaiteria* 🌴
-
-Olá *${firstName}*! 👋
-
-✅ *Pagamento Confirmado!*
-
-Seu pedido foi recebido e já está sendo preparado com muito carinho! 🥥
-
-📋 *Pedido #${orderData.orderNumber}*
-🪑 *Mesa:* ${orderData.tableNumber}
-
-📝 *Seus Itens:*
-${itemsList}
-
-💰 *Total Pago:* R$ ${orderData.totalAmount.toFixed(2)}
-
-⏰ *Tempo estimado:* 15-20 minutos
-
-Você receberá uma nova mensagem quando seu pedido estiver pronto para retirada no balcão!
-
-Obrigado por escolher a Coco Loko! 🌊`;
+    // Use rotating message variations
+    return getPaymentConfirmedMessage(orderData);
   }
 
   private static generateReadyForPickupFallback(orderData: OrderData): string {
-    const itemsList = orderData.items
-      .map(item => {
-        const itemTotal = item.quantity * item.unitPrice;
-        return `• ${item.quantity}x ${item.itemName} — R$ ${itemTotal.toFixed(2)}`;
-      })
-      .join('\n');
-
-    // Get first name for personalization
-    const firstName = orderData.customerName.split(' ')[0];
-
-    // Determine payment status indicator
-    let paymentStatus = '🔴 Pendente';
-    if (orderData.paymentMethod === 'pix' || orderData.paymentMethod === 'PIX') {
-      paymentStatus = '🟢 Confirmado via PIX';
-    } else if (orderData.paymentMethod === 'credit_card' || orderData.paymentMethod === 'card') {
-      paymentStatus = '🔵 Confirmado via Cartão';
-    } else if (orderData.paymentConfirmedAt) {
-      // If payment is confirmed but method unknown, check for PIX first
-      paymentStatus = '🟢 Confirmado via PIX';
-    }
-
-    return `🌴 *Coco Loko Açaiteria* 🌴
-
-Olá, *${firstName}*!
-
-Seu pedido já está pronto para retirada no balcão.
-
-📝 *Itens do Pedido [#${orderData.orderNumber}]:*
-${itemsList}
-
-💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
-
-📌 *Status do pagamento:* ${paymentStatus}
-
-Obrigado pela preferência! 🙌`;
+    // Use rotating message variations
+    return getOrderReadyMessage(orderData);
   }
 
   private static generatePreparingFallback(orderData: OrderData): string {
-    const itemsList = orderData.items
-      .map(item => `• ${item.quantity}x ${item.itemName}`)
-      .join('\n');
-
-    // Get first name for personalization
-    const firstName = orderData.customerName.split(' ')[0];
-
-    return `🌴 *Coco Loko Açaiteria* 🌴
-
-Olá *${firstName}*! 👋
-
-👨‍🍳 *Seu pedido está sendo preparado!*
-
-📋 *Pedido #${orderData.orderNumber}*
-🪑 *Mesa:* ${orderData.tableNumber}
-
-📝 *Seus Itens:*
-${itemsList}
-
-💰 *Total:* R$ ${orderData.totalAmount.toFixed(2)}
-
-⏰ *Tempo estimado:* 15-20 minutos
-
-Estamos preparando tudo com muito carinho! Em breve você receberá uma notificação quando estiver pronto! 🥥🌊`;
+    // Use rotating message variations
+    return getOrderPreparingMessage(orderData);
   }
 
   private static generateStatusUpdateFallback(orderData: OrderData, status: string): string {
