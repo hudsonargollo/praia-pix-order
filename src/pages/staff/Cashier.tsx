@@ -675,12 +675,17 @@ const Cashier = () => {
                 
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft">
-                    {/* Order Number + Status Badges */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <h3 className="font-bold text-lg sm:text-xl text-gray-900">
-                        Pedido #{order.order_number}
-                      </h3>
-                      <div className="flex flex-wrap gap-1.5">
+                    {/* Order Number + Created Time + Status Badges */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-lg sm:text-xl text-gray-900">
+                          Pedido #{order.order_number}
+                        </h3>
+                        <span className="text-sm text-gray-600">
+                          Criado em {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 justify-end">
                         <StatusBadge 
                           orderStatus={order.status as OrderStatus}
                           paymentStatus={order.payment_status as PaymentStatus}
@@ -1016,12 +1021,17 @@ const Cashier = () => {
                 
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-success">
-                    {/* Order Number + Status Badges */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <h3 className="font-bold text-lg sm:text-xl text-gray-900">
-                        Pedido #{order.order_number}
-                      </h3>
-                      <div className="flex flex-wrap gap-1.5">
+                    {/* Order Number + Created Time + Status Badges */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-lg sm:text-xl text-gray-900">
+                          Pedido #{order.order_number}
+                        </h3>
+                        <span className="text-sm text-gray-600">
+                          Criado em {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 justify-end">
                         <StatusBadge 
                           orderStatus={order.status as OrderStatus}
                           paymentStatus={order.payment_status as PaymentStatus}
@@ -1202,12 +1212,17 @@ const Cashier = () => {
                 
                 return (
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-muted">
-                    {/* Order Number + Status Badges */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <h3 className="font-bold text-lg sm:text-xl text-gray-900">
-                        Pedido #{order.order_number}
-                      </h3>
-                      <div className="flex flex-wrap gap-1.5">
+                    {/* Order Number + Created Time + Status Badges */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-lg sm:text-xl text-gray-900">
+                          Pedido #{order.order_number}
+                        </h3>
+                        <span className="text-sm text-gray-600">
+                          Criado em {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 justify-end">
                         <StatusBadge 
                           orderStatus={order.status as OrderStatus}
                           paymentStatus={order.payment_status as PaymentStatus}
