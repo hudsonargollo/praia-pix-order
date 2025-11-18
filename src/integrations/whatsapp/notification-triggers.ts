@@ -46,7 +46,7 @@ export class NotificationTriggerService {
         .join('\n');
 
       const message = `🎉 *Pedido #${orderData.orderNumber} Criado!*\n\n` +
-        `Olá ${orderData.customerName}! Seu pedido foi criado com sucesso.\n\n` +
+        `Olá ${orderData.customerName}! Recebemos o seu pedido!\n\n` +
         `📋 *Itens do Pedido:*\n${itemsList}\n\n` +
         `💰 *Total: R$ ${orderData.totalAmount.toFixed(2)}*\n\n` +
         `🔗 *Links Úteis:*\n` +
