@@ -281,19 +281,19 @@ const Checkout = () => {
                     <span className="text-3xl">👋</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    Olá! Bem-vindo!
+                    Olá, é uma honra ter você aqui.
                   </h2>
-                  <p className="text-gray-600">Para começar, qual é o seu nome?</p>
+                  <p className="text-gray-600">Como você gostaria de ser chamado?</p>
                 </div>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="name" className="text-base font-semibold text-gray-700">
-                      Nome completo
+                      Nome
                     </Label>
                     <Input
                       id="name"
                       type="text"
-                      placeholder="Ex: João Silva"
+                      placeholder="ex: João"
                       value={name}
                       onChange={(e) => {
                         setName(e.target.value);
