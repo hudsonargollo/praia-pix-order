@@ -17,7 +17,8 @@ import {
   Users, 
   UserCheck,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Key
 } from "lucide-react";
 import { z } from "zod";
 import { UniformHeader } from "@/components/UniformHeader";
@@ -27,18 +28,20 @@ interface Waiter {
   email: string;
   full_name: string;
   created_at: string;
+  phone_number?: string;
 }
 
 const waiterSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }).max(255),
   password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }).max(100),
   full_name: z.string().min(1, { message: "Nome completo é obrigatório" }).max(255),
+  phone_number: z.string().min(10, { message: "Telefone deve ter no mínimo 10 dígitos" }).max(20).optional(),
 });
 
 const waiterEditSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }).max(255),
   full_name: z.string().min(1, { message: "Nome completo é obrigatório" }).max(255),
-  password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }).max(100).optional(),
+  phone_number: z.string().min(10, { message: "Telefone deve ter no mínimo 10 dígitos" }).max(20).optional(),
 });
 
 const WaiterManagement = () => {
@@ -163,9 +166,9 @@ const WaiterManagement = () => {
         return;
       }
 
-      const { email, full_name, password } = validation.data;
+      const { email, full_name, phone_number } = validation.data;
 
-      console.log('🔵 Updating waiter:', { id: currentWaiter.id, email, full_name });
+      console.log('🔵 Updating waiter:', { id: currentWaiter.id, email, full_name, phone_number });
 
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -175,29 +178,23 @@ const WaiterManagement = () => {
         return;
       }
 
-      const body: any = { 
-        waiterId: currentWaiter.id, 
-        email, 
-        full_name 
-      };
-      
-      if (password && password.trim()) {
-        body.password = password;
+      // Update profile in database
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          email,
+          full_name,
+          phone_number,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentWaiter.id);
+
+      if (profileError) {
+        console.error('❌ Update profile error:', profileError);
+        throw new Error(profileError.message || "Erro ao atualizar garçom.");
       }
 
-      const { data, error } = await supabase.functions.invoke('update-waiter', {
-        body,
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
-
-      if (error) {
-        console.error('❌ Update waiter error:', error);
-        throw new Error(error.message || "Erro ao atualizar garçom.");
-      }
-
-      toast.success("✅ Garçom atualizado com sucesso!");
+      toast.success("✅ Garçom atualizado com sucesso! Use 'Redefinir Senha' para alterar a senha.");
       setIsDialogOpen(false);
       setCurrentWaiter({});
       setIsEditMode(false);
@@ -208,6 +205,51 @@ const WaiterManagement = () => {
       toast.error(error.message || "Erro desconhecido ao atualizar garçom.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async (waiter: Waiter) => {
+    if (!waiter.phone_number) {
+      toast.error("Este garçom não tem número de telefone cadastrado.");
+      return;
+    }
+
+    if (!window.confirm(`Enviar link de redefinição de senha para ${waiter.full_name} via WhatsApp?`)) return;
+
+    try {
+      console.log('🔵 Sending password reset for:', waiter.id);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate('/auth');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { 
+          waiterId: waiter.id,
+          waiterEmail: waiter.email,
+          waiterName: waiter.full_name,
+          phoneNumber: waiter.phone_number
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) {
+        console.error('❌ Reset password error:', error);
+        throw new Error(error.message || "Erro ao enviar link de redefinição.");
+      }
+
+      console.log('✅ Password reset sent');
+      toast.success("✅ Link de redefinição enviado via WhatsApp!");
+
+    } catch (error: any) {
+      console.error('❌ Reset password error:', error);
+      toast.error(error.message || "Erro ao enviar link de redefinição.");
     }
   };
 
@@ -411,14 +453,27 @@ const WaiterManagement = () => {
                                   size="sm" 
                                   onClick={() => openEditDialog(waiter)}
                                   className="hover:bg-purple-50 border-purple-200"
+                                  title="Editar"
                                 >
                                   <Edit className="w-4 h-4 text-purple-600" />
                                 </Button>
+                                {waiter.phone_number && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => handleResetPassword(waiter)}
+                                    className="hover:bg-blue-50 border-blue-200"
+                                    title="Redefinir Senha via WhatsApp"
+                                  >
+                                    <Key className="w-4 h-4 text-blue-600" />
+                                  </Button>
+                                )}
                                 <Button 
                                   variant="destructive" 
                                   size="sm" 
                                   onClick={() => handleDeleteWaiter(waiter.id, waiter.full_name)}
                                   className="hover:bg-red-600"
+                                  title="Deletar"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -469,19 +524,34 @@ const WaiterManagement = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm">
-                    {isEditMode ? 'Nova Senha (opcional)' : 'Senha'}
-                  </Label>
+                  <Label htmlFor="phone_number" className="text-sm">WhatsApp {isEditMode ? '(recomendado)' : '(opcional)'}</Label>
                   <Input
-                    id="password"
-                    type="password"
-                    placeholder={isEditMode ? "Deixe em branco para manter a senha atual" : "Digite a senha (mínimo 6 caracteres)"}
-                    value={currentWaiter.password || ''}
-                    onChange={(e) => setCurrentWaiter({ ...currentWaiter, password: e.target.value })}
-                    required={!isEditMode}
+                    id="phone_number"
+                    type="tel"
+                    placeholder="5511999999999"
+                    value={currentWaiter.phone_number || ''}
+                    onChange={(e) => setCurrentWaiter({ ...currentWaiter, phone_number: e.target.value })}
                     className="text-base"
                   />
+                  <p className="text-xs text-gray-500">Formato: código do país + DDD + número (ex: 5511999999999)</p>
+                  {isEditMode && (
+                    <p className="text-xs text-purple-600">Necessário para redefinição de senha via WhatsApp</p>
+                  )}
                 </div>
+                {!isEditMode && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm">Senha</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Digite a senha (mínimo 6 caracteres)"
+                      value={currentWaiter.password || ''}
+                      onChange={(e) => setCurrentWaiter({ ...currentWaiter, password: e.target.value })}
+                      required
+                      className="text-base"
+                    />
+                  </div>
+                )}
               </div>
               <DialogFooter className="flex-col sm:flex-row gap-2">
                 <Button 

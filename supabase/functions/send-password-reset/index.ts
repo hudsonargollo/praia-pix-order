@@ -52,13 +52,13 @@ serve(async (req) => {
     console.log('✅ Admin verified');
 
     // Get request body
-    const { waiterId, email, full_name, password } = await req.json();
+    const { waiterId, waiterEmail, waiterName, phoneNumber } = await req.json();
 
-    if (!waiterId || !email || !full_name) {
-      throw new Error('Missing required fields: waiterId, email, full_name');
+    if (!waiterId || !waiterEmail || !phoneNumber) {
+      throw new Error('Missing required fields: waiterId, waiterEmail, phoneNumber');
     }
 
-    console.log('🔵 Updating waiter:', { waiterId, email, full_name, hasPassword: !!password });
+    console.log('🔵 Sending password reset:', { waiterId, waiterEmail, phoneNumber });
 
     // Create admin client
     const supabaseAdmin = createClient(
@@ -72,72 +72,58 @@ serve(async (req) => {
       }
     );
 
-    // Update email and metadata first (without password)
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.updateUserById(
-      waiterId,
-      {
-        email,
-        user_metadata: { full_name }
-      }
-    );
+    // Generate password reset link
+    const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: waiterEmail,
+    });
 
-    if (authError) {
-      console.error('❌ Auth update error:', authError);
-      console.error('❌ Error details:', JSON.stringify(authError, null, 2));
-      throw new Error(`Failed to update waiter: ${authError.message}`);
+    if (resetError) {
+      console.error('❌ Reset link generation error:', resetError);
+      throw new Error(`Failed to generate reset link: ${resetError.message}`);
     }
 
-    console.log('✅ Auth user email and metadata updated');
+    console.log('✅ Reset link generated');
 
-    // If password is provided, update it in a completely separate call
-    if (password && password.trim().length > 0) {
-      console.log('🔵 Updating password separately...');
-      
-      const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(
-        waiterId,
-        {
-          password: password.trim()
-        }
-      );
+    // Send WhatsApp message with reset link
+    const evolutionApiUrl = Deno.env.get('VITE_EVOLUTION_API_URL') || 'http://wppapi.clubemkt.digital';
+    const evolutionApiKey = Deno.env.get('VITE_EVOLUTION_API_KEY') || 'DD451E404240-4C45-AF35-BFCA6A976927';
+    const instanceName = Deno.env.get('VITE_EVOLUTION_INSTANCE_NAME') || 'cocooo';
 
-      if (passwordError) {
-        console.error('❌ Password update error:', passwordError);
-        console.error('❌ Password error details:', JSON.stringify(passwordError, null, 2));
-        // Don't throw here - email was updated successfully
-        console.log('⚠️ Warning: Email updated but password update failed');
-      } else {
-        console.log('✅ Password updated successfully');
-      }
-    } else {
-      console.log('🔵 No password update requested');
-    }
+    const message = `Olá ${waiterName || 'Garçom'}! 👋
 
-    // Update profile
-    const { error: profileUpdateError } = await supabaseAdmin
-      .from('profiles')
-      .update({ 
-        email,
-        full_name,
-        updated_at: new Date().toISOString()
+Você recebeu um link para redefinir sua senha:
+
+${resetData.properties.action_link}
+
+Este link é válido por 1 hora. Clique nele para criar uma nova senha.
+
+Se você não solicitou esta redefinição, ignore esta mensagem.`;
+
+    const whatsappResponse = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
+      method: 'POST',
+      headers: {
+        'apikey': evolutionApiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        number: phoneNumber,
+        text: message
       })
-      .eq('id', waiterId);
+    });
 
-    if (profileUpdateError) {
-      console.error('❌ Profile update error:', profileUpdateError);
-      throw new Error(`Failed to update profile: ${profileUpdateError.message}`);
+    if (!whatsappResponse.ok) {
+      const errorText = await whatsappResponse.text();
+      console.error('❌ WhatsApp send error:', errorText);
+      throw new Error('Failed to send WhatsApp message');
     }
 
-    console.log('✅ Profile updated');
+    console.log('✅ WhatsApp message sent');
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: 'Waiter updated successfully',
-        waiter: {
-          id: authUser.user.id,
-          email: authUser.user.email,
-          full_name: authUser.user.user_metadata.full_name
-        }
+        message: 'Link de redefinição enviado via WhatsApp'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
