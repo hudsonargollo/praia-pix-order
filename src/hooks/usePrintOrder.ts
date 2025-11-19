@@ -118,6 +118,19 @@ export function usePrintOrder() {
     documentTitle: `Pedido-${orderData?.order.order_number || 'N/A'}`,
     onAfterPrint: handleAfterPrint,
     onPrintError: handlePrintError,
+    pageStyle: `
+      @page {
+        size: 80mm auto;
+        margin: 0;
+      }
+      @media print {
+        body {
+          margin: 0;
+          padding: 0;
+          width: 80mm;
+        }
+      }
+    `,
   });
 
   // Main print function
