@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,12 +6,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, ShoppingCart, TrendingUp, Calendar as CalendarIcon, Download, Users } from "lucide-react";
+import { DollarSign, ShoppingCart, TrendingUp, Calendar as CalendarIcon, Download, Users, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { UniformHeader } from "@/components/UniformHeader";
 import { fetchAllWaiters, type WaiterInfo } from "@/lib/waiterUtils";
+import { usePrintReport } from "@/hooks/usePrintReport";
+import { ReportPrintView } from "@/components/printable/ReportPrintView";
 
 interface OrderStats {
   totalOrders: number;
@@ -28,7 +29,6 @@ interface DailyStats {
 }
 
 const Reports = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("geral");
   const [waiters, setWaiters] = useState<WaiterInfo[]>([]);
@@ -45,6 +45,9 @@ const Reports = () => {
     today.setHours(0, 0, 0, 0);
     return { from: today, to: new Date() };
   });
+
+  // Print report hook
+  const { printReport, isPrinting, reportData, printRef } = usePrintReport();
 
   useEffect(() => {
     loadWaiters();
@@ -138,6 +141,20 @@ const Reports = () => {
     toast.success("CSV exportado!");
   };
 
+  const handlePrintReport = () => {
+    const waiterName = selectedWaiterId 
+      ? waiters.find(w => w.id === selectedWaiterId)?.display_name || waiters.find(w => w.id === selectedWaiterId)?.full_name
+      : undefined;
+
+    printReport({
+      dateRange,
+      stats,
+      dailyStats,
+      waiterName,
+      reportType: activeTab as "geral" | "individual",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
       <UniformHeader title="Relatórios" />
@@ -188,6 +205,16 @@ const Reports = () => {
                       />
                     </PopoverContent>
                   </Popover>
+                  <Button 
+                    onClick={handlePrintReport} 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 sm:flex-none"
+                    disabled={isPrinting || loading}
+                  >
+                    <Printer className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Imprimir</span>
+                  </Button>
                   <Button onClick={exportToCSV} variant="outline" size="sm" className="flex-1 sm:flex-none">
                     <Download className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Exportar</span>
@@ -329,6 +356,16 @@ const Reports = () => {
                       />
                     </PopoverContent>
                   </Popover>
+                  <Button 
+                    onClick={handlePrintReport} 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 sm:flex-none"
+                    disabled={!selectedWaiterId || isPrinting || loading}
+                  >
+                    <Printer className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Imprimir</span>
+                  </Button>
                   <Button onClick={exportToCSV} variant="outline" size="sm" className="flex-1 sm:flex-none" disabled={!selectedWaiterId}>
                     <Download className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Exportar</span>
@@ -440,6 +477,21 @@ const Reports = () => {
             )}
           </TabsContent>
         </Tabs>
+      </div>
+
+      {/* Hidden print component */}
+      <div style={{ display: 'none' }}>
+        <div ref={printRef}>
+          {reportData && (
+            <ReportPrintView
+              dateRange={reportData.dateRange}
+              stats={reportData.stats}
+              dailyStats={reportData.dailyStats}
+              waiterName={reportData.waiterName}
+              reportType={reportData.reportType}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

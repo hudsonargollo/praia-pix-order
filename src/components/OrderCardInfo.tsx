@@ -1,9 +1,13 @@
 import { getWaiterName } from "@/lib/waiterUtils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { Badge } from "@/components/ui/badge";
-import { User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { User, Printer } from "lucide-react";
+import { usePrintOrder } from "@/hooks/usePrintOrder";
+import { OrderReceipt } from "@/components/printable/OrderReceipt";
 
 interface OrderCardInfoProps {
+  orderId: string;
   orderNumber: number;
   customerName: string;
   customerPhone: string;
@@ -15,6 +19,7 @@ interface OrderCardInfoProps {
 }
 
 export function OrderCardInfo({
+  orderId,
   orderNumber,
   customerName,
   customerPhone,
@@ -24,6 +29,8 @@ export function OrderCardInfo({
   readyAt,
   kitchenNotifiedAt,
 }: OrderCardInfoProps) {
+  const { printOrder, isPrinting, orderData, printRef } = usePrintOrder();
+
   const formatTimestamp = (timestamp: string | null | undefined) => {
     if (!timestamp) return null;
     return new Date(timestamp).toLocaleString('pt-BR', {
@@ -35,25 +42,55 @@ export function OrderCardInfo({
     });
   };
 
+  const handlePrint = () => {
+    printOrder(orderId);
+  };
+
   return (
-    <div className="space-y-1">
-      {/* Customer Info */}
-      <div className="text-sm text-gray-700">
-        <span className="font-bold">Cliente:</span> {customerName}
-      </div>
-      <div className="text-sm text-gray-700">
-        <span className="font-bold">Telefone:</span> {formatPhoneNumber(customerPhone)}
+    <>
+      <div className="space-y-1">
+        {/* Customer Info */}
+        <div className="text-sm text-gray-700">
+          <span className="font-bold">Cliente:</span> {customerName}
+        </div>
+        <div className="text-sm text-gray-700">
+          <span className="font-bold">Telefone:</span> {formatPhoneNumber(customerPhone)}
+        </div>
+
+        {/* Waiter Badge and Print Button */}
+        <div className="pt-1 flex items-center gap-2">
+          {waiterId && (
+            <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200 h-5 px-2">
+              <User className="mr-1 h-3 w-3" />
+              {getWaiterName(waiterId)}
+            </Badge>
+          )}
+          
+          {/* Print Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrint}
+            disabled={isPrinting}
+            className="h-5 px-2 text-xs"
+          >
+            <Printer className="h-3 w-3 mr-1" />
+            {isPrinting ? 'Imprimindo...' : 'Imprimir'}
+          </Button>
+        </div>
       </div>
 
-      {/* Waiter Badge - Compact */}
-      {waiterId && (
-        <div className="pt-1">
-          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200 h-5 px-2">
-            <User className="mr-1 h-3 w-3" />
-            {getWaiterName(waiterId)}
-          </Badge>
+      {/* Hidden OrderReceipt for printing */}
+      {orderData && (
+        <div style={{ display: 'none' }}>
+          <OrderReceipt
+            ref={printRef}
+            order={orderData.order}
+            items={orderData.items}
+            waiterName={orderData.waiterName}
+          />
         </div>
       )}
-    </div>
+    </>
   );
 }

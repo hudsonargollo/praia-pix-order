@@ -370,3 +370,486 @@ All colors MUST be HSL.
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* ============================================
+   PRINT STYLES - Thermal Receipt (80mm)
+   ============================================ */
+
+/* Print media query for thermal receipts */
+@media print {
+  /* Set page size for 80mm thermal paper */
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  /* Hide everything except print content */
+  body > *:not(.receipt-container) {
+    display: none !important;
+  }
+
+  /* Ensure receipt container is visible */
+  .receipt-container {
+    display: block !important;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Remove all shadows, gradients, and backgrounds */
+  * {
+    box-shadow: none !important;
+    background-image: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Force black text on white background */
+  body {
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* Prevent page breaks inside receipt elements */
+  .receipt,
+  .receipt-item,
+  .receipt-notes {
+    page-break-inside: avoid;
+  }
+}
+
+/* Receipt container styles */
+.receipt-container {
+  display: none; /* Hidden by default, shown only when printing */
+  width: 80mm;
+  max-width: 80mm;
+  margin: 0 auto;
+  background: white;
+}
+
+/* Main receipt styles */
+.receipt {
+  width: 80mm;
+  max-width: 80mm;
+  font-family: 'Courier New', 'Courier', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #000;
+  background: #fff;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* Header section */
+.receipt-header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.receipt-logo h1 {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0 0 4px 0;
+  letter-spacing: 2px;
+}
+
+.receipt-logo p {
+  font-size: 14px;
+  margin: 0 0 8px 0;
+}
+
+.receipt-divider {
+  font-size: 10px;
+  margin: 4px 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Order info section */
+.receipt-order-info {
+  margin-bottom: 8px;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  font-size: 11px;
+}
+
+.receipt-label {
+  font-weight: bold;
+}
+
+.receipt-value {
+  text-align: right;
+}
+
+/* Items section */
+.receipt-items {
+  margin-bottom: 8px;
+}
+
+.receipt-items-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.receipt-items-header span:first-child {
+  width: 15%;
+}
+
+.receipt-items-header span:nth-child(2) {
+  width: 55%;
+  text-align: left;
+}
+
+.receipt-items-header span:last-child {
+  width: 30%;
+  text-align: right;
+}
+
+.receipt-item {
+  margin-bottom: 4px;
+}
+
+.receipt-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 11px;
+}
+
+.receipt-item-qty {
+  width: 15%;
+  font-weight: bold;
+}
+
+.receipt-item-name {
+  width: 55%;
+  text-align: left;
+  word-wrap: break-word;
+}
+
+.receipt-item-price {
+  width: 30%;
+  text-align: right;
+  font-weight: bold;
+}
+
+/* Notes section */
+.receipt-notes {
+  margin-bottom: 8px;
+  padding: 4px 0;
+}
+
+.receipt-notes-label {
+  font-weight: bold;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.receipt-notes-text {
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  padding: 4px 0;
+}
+
+/* Total section */
+.receipt-total {
+  margin-bottom: 8px;
+}
+
+.receipt-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 4px 0;
+}
+
+.receipt-total-label {
+  font-size: 16px;
+}
+
+.receipt-total-value {
+  font-size: 18px;
+}
+
+/* Footer section */
+.receipt-footer {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.receipt-thanks {
+  font-size: 12px;
+  font-weight: bold;
+  margin: 8px 0 4px 0;
+}
+
+.receipt-contact {
+  font-size: 10px;
+  margin: 4px 0 0 0;
+}
+
+/* ============================================
+   PRINT STYLES - Report (A4/Letter)
+   ============================================ */
+
+/* Report container - hidden by default, shown only when printing */
+.report-print-view {
+  display: none;
+  width: 100%;
+  max-width: 210mm; /* A4 width */
+  margin: 0 auto;
+  background: white;
+  color: black;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
+/* Report header */
+.report-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #000;
+}
+
+.report-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+  color: #000;
+}
+
+.report-subtitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.report-waiter {
+  font-size: 14px;
+  margin: 4px 0;
+  color: #555;
+}
+
+.report-period {
+  font-size: 14px;
+  margin: 4px 0;
+  color: #555;
+}
+
+.report-generated {
+  font-size: 12px;
+  margin: 8px 0 0 0;
+  color: #777;
+}
+
+/* Summary section */
+.report-summary {
+  margin-bottom: 32px;
+}
+
+.summary-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 16px 0;
+  color: #000;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.summary-card {
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+
+.summary-label {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #000;
+}
+
+.summary-revenue {
+  color: #16a34a; /* Green for revenue */
+}
+
+/* Daily breakdown section */
+.report-daily {
+  margin-bottom: 32px;
+}
+
+.daily-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 12px 0;
+  color: #000;
+}
+
+.daily-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.table-header {
+  background: #f3f4f6;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: bold;
+  border: 1px solid #ddd;
+  color: #000;
+}
+
+.table-header-right {
+  text-align: right;
+}
+
+.table-cell {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  color: #000;
+}
+
+.table-cell-right {
+  text-align: right;
+}
+
+.table-cell-bold {
+  font-weight: bold;
+}
+
+.table-cell-revenue {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.table-empty {
+  text-align: center;
+  padding: 24px 12px;
+  color: #999;
+  font-style: italic;
+}
+
+.table-footer {
+  background: #f9fafb;
+  font-weight: bold;
+}
+
+/* Report footer */
+.report-footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #ddd;
+  text-align: center;
+}
+
+.footer-text {
+  font-size: 11px;
+  color: #777;
+  margin: 0;
+}
+
+/* Print media query for reports */
+@media print {
+  /* Show report when printing */
+  .report-print-view {
+    display: block !important;
+  }
+
+  /* Hide everything else */
+  body > *:not(.report-print-view) {
+    display: none !important;
+  }
+
+  /* Set page size for A4/Letter */
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+
+  /* Remove all shadows and backgrounds */
+  * {
+    box-shadow: none !important;
+    background-image: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Force black text on white background */
+  body {
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* Ensure proper page breaks */
+  .report-header,
+  .report-summary,
+  .summary-card {
+    page-break-inside: avoid;
+  }
+
+  /* Allow page breaks in table if needed */
+  .daily-table {
+    page-break-inside: auto;
+  }
+
+  .daily-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* Keep table header on each page */
+  .daily-table thead {
+    display: table-header-group;
+  }
+
+  .daily-table tfoot {
+    display: table-footer-group;
+  }
+
+  /* Adjust summary grid for print */
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* Remove background colors for print */
+  .summary-card {
+    background: #fff !important;
+    border: 1px solid #000;
+  }
+
+  .table-header {
+    background: #f3f4f6 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .table-footer {
+    background: #f9fafb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

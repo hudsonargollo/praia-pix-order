@@ -6,8 +6,12 @@ import { RealtimeNotifications, notificationUtils } from "@/components/RealtimeN
 import { ConnectionMonitor, useConnectionMonitor } from "@/components/ConnectionMonitor";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UniformHeader } from "@/components/UniformHeader";
+import { AutoPrintToggle } from "@/components/AutoPrintToggle";
+import { OrderReceipt } from "@/components/printable/OrderReceipt";
 import type { PaymentStatus } from "@/components/StatusBadge";
 import { fetchAllWaiters, getWaiterName } from "@/lib/waiterUtils";
+import { useAutoPrint } from "@/hooks/useAutoPrint";
+import { usePrintOrder } from "@/hooks/usePrintOrder";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +55,22 @@ const Kitchen = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [processingOrders, setProcessingOrders] = useState<Set<string>>(new Set());
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Print functionality
+  const { printOrder, orderData, printRef } = usePrintOrder();
+
+  // Auto-print functionality
+  const { isAutoPrintEnabled, toggleAutoPrint } = useAutoPrint({
+    enabled: true,
+    onPrint: (orderId) => {
+      console.log('Auto-printing order:', orderId);
+      printOrder(orderId);
+    },
+    onError: (error) => {
+      console.error('Auto-print error:', error);
+      toast.error('Erro na impressão automática');
+    }
+  });
 
   // Real-time order updates
   const handleNewPaidOrder = useCallback((order: Order) => {
@@ -308,6 +328,12 @@ const Kitchen = () => {
       <UniformHeader
         title="Cozinha"
         showConnection={true}
+        actions={
+          <AutoPrintToggle
+            enabled={isAutoPrintEnabled}
+            onToggle={toggleAutoPrint}
+          />
+        }
       />
 
       <div className="max-w-7xl mx-auto p-4">
@@ -593,6 +619,19 @@ const Kitchen = () => {
           </div>
         </div>
       </div>
+
+      {/* Hidden OrderReceipt component for printing */}
+      {orderData && (
+        <div style={{ display: 'none' }}>
+          <div ref={printRef}>
+            <OrderReceipt
+              order={orderData.order}
+              items={orderData.items}
+              waiterName={orderData.waiterName}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

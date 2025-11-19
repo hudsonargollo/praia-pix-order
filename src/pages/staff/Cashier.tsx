@@ -789,6 +789,7 @@ const Cashier = () => {
                     <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
                       <div className="flex-1">
                         <OrderCardInfo
+                          orderId={order.id}
                           orderNumber={order.order_number}
                           customerName={order.customer_name}
                           customerPhone={order.customer_phone}
@@ -985,6 +986,7 @@ const Cashier = () => {
                     <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
                       <div className="flex-1">
                         <OrderCardInfo
+                          orderId={order.id}
                           orderNumber={order.order_number}
                           customerName={order.customer_name}
                           customerPhone={order.customer_phone}
@@ -1186,6 +1188,7 @@ const Cashier = () => {
                     <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
                       <div className="flex-1">
                         <OrderCardInfo
+                          orderId={order.id}
                           orderNumber={order.order_number}
                           customerName={order.customer_name}
                           customerPhone={order.customer_phone}
@@ -1360,6 +1363,7 @@ const Cashier = () => {
                     <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
                       <div className="flex-1">
                         <OrderCardInfo
+                          orderId={order.id}
                           orderNumber={order.order_number}
                           customerName={order.customer_name}
                           customerPhone={order.customer_phone}

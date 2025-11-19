@@ -5,8 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { OrderCardInfo } from "@/components/OrderCardInfo";
 import type { OrderStatus, PaymentStatus } from "@/components/StatusBadge";
-import { ChevronDown, ChevronUp, Eye, MessageSquare } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, MessageSquare, Printer } from "lucide-react";
 import type { Order } from "@/integrations/supabase/realtime";
+import { usePrintOrder } from "@/hooks/usePrintOrder";
+import { OrderReceipt } from "@/components/printable/OrderReceipt";
 
 interface CompactOrderCardProps {
   order: Order;
@@ -22,6 +24,11 @@ export const CompactOrderCard = ({
   formatTimeWithAMPM 
 }: CompactOrderCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { printOrder, isPrinting, orderData, printRef } = usePrintOrder();
+
+  const handlePrint = () => {
+    printOrder(order.id);
+  };
 
   return (
     <Card className="p-4 shadow-md hover:shadow-lg transition-all duration-200 border-l-4 border-l-purple-500">
@@ -76,6 +83,7 @@ export const CompactOrderCard = ({
       {isExpanded && (
         <div className="border-t pt-3 space-y-3 animate-in slide-in-from-top-2 duration-200">
           <OrderCardInfo
+            orderId={order.id}
             orderNumber={order.order_number}
             customerName={order.customer_name}
             customerPhone={order.customer_phone}
@@ -126,7 +134,29 @@ export const CompactOrderCard = ({
                 Notificar
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              disabled={isPrinting}
+              className="flex-1"
+            >
+              <Printer className="h-3 w-3 mr-1" />
+              {isPrinting ? 'Imprimindo...' : 'Imprimir'}
+            </Button>
           </div>
+        </div>
+      )}
+
+      {/* Hidden OrderReceipt for printing */}
+      {orderData && (
+        <div style={{ display: 'none' }}>
+          <OrderReceipt
+            ref={printRef}
+            order={orderData.order}
+            items={orderData.items}
+            waiterName={orderData.waiterName}
+          />
         </div>
       )}
     </Card>
