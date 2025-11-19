@@ -383,14 +383,23 @@ All colors MUST be HSL.
     margin: 0;
   }
 
-  /* Hide everything except print content */
-  body > *:not(.receipt-container) {
-    display: none !important;
+  /* Hide everything except receipt content */
+  body * {
+    visibility: hidden;
   }
 
-  /* Ensure receipt container is visible */
+  /* Show only receipt container and its children */
+  .receipt-container,
+  .receipt-container * {
+    visibility: visible;
+  }
+
+  /* Ensure receipt container is visible and positioned */
   .receipt-container {
     display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
     width: 100%;
     margin: 0;
     padding: 0;
@@ -774,14 +783,24 @@ All colors MUST be HSL.
 
 /* Print media query for reports */
 @media print {
+  /* Hide everything except report content */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only report and its children */
+  .report-print-view,
+  .report-print-view * {
+    visibility: visible;
+  }
+
   /* Show report when printing */
   .report-print-view {
     display: block !important;
-  }
-
-  /* Hide everything else */
-  body > *:not(.report-print-view) {
-    display: none !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
   }
 
   /* Set page size for A4/Letter */
