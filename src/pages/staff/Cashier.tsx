@@ -53,9 +53,18 @@ import type { Order } from "@/integrations/supabase/realtime";
 
 // Order interface is now imported from realtime service
 
+interface OrderWithItems extends Order {
+  items?: Array<{
+    id: string;
+    item_name: string;
+    quantity: number;
+    unit_price: number;
+  }>;
+}
+
 const Cashier = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
@@ -244,10 +253,27 @@ const Cashier = () => {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      const { data, error } = await query;
+      const { data: ordersData, error } = await query;
 
       if (error) throw error;
-      setOrders((data || []) as Order[]);
+      
+      // Load items for each order
+      const ordersWithItems = await Promise.all(
+        (ordersData || []).map(async (order) => {
+          const { data: items } = await supabase
+            .from("order_items")
+            .select("id, item_name, quantity, unit_price")
+            .eq("order_id", order.id)
+            .order("created_at", { ascending: true });
+          
+          return {
+            ...order,
+            items: items || []
+          } as OrderWithItems;
+        })
+      );
+      
+      setOrders(ordersWithItems);
     } catch (error) {
       console.error("Error loading orders:", error);
       toast.error("Erro ao carregar pedidos");
@@ -783,6 +809,25 @@ const Cashier = () => {
                       </div>
                     </div>
                     
+                    {/* Order Items */}
+                    {order.items && order.items.length > 0 && (
+                      <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">📋 Itens:</p>
+                        <div className="space-y-1">
+                          {order.items.map((item) => (
+                            <div key={item.id} className="flex justify-between text-xs">
+                              <span className="text-gray-600">
+                                {item.quantity}x {item.item_name}
+                              </span>
+                              <span className="font-medium text-gray-900">
+                                R$ {Number(item.unit_price * item.quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* Action Buttons */}
                     <div className="border-t pt-3 space-y-2">
                       {/* Edit and Cancel Buttons */}
@@ -955,6 +1000,25 @@ const Cashier = () => {
                         </p>
                       </div>
                     </div>
+                    
+                    {/* Order Items */}
+                    {order.items && order.items.length > 0 && (
+                      <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">📋 Itens:</p>
+                        <div className="space-y-1">
+                          {order.items.map((item) => (
+                            <div key={item.id} className="flex justify-between text-xs">
+                              <span className="text-gray-600">
+                                {item.quantity}x {item.item_name}
+                              </span>
+                              <span className="font-medium text-gray-900">
+                                R$ {Number(item.unit_price * item.quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     
                     {/* WhatsApp Error Indicator */}
                     {orderErrors.length > 0 && (
@@ -1138,6 +1202,25 @@ const Cashier = () => {
                       </div>
                     </div>
                     
+                    {/* Order Items */}
+                    {order.items && order.items.length > 0 && (
+                      <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">📋 Itens:</p>
+                        <div className="space-y-1">
+                          {order.items.map((item) => (
+                            <div key={item.id} className="flex justify-between text-xs">
+                              <span className="text-gray-600">
+                                {item.quantity}x {item.item_name}
+                              </span>
+                              <span className="font-medium text-gray-900">
+                                R$ {Number(item.unit_price * item.quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* WhatsApp Error Indicator */}
                     {orderErrors.length > 0 && (
                       <div className="mb-3">
@@ -1297,6 +1380,25 @@ const Cashier = () => {
                         </p>
                       </div>
                     </div>
+                    
+                    {/* Order Items */}
+                    {order.items && order.items.length > 0 && (
+                      <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">📋 Itens:</p>
+                        <div className="space-y-1">
+                          {order.items.map((item) => (
+                            <div key={item.id} className="flex justify-between text-xs">
+                              <span className="text-gray-600">
+                                {item.quantity}x {item.item_name}
+                              </span>
+                              <span className="font-medium text-gray-900">
+                                R$ {Number(item.unit_price * item.quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* View Details Button */}
                     <div className="border-t pt-3">

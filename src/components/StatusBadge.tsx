@@ -66,12 +66,12 @@ const orderStatusConfig: Record<OrderStatus, { label: string; className: string 
 // Payment status configuration
 const paymentStatusConfig: Record<PaymentStatus, { label: string; className: string }> = {
   pending: {
-    label: "Aguardando Pagamento",
+    label: "A PAGAR",
     className: "bg-orange-100 text-orange-800 border-orange-300",
   },
   confirmed: {
-    label: "Pagamento Confirmado",
-    className: "bg-blue-100 text-blue-800 border-blue-200",
+    label: "PAGO",
+    className: "bg-green-100 text-green-800 border-green-200",
   },
   failed: {
     label: "Pagamento Falhou",
