@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +61,7 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("");
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -74,6 +76,13 @@ const Menu = () => {
       items: menuItems.filter(item => item.category_id === category.id)
     })).filter(category => category.items.length > 0);
   }, [categories, menuItems]);
+
+  // Set initial active tab when categories load
+  useEffect(() => {
+    if (categorizedItems.length > 0 && !activeTab) {
+      setActiveTab(categorizedItems[0].id);
+    }
+  }, [categorizedItems, activeTab]);
 
   // Optimized scroll handler
   const handleCategoryScroll = useCallback((categoryId: string) => {
@@ -413,42 +422,45 @@ const Menu = () => {
       )}
 
       {/* Menu Content - Adjusted padding for fixed header and cart */}
-      <div className={`relative z-10 max-w-2xl lg:max-w-6xl mx-auto px-4 pb-8 space-y-6 ${cartState.items.length > 0 ? 'pt-64 md:pt-72' : 'pt-48 md:pt-44'}`}>
+      <div className={`relative z-10 max-w-2xl lg:max-w-6xl mx-auto px-4 pb-8 ${cartState.items.length > 0 ? 'pt-64 md:pt-72' : 'pt-48 md:pt-44'}`}>
         {categorizedItems.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <div className="text-4xl mb-3">🥥</div>
             <p className="text-gray-900 font-semibold text-lg">Nenhum item disponível</p>
           </div>
         ) : (
-          categorizedItems.map((category) => (
-            <div key={category.id} id={`category-${category.id}`} className="space-y-4 scroll-mt-20">
-              {/* Category Header - Purple Badge Style */}
-              <div className="bg-gradient-to-r from-purple-700 to-purple-600 text-white px-4 py-2 rounded-full inline-block shadow-md">
-                <h2 className="text-sm md:text-base font-bold uppercase tracking-wide">
-                  {category.name}
-                </h2>
-              </div>
+          <>
+            {/* Mobile: Scrollable List */}
+            <div className="md:hidden space-y-6">
+              {categorizedItems.map((category) => (
+                <div key={category.id} id={`category-${category.id}`} className="space-y-4 scroll-mt-20">
+                  {/* Category Header - Purple Badge Style */}
+                  <div className="bg-gradient-to-r from-purple-700 to-purple-600 text-white px-4 py-2 rounded-full inline-block shadow-md">
+                    <h2 className="text-sm font-bold uppercase tracking-wide">
+                      {category.name}
+                    </h2>
+                  </div>
 
-              {/* Category Items - Clean Cards */}
-              <SortableProductList
-                items={category.items}
-                categoryId={category.id}
-                onReorder={(startIndex, endIndex) => handleReorder(category.id, startIndex, endIndex)}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                  {category.items.map((item) => {
-                    const quantity = getItemQuantity(item.id);
-                    const hasImageError = imageErrors.has(item.id);
-                    
-                    return (
-                      <DraggableProductCard
-                        key={item.id}
-                        item={item}
-                        isSortingMode={isSortingMode}
-                      >
-                        <div 
-                          className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4"
-                        >
+                  {/* Category Items - Clean Cards */}
+                  <SortableProductList
+                    items={category.items}
+                    categoryId={category.id}
+                    onReorder={(startIndex, endIndex) => handleReorder(category.id, startIndex, endIndex)}
+                  >
+                    <div className="grid grid-cols-1 gap-3">
+                      {category.items.map((item) => {
+                        const quantity = getItemQuantity(item.id);
+                        const hasImageError = imageErrors.has(item.id);
+                        
+                        return (
+                          <DraggableProductCard
+                            key={item.id}
+                            item={item}
+                            isSortingMode={isSortingMode}
+                          >
+                            <div 
+                              className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4"
+                            >
                       {/* Image */}
                       <div 
                         className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
@@ -543,10 +555,160 @@ const Menu = () => {
                       </DraggableProductCard>
                     );
                   })}
+                    </div>
+                  </SortableProductList>
                 </div>
-              </SortableProductList>
+              ))}
             </div>
-          ))
+
+            {/* Desktop/Tablet: Tabs */}
+            <div className="hidden md:block">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="w-full justify-start bg-white/80 backdrop-blur-sm p-2 rounded-2xl shadow-lg mb-6 flex-wrap h-auto gap-2">
+                  {categorizedItems.map((category) => (
+                    <TabsTrigger
+                      key={category.id}
+                      value={category.id}
+                      className="px-6 py-3 rounded-xl font-semibold text-base data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+                    >
+                      {category.name}
+                    </TabsTrigger>
+                  ))}
+                  
+                  {/* Sorting Toggle - Desktop Tabs */}
+                  {isAdmin && !adminLoading && (
+                    <div className="ml-auto">
+                      <SortingToggle
+                        isSortingMode={isSortingMode}
+                        onToggle={toggleSortingMode}
+                        disabled={isSaving}
+                      />
+                    </div>
+                  )}
+                </TabsList>
+
+                {categorizedItems.map((category) => (
+                  <TabsContent key={category.id} value={category.id} className="mt-0">
+                    <SortableProductList
+                      items={category.items}
+                      categoryId={category.id}
+                      onReorder={(startIndex, endIndex) => handleReorder(category.id, startIndex, endIndex)}
+                    >
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                        {category.items.map((item) => {
+                          const quantity = getItemQuantity(item.id);
+                          const hasImageError = imageErrors.has(item.id);
+                          
+                          return (
+                            <DraggableProductCard
+                              key={item.id}
+                              item={item}
+                              isSortingMode={isSortingMode}
+                            >
+                              <div 
+                                className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4"
+                              >
+                      {/* Image */}
+                      <div 
+                        className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
+                        onClick={() => setSelectedItem(item)}
+                      >
+                        {item.image_url && !hasImageError ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            onError={() => handleImageError(item.id)}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-purple-50">
+                            <ShoppingCart className="w-8 h-8 text-purple-400" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div 
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => setSelectedItem(item)}
+                      >
+                        <h3 className="font-bold text-gray-900 text-lg">
+                          {item.name}
+                        </h3>
+                        {item.description && (
+                          <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                            {item.description}
+                          </p>
+                        )}
+                        <p className="text-purple-600 font-bold text-xl mt-2">
+                          R$ {item.price.toFixed(2)}
+                        </p>
+                      </div>
+
+                      {/* Add/Quantity Controls */}
+                      <div className="flex-shrink-0">
+                        {quantity > 0 ? (
+                          <div className="flex flex-col gap-2">
+                            {/* Quantity Controls */}
+                            <div className="flex items-center gap-2 bg-purple-50 rounded-xl p-2">
+                              <button
+                                onClick={() => removeItem(item.id)}
+                                className="w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
+                                aria-label="Remover um"
+                                disabled={isSortingMode}
+                              >
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <span className="font-bold text-purple-900 text-lg min-w-[24px] text-center">
+                                {quantity}
+                              </span>
+                              <button
+                                onClick={() => handleAddToCart(item)}
+                                className="w-8 h-8 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
+                                aria-label="Adicionar mais"
+                                disabled={isSortingMode}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+                            {/* Remove All Button */}
+                            <button
+                              onClick={() => {
+                                // Remove all items of this type
+                                for (let i = 0; i < quantity; i++) {
+                                  removeItem(item.id);
+                                }
+                                toast.success(`${item.name} removido do carrinho`);
+                              }}
+                              className="w-full px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition-all flex items-center justify-center gap-1"
+                              disabled={isSortingMode}
+                            >
+                              <span className="text-base">×</span>
+                              <span>Remover</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={() => handleAddToCart(item)}
+                            className={`bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl text-base font-semibold shadow-md hover:shadow-lg transition-all ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={isSortingMode}
+                          >
+                            Adicionar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                            </DraggableProductCard>
+                          );
+                        })}
+                      </div>
+                    </SortableProductList>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </div>
+          </>
         )}
       </div>
 
