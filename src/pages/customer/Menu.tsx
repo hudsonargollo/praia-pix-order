@@ -450,11 +450,11 @@ const Menu = () => {
                             isSortingMode={isSortingMode}
                           >
                             <div 
-                              className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4"
+                              className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex flex-col"
                             >
                       {/* Image */}
                       <div 
-                        className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
+                        className="w-full aspect-video rounded-xl overflow-hidden bg-gray-100 cursor-pointer mb-3"
                         onClick={() => setSelectedItem(item)}
                       >
                         {item.image_url && !hasImageError ? (
@@ -467,34 +467,35 @@ const Menu = () => {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-purple-50">
-                            <ShoppingCart className="w-8 h-8 text-purple-400" />
+                            <ShoppingCart className="w-12 h-12 text-purple-400" />
                           </div>
                         )}
                       </div>
 
                       {/* Info */}
                       <div 
-                        className="flex-1 min-w-0 cursor-pointer"
+                        className="cursor-pointer mb-3"
                         onClick={() => setSelectedItem(item)}
                       >
-                        <h3 className="font-bold text-gray-900 text-base line-clamp-2">
+                        <h3 className="font-bold text-gray-900 text-base mb-1">
                           {item.name}
                         </h3>
                         {item.description && (
-                          <p className="text-xs text-gray-600 line-clamp-2 mt-1">
+                          <p className="text-xs text-gray-600 line-clamp-2 mb-2">
                             {item.description}
                           </p>
                         )}
-                        <p className="text-purple-600 font-bold text-lg mt-2">
-                          R$ {item.price.toFixed(2)}
-                        </p>
                       </div>
 
-                      {/* Add/Quantity Controls */}
-                      <div className="flex-shrink-0">
-                        {quantity > 0 ? (
-                          <div className="flex flex-col gap-2">
-                            {/* Quantity Controls */}
+                      {/* Price and Button Row */}
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-purple-600 font-bold text-xl">
+                          R$ {item.price.toFixed(2)}
+                        </p>
+                        
+                        {/* Add/Quantity Controls */}
+                        <div className="flex-shrink-0">
+                          {quantity > 0 ? (
                             <div className="flex items-center gap-2 bg-purple-50 rounded-xl p-2">
                               <button
                                 onClick={() => removeItem(item.id)}
@@ -516,16 +517,16 @@ const Menu = () => {
                                 <Plus className="w-4 h-4" />
                               </button>
                             </div>
-                          </div>
-                        ) : (
-                          <Button
-                            onClick={() => handleAddToCart(item)}
-                            className={`bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            disabled={isSortingMode}
-                          >
-                            Adicionar
-                          </Button>
-                        )}
+                          ) : (
+                            <Button
+                              onClick={() => handleAddToCart(item)}
+                              className={`bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              disabled={isSortingMode}
+                            >
+                              Adicionar
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                       </DraggableProductCard>

@@ -16,7 +16,7 @@ ORDER BY p.created_at DESC;
 
 -- Also check user_roles table
 SELECT 
-    ur.user_id,
+    ur.user_id,b
     ur.role,
     p.full_name,
     au.email
