@@ -586,12 +586,14 @@ const Menu = () => {
                               isSortingMode={isSortingMode}
                             >
                               <div 
-                                className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex gap-4"
+                                className={`bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all ${
+                                  viewMode === 'grid' ? 'flex flex-col h-full' : 'flex gap-4'
+                                }`}
                               >
-                      {/* Image - Left Column */}
+                      {/* Image */}
                       <div 
                         className={`rounded-xl overflow-hidden bg-gray-100 cursor-pointer flex-shrink-0 ${
-                          viewMode === 'grid' ? 'w-24 h-24' : 'w-24 h-24'
+                          viewMode === 'grid' ? 'w-full aspect-square mb-3 relative group' : 'w-24 h-24'
                         }`}
                         onClick={() => setSelectedItem(item)}
                       >
@@ -605,22 +607,30 @@ const Menu = () => {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-purple-50">
-                            <ShoppingCart className="w-10 h-10 text-purple-400" />
+                            <ShoppingCart className={viewMode === 'grid' ? 'w-12 h-12 text-purple-400' : 'w-10 h-10 text-purple-400'} />
+                          </div>
+                        )}
+                        {/* Hover Description Overlay - Grid View Only */}
+                        {viewMode === 'grid' && item.description && (
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <p className="text-white text-sm line-clamp-3">
+                              {item.description}
+                            </p>
                           </div>
                         )}
                       </div>
 
-                      {/* Right Column - Info and Actions */}
-                      <div className="flex-1 flex flex-col min-w-0">
+                      {/* Info and Actions */}
+                      <div className={`${viewMode === 'grid' ? 'flex-1 flex flex-col' : 'flex-1 flex flex-col min-w-0'}`}>
                         {/* Title and Description */}
                         <div 
-                          className="cursor-pointer mb-2"
+                          className={`cursor-pointer ${viewMode === 'grid' ? 'mb-3' : 'mb-2'}`}
                           onClick={() => setSelectedItem(item)}
                         >
-                          <h3 className="font-bold text-gray-900 text-base mb-1">
+                          <h3 className={`font-bold text-gray-900 ${viewMode === 'grid' ? 'text-lg mb-1 line-clamp-2' : 'text-base mb-1'}`}>
                             {item.name}
                           </h3>
-                          {item.description && (
+                          {viewMode === 'list' && item.description && (
                             <p className="text-xs text-gray-600 line-clamp-2">
                               {item.description}
                             </p>
@@ -628,50 +638,69 @@ const Menu = () => {
                         </div>
 
                         {/* Price and Button Row */}
-                        <div className="flex items-center justify-between gap-3 mt-auto">
-                          <p className="text-purple-600 font-bold text-lg">
+                        <div className={`flex items-center justify-between gap-3 ${viewMode === 'grid' ? 'mt-auto' : 'mt-auto'}`}>
+                          <p className={`text-purple-600 font-bold ${viewMode === 'grid' ? 'text-xl' : 'text-lg'}`}>
                             R$ {item.price.toFixed(2)}
                           </p>
                           
                           {/* Add/Quantity Controls */}
                           <div className="flex-shrink-0">
                             {quantity > 0 ? (
-                              <div className="flex items-center gap-2 bg-purple-50 rounded-xl p-2">
-                                <button
-                                  onClick={() => removeItem(item.id)}
-                                  className="w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
-                                  aria-label="Remover um"
-                                  disabled={isSortingMode}
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="font-bold text-purple-900 text-lg min-w-[24px] text-center">
-                                  {quantity}
-                                </span>
-                                <button
-                                  onClick={() => handleAddToCart(item)}
-                                  className="w-8 h-8 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
-                                  aria-label="Adicionar mais"
-                                  disabled={isSortingMode}
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
+                              <div className={viewMode === 'grid' ? 'space-y-2' : 'flex flex-col gap-2'}>
+                                <div className={`flex items-center gap-2 bg-purple-50 rounded-xl p-2 ${
+                                  viewMode === 'grid' ? 'justify-center gap-3' : ''
+                                }`}>
+                                  <button
+                                    onClick={() => removeItem(item.id)}
+                                    className={`rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all ${
+                                      viewMode === 'grid' ? 'w-10 h-10' : 'w-8 h-8'
+                                    }`}
+                                    aria-label="Remover um"
+                                    disabled={isSortingMode}
+                                  >
+                                    <Minus className={viewMode === 'grid' ? 'w-5 h-5' : 'w-4 h-4'} />
+                                  </button>
+                                  <span className={`font-bold text-purple-900 text-center ${
+                                    viewMode === 'grid' ? 'text-xl min-w-[32px]' : 'text-lg min-w-[24px]'
+                                  }`}>
+                                    {quantity}
+                                  </span>
+                                  <button
+                                    onClick={() => handleAddToCart(item)}
+                                    className={`rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all ${
+                                      viewMode === 'grid' ? 'w-10 h-10' : 'w-8 h-8'
+                                    }`}
+                                    aria-label="Adicionar mais"
+                                    disabled={isSortingMode}
+                                  >
+                                    <Plus className={viewMode === 'grid' ? 'w-5 h-5' : 'w-4 h-4'} />
+                                  </button>
+                                </div>
+                                {viewMode === 'grid' && (
+                                  <button
+                                    onClick={() => {
+                                      for (let i = 0; i < quantity; i++) {
+                                        removeItem(item.id);
+                                      }
+                                      toast.success(`${item.name} removido do carrinho`);
+                                    }}
+                                    className="w-full px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-all"
+                                    disabled={isSortingMode}
+                                  >
+                                    Remover Todos
+                                  </button>
+                                )}
                               </div>
                             ) : (
-                              <button
+                              <Button
                                 onClick={() => handleAddToCart(item)}
-                                className={`rounded-full bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center shadow-md hover:shadow-lg transition-all ${
-                                  viewMode === 'grid' ? 'w-10 h-10' : 'px-6 py-3'
+                                className={`bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all ${
+                                  viewMode === 'grid' ? 'w-full py-3 text-base' : 'px-6 py-3 text-base'
                                 } ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 disabled={isSortingMode}
-                                aria-label="Adicionar ao carrinho"
                               >
-                                {viewMode === 'grid' ? (
-                                  <Plus className="w-5 h-5" />
-                                ) : (
-                                  <span className="text-base font-semibold">Adicionar</span>
-                                )}
-                              </button>
+                                Adicionar
+                              </Button>
                             )}
                           </div>
                         </div>
