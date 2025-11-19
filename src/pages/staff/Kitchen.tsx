@@ -7,7 +7,6 @@ import { ConnectionMonitor, useConnectionMonitor } from "@/components/Connection
 import { StatusBadge } from "@/components/StatusBadge";
 import { UniformHeader } from "@/components/UniformHeader";
 import { AutoPrintToggle } from "@/components/AutoPrintToggle";
-import { OrderReceipt } from "@/components/printable/OrderReceipt";
 import type { PaymentStatus } from "@/components/StatusBadge";
 import { fetchAllWaiters, getWaiterName } from "@/lib/waiterUtils";
 import { useAutoPrint } from "@/hooks/useAutoPrint";
@@ -57,7 +56,7 @@ const Kitchen = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Print functionality
-  const { printOrder, orderData, printRef } = usePrintOrder();
+  const { printOrder } = usePrintOrder();
 
   // Auto-print functionality
   const { isAutoPrintEnabled, toggleAutoPrint } = useAutoPrint({
@@ -620,15 +619,7 @@ const Kitchen = () => {
         </div>
       </div>
 
-      {/* Hidden OrderReceipt component for printing */}
-      {orderData && (
-        <OrderReceipt
-          ref={printRef}
-          order={orderData.order}
-          items={orderData.items}
-          waiterName={orderData.waiterName}
-        />
-      )}
+
     </div>
   );
 };

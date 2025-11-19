@@ -1,5 +1,4 @@
-import { useRef, useCallback, useState, useEffect } from 'react';
-import { useReactToPrint } from 'react-to-print';
+import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -31,14 +30,12 @@ interface PrintOrderData {
  * Hook for manual order printing
  * 
  * Provides functionality to print order receipts on demand.
- * Fetches order data, renders OrderReceipt component, and triggers browser print dialog.
+ * Fetches order data and opens print dialog with formatted receipt.
  * 
  * Requirements: 2.1, 2.2
  */
 export function usePrintOrder() {
-  const printRef = useRef<HTMLDivElement>(null);
   const [isPrinting, setIsPrinting] = useState(false);
-  const [orderData, setOrderData] = useState<PrintOrderData | null>(null);
 
   // Fetch order data including items and waiter name
   const fetchOrderData = useCallback(async (orderId: string): Promise<PrintOrderData | null> => {
@@ -99,50 +96,232 @@ export function usePrintOrder() {
     }
   }, []);
 
-  // Handle print completion
-  const handleAfterPrint = useCallback(() => {
-    setIsPrinting(false);
-    console.log('Print completed');
-  }, []);
+  // Generate HTML for receipt
+  const generateReceiptHTML = (data: PrintOrderData): string => {
+    const formatCurrency = (value: number) => {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      }).format(value);
+    };
 
-  // Handle print error
-  const handlePrintError = useCallback((errorLocation: 'onBeforePrint' | 'print', error: Error) => {
-    console.error(`Print error at ${errorLocation}:`, error);
-    setIsPrinting(false);
-    toast.error('Erro ao imprimir');
-  }, []);
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(date);
+    };
 
-  // Configure react-to-print
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: `Pedido-${orderData?.order.order_number || 'N/A'}`,
-    onAfterPrint: handleAfterPrint,
-    onPrintError: handlePrintError,
-    pageStyle: `
-      @page {
-        size: 80mm auto;
-        margin: 0;
-      }
-      @media print {
-        body {
-          margin: 0;
-          padding: 0;
-          width: 80mm;
-        }
-      }
-    `,
-  });
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Pedido #${data.order.order_number}</title>
+        <style>
+          @page {
+            size: 80mm auto;
+            margin: 0;
+          }
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            background: #fff;
+            width: 80mm;
+            padding: 8px;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 8px;
+          }
+          .logo h1 {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0 0 4px 0;
+            letter-spacing: 2px;
+          }
+          .logo p {
+            font-size: 14px;
+            margin: 0 0 8px 0;
+          }
+          .divider {
+            font-size: 10px;
+            margin: 4px 0;
+          }
+          .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+            font-size: 11px;
+          }
+          .label {
+            font-weight: bold;
+          }
+          .items {
+            margin: 8px 0;
+          }
+          .items-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 10px;
+            margin-bottom: 4px;
+          }
+          .item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-bottom: 4px;
+          }
+          .item-qty {
+            width: 15%;
+            font-weight: bold;
+          }
+          .item-name {
+            width: 55%;
+          }
+          .item-price {
+            width: 30%;
+            text-align: right;
+            font-weight: bold;
+          }
+          .notes {
+            margin: 8px 0;
+            padding: 4px 0;
+          }
+          .notes-label {
+            font-weight: bold;
+            font-size: 11px;
+            margin-bottom: 4px;
+          }
+          .notes-text {
+            font-size: 11px;
+            white-space: pre-wrap;
+          }
+          .total {
+            margin: 8px 0;
+          }
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 4px 0;
+          }
+          .total-value {
+            font-size: 18px;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 8px;
+          }
+          .thanks {
+            font-size: 12px;
+            font-weight: bold;
+            margin: 8px 0 4px 0;
+          }
+          .contact {
+            font-size: 10px;
+          }
+          @media print {
+            body {
+              width: 80mm;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <h1>COCO LOKO</h1>
+            <p>Açaiteria</p>
+          </div>
+          <div class="divider">================================</div>
+        </div>
 
-  // Trigger print when orderData is set and we're in printing state
-  useEffect(() => {
-    if (orderData && isPrinting && printRef.current) {
-      // Small delay to ensure DOM is updated
-      const timer = setTimeout(() => {
-        handlePrint();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [orderData, isPrinting, handlePrint]);
+        <div class="order-info">
+          <div class="row">
+            <span class="label">Pedido:</span>
+            <span>#${data.order.order_number}</span>
+          </div>
+          <div class="row">
+            <span class="label">Data:</span>
+            <span>${formatDate(data.order.created_at)}</span>
+          </div>
+          <div class="row">
+            <span class="label">Cliente:</span>
+            <span>${data.order.customer_name}</span>
+          </div>
+          ${data.waiterName && data.waiterName !== 'Cliente' ? `
+          <div class="row">
+            <span class="label">Garçom:</span>
+            <span>${data.waiterName}</span>
+          </div>
+          ` : ''}
+          <div class="divider">================================</div>
+        </div>
+
+        <div class="items">
+          <div class="items-header">
+            <span>QTD</span>
+            <span>ITEM</span>
+            <span>VALOR</span>
+          </div>
+          <div class="divider">--------------------------------</div>
+          ${data.items.map(item => `
+          <div class="item">
+            <span class="item-qty">${item.quantity}x</span>
+            <span class="item-name">${item.item_name}</span>
+            <span class="item-price">${formatCurrency(item.unit_price * item.quantity)}</span>
+          </div>
+          `).join('')}
+          <div class="divider">--------------------------------</div>
+        </div>
+
+        ${data.order.order_notes ? `
+        <div class="notes">
+          <div class="notes-label">OBSERVAÇÕES:</div>
+          <div class="notes-text">${data.order.order_notes}</div>
+          <div class="divider">================================</div>
+        </div>
+        ` : ''}
+
+        <div class="total">
+          <div class="total-row">
+            <span>TOTAL:</span>
+            <span class="total-value">${formatCurrency(data.order.total_amount)}</span>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="divider">================================</div>
+          <p class="thanks">Obrigado pela preferência!</p>
+          <p class="contact">Tel: ${data.order.customer_phone}</p>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() {
+              window.close();
+            };
+          };
+        </script>
+      </body>
+      </html>
+    `;
+  };
 
   // Main print function
   const printOrder = useCallback(async (orderId: string) => {
@@ -162,19 +341,27 @@ export function usePrintOrder() {
         return;
       }
 
-      // Set order data for rendering - useEffect will trigger print
-      setOrderData(data);
+      // Generate HTML and open print window
+      const html = generateReceiptHTML(data);
+      const printWindow = window.open('', '_blank', 'width=302,height=600');
+      
+      if (printWindow) {
+        printWindow.document.write(html);
+        printWindow.document.close();
+      } else {
+        toast.error('Não foi possível abrir janela de impressão');
+      }
+      
+      setIsPrinting(false);
     } catch (error) {
       console.error('Error preparing print:', error);
       toast.error('Erro ao preparar impressão');
       setIsPrinting(false);
     }
-  }, [isPrinting, fetchOrderData]);
+  }, [isPrinting, fetchOrderData, generateReceiptHTML]);
 
   return {
     printOrder,
     isPrinting,
-    orderData,
-    printRef,
   };
 }
