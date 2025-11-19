@@ -189,17 +189,22 @@ serve(async (req) => {
 
     console.log('[create-waiter] User created via admin API:', userId)
 
-    // Add waiter role
+    // Add waiter role to user_roles table
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
       .insert({ user_id: userId, role: 'waiter' })
 
     if (roleError) {
-      console.error('[create-waiter] Error adding role:', roleError)
-      // Continue anyway, role might already exist
+      console.error('[create-waiter] Error adding role to user_roles:', roleError)
+      // If it's not a duplicate error, this is a problem
+      if (!roleError.message.includes('duplicate') && !roleError.message.includes('already exists')) {
+        console.error('[create-waiter] CRITICAL: Failed to add waiter role!')
+      }
+    } else {
+      console.log('[create-waiter] ✅ Successfully added waiter role to user_roles')
     }
 
-    // Create profile
+    // Create profile with waiter role
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert({
@@ -211,7 +216,12 @@ serve(async (req) => {
 
     if (profileError) {
       console.error('[create-waiter] Error creating profile:', profileError)
-      // Continue anyway
+      // If it's not a duplicate error, this is a problem
+      if (!profileError.message.includes('duplicate') && !profileError.message.includes('already exists')) {
+        console.error('[create-waiter] CRITICAL: Failed to create profile!')
+      }
+    } else {
+      console.log('[create-waiter] ✅ Successfully created profile with waiter role')
     }
 
     const data = { user_id: userId }

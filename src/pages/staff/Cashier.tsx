@@ -46,7 +46,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Eye, Edit, BarChart3, X, Users } from "lucide-react";
+import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Eye, Edit, BarChart3, X, Users, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { Order } from "@/integrations/supabase/realtime";
@@ -526,6 +526,14 @@ const Cashier = () => {
         actions={
           <>
             <Button
+              onClick={() => window.location.href = '/menu'}
+              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+              size="sm"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Criar Pedido</span>
+            </Button>
+            <Button
               onClick={() => window.location.href = '/reports'}
               className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
               size="sm"
@@ -540,14 +548,6 @@ const Cashier = () => {
             >
               <Package className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Produtos</span>
-            </Button>
-            <Button
-              onClick={() => window.location.href = '/whatsapp-admin'}
-              className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-              size="sm"
-            >
-              <Bell className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">WhatsApp</span>
             </Button>
           </>
         }
