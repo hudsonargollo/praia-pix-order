@@ -15,11 +15,16 @@ const authSchema = z.object({
 });
 
 const greetings = [
-  "Olá! Que bom te ver! 👋",
-  "Bem-vindo de volta! 🌟",
-  "Oi! Pronto para começar? 🚀",
-  "E aí! Vamos nessa? 💪",
-  "Olá! Bom te ver aqui! 😊"
+  "Bora trabalhar! 💪",
+  "Vamos fazer acontecer! 🚀",
+  "Hora de brilhar! ⭐",
+  "Foco no resultado! 🎯",
+  "Seu esforço vale a pena! 💎",
+  "Cada dia é uma vitória! 🏆",
+  "Vamos com tudo! 🔥",
+  "Determinação é tudo! 💯",
+  "Sucesso vem do trabalho! ⚡",
+  "Você é capaz! 🌟"
 ];
 
 const Auth = () => {
