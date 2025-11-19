@@ -214,7 +214,7 @@ export function OrderEditDialog({
 
       // Step 6: Update order total
       const newTotal = items.reduce(
-        (sum, item) => sum + item.quantity * item.unit_price,
+        (sum, item) => sum + (Number(item.quantity) * Number(item.unit_price)),
         0
       );
 
@@ -246,7 +246,7 @@ export function OrderEditDialog({
   };
 
   const totalAmount = items.reduce(
-    (sum, item) => sum + item.quantity * item.unit_price,
+    (sum, item) => sum + (Number(item.quantity) * Number(item.unit_price)),
     0
   );
 
@@ -281,7 +281,7 @@ export function OrderEditDialog({
                       <div className="flex-1">
                         <p className="font-semibold text-gray-900">{item.item_name}</p>
                         <p className="text-sm text-gray-600">
-                          R$ {item.unit_price.toFixed(2)} cada
+                          R$ {Number(item.unit_price).toFixed(2)} cada
                         </p>
                       </div>
                       <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm">
@@ -325,7 +325,7 @@ export function OrderEditDialog({
                       </Button>
                       <div className="text-right min-w-[90px]">
                         <p className="font-bold text-lg text-purple-600">
-                          R$ {(item.quantity * item.unit_price).toFixed(2)}
+                          R$ {(Number(item.quantity) * Number(item.unit_price)).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -350,7 +350,7 @@ export function OrderEditDialog({
                     <div className="text-left w-full">
                       <p className="font-semibold text-sm text-gray-900">{menuItem.name}</p>
                       <p className="text-xs text-purple-600 font-medium mt-1">
-                        R$ {menuItem.price.toFixed(2)}
+                        R$ {Number(menuItem.price).toFixed(2)}
                       </p>
                     </div>
                   </Button>
