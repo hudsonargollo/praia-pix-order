@@ -593,7 +593,7 @@ const Menu = () => {
                       {/* Image */}
                       <div 
                         className={`rounded-xl overflow-hidden bg-gray-100 cursor-pointer flex-shrink-0 ${
-                          viewMode === 'grid' ? 'w-full aspect-square mb-3 relative group' : 'w-24 h-24'
+                          viewMode === 'grid' ? 'w-full aspect-square mb-3' : 'w-24 h-24'
                         }`}
                         onClick={() => setSelectedItem(item)}
                       >
@@ -610,14 +610,6 @@ const Menu = () => {
                             <ShoppingCart className={viewMode === 'grid' ? 'w-12 h-12 text-purple-400' : 'w-8 h-8 text-purple-400'} />
                           </div>
                         )}
-                        {/* Hover Description Overlay - Grid View Only */}
-                        {viewMode === 'grid' && item.description && (
-                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <p className="text-white text-sm line-clamp-3">
-                              {item.description}
-                            </p>
-                          </div>
-                        )}
                       </div>
 
                       {/* Info */}
@@ -632,8 +624,10 @@ const Menu = () => {
                         }`}>
                           {item.name}
                         </h3>
-                        {viewMode === 'list' && item.description && (
-                          <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                        {item.description && (
+                          <p className={`text-gray-600 line-clamp-2 ${
+                            viewMode === 'grid' ? 'text-sm mb-2' : 'text-sm mt-1'
+                          }`}>
                             {item.description}
                           </p>
                         )}
