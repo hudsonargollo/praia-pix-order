@@ -99,21 +99,18 @@ export function usePrintOrder() {
   // Generate HTML for receipt
   const generateReceiptHTML = (data: PrintOrderData): string => {
     const formatCurrency = (value: number) => {
-      return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(value);
+      // Format as "R$ 123.45" using simple string formatting
+      return `R$ ${value.toFixed(2).replace('.', ',')}`;
     };
 
     const formatDate = (dateString: string) => {
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(date);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
     };
 
     return `
@@ -121,6 +118,7 @@ export function usePrintOrder() {
       <html>
       <head>
         <meta charset="UTF-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>Pedido #${data.order.order_number}</title>
         <style>
           @page {
@@ -245,7 +243,7 @@ export function usePrintOrder() {
         <div class="header">
           <div class="logo">
             <h1>COCO LOKO</h1>
-            <p>Açaiteria</p>
+            <p>Acaiteria</p>
           </div>
           <div class="divider">================================</div>
         </div>
@@ -265,7 +263,7 @@ export function usePrintOrder() {
           </div>
           ${data.waiterName && data.waiterName !== 'Cliente' ? `
           <div class="row">
-            <span class="label">Garçom:</span>
+            <span class="label">Garcom:</span>
             <span>${data.waiterName}</span>
           </div>
           ` : ''}
@@ -291,7 +289,7 @@ export function usePrintOrder() {
 
         ${data.order.order_notes ? `
         <div class="notes">
-          <div class="notes-label">OBSERVAÇÕES:</div>
+          <div class="notes-label">OBSERVACOES:</div>
           <div class="notes-text">${data.order.order_notes}</div>
           <div class="divider">================================</div>
         </div>
@@ -306,7 +304,7 @@ export function usePrintOrder() {
 
         <div class="footer">
           <div class="divider">================================</div>
-          <p class="thanks">Obrigado pela preferência!</p>
+          <p class="thanks">Obrigado pela preferencia!</p>
           <p class="contact">Tel: ${data.order.customer_phone}</p>
         </div>
 
