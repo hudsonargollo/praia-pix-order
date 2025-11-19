@@ -413,7 +413,7 @@ const Menu = () => {
       )}
 
       {/* Menu Content - Adjusted padding for fixed header and cart */}
-      <div className={`relative z-10 max-w-2xl mx-auto px-4 pb-8 space-y-6 ${cartState.items.length > 0 ? 'pt-64 md:pt-72' : 'pt-48 md:pt-44'}`}>
+      <div className={`relative z-10 max-w-2xl lg:max-w-6xl mx-auto px-4 pb-8 space-y-6 ${cartState.items.length > 0 ? 'pt-64 md:pt-72' : 'pt-48 md:pt-44'}`}>
         {categorizedItems.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <div className="text-4xl mb-3">🥥</div>
@@ -435,7 +435,7 @@ const Menu = () => {
                 categoryId={category.id}
                 onReorder={(startIndex, endIndex) => handleReorder(category.id, startIndex, endIndex)}
               >
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                   {category.items.map((item) => {
                     const quantity = getItemQuantity(item.id);
                     const hasImageError = imageErrors.has(item.id);
