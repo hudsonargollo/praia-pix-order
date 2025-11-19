@@ -11,6 +11,7 @@ import { WhatsAppErrorIndicator } from "@/components/WhatsAppErrorIndicator";
 import { OrderDetailsDialog } from "@/components/OrderDetailsDialog";
 import { OrderEditDialog } from "@/components/OrderEditDialog";
 import { OrderCardInfo } from "@/components/OrderCardInfo";
+import { CompactOrderCard } from "@/components/CompactOrderCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UniformHeader } from "@/components/UniformHeader";
 import type { OrderStatus, PaymentStatus } from "@/components/StatusBadge";
@@ -1094,13 +1095,11 @@ const Cashier = () => {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {readyOrders.map((order) => {
-                const paymentStatus = getPaymentStatus(order);
-                const PaymentIcon = paymentStatus.icon;
                 const orderNotificationHistory = notificationHistory.get(order.id);
                 const orderErrors = whatsappErrors.get(order.id) || [];
                 
                 return (
-                  <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-success">
+                  <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-green-500">
                     {/* Order Number + Status Badges */}
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <h3 className="font-bold text-base sm:text-xl text-gray-900">
@@ -1148,8 +1147,20 @@ const Cashier = () => {
                     
                     {/* Action Buttons */}
                     <div className="border-t pt-3 space-y-2">
-                      {/* Edit and Cancel Buttons */}
+                      {/* View Details and Edit Buttons */}
                       <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setIsDetailsDialogOpen(true);
+                          }}
+                          className="flex-1"
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Detalhes
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -1162,79 +1173,29 @@ const Cashier = () => {
                           <Edit className="mr-2 h-4 w-4" />
                           Editar
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="flex-1 text-destructive hover:bg-destructive hover:text-white">
-                              <X className="mr-2 h-4 w-4" />
-                              Cancelar
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Cancelar Pedido</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja cancelar o pedido #{order.order_number}?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Não</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => cancelOrder(order.id)} className="bg-destructive">
-                                Sim, Cancelar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                       </div>
 
-                      {/* Message and Complete Buttons */}
-                      <div className="flex gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button className="flex-1 min-h-[44px] text-base bg-blue-600 hover:bg-blue-700">
-                              <Bell className="mr-2 h-4 w-4" />
-                              Mensagem
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Notificações - Pedido #{order.order_number}</DialogTitle>
-                            </DialogHeader>
-                            <NotificationControls
-                              orderId={order.id}
-                              orderNumber={order.order_number}
-                              customerPhone={order.customer_phone}
-                              customerName={order.customer_name}
-                              orderStatus={order.status}
-                              notificationHistory={orderNotificationHistory}
-                              onNotificationSent={refreshNotifications}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button className="flex-1 min-h-[44px] text-base bg-green-600 hover:bg-green-700">
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Concluir Pedido
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Concluir Pedido</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja marcar o pedido #{order.order_number} como concluído? 
-                                Esta ação indica que o cliente retirou o pedido.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => completeOrder(order.id)} className="bg-green-600">
-                                Sim, Concluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                      {/* Notification Controls */}
+                      <div className="border-t pt-2">
+                        <NotificationControls
+                          orderId={order.id}
+                          orderNumber={order.order_number}
+                          customerPhone={order.customer_phone}
+                          customerName={order.customer_name}
+                          orderStatus={order.status}
+                          notificationHistory={orderNotificationHistory}
+                          onNotificationSent={refreshNotifications}
+                        />
                       </div>
+
+                      {/* Complete Order Button */}
+                      <Button
+                        className="w-full min-h-[44px] text-base bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                        onClick={() => completeOrder(order.id)}
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Marcar como Entregue
+                      </Button>
                     </div>
                   </Card>
                 );
@@ -1292,11 +1253,8 @@ const Cashier = () => {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {completedOrders.map((order) => {
-                const paymentStatus = getPaymentStatus(order);
-                const PaymentIcon = paymentStatus.icon;
-                
                 return (
-                  <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-muted">
+                  <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-purple-500">
                     {/* Order Number + Status Badges */}
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <h3 className="font-bold text-base sm:text-xl text-gray-900">
@@ -1338,6 +1296,22 @@ const Cashier = () => {
                           R$ {Number(order.total_amount).toFixed(2)}
                         </p>
                       </div>
+                    </div>
+
+                    {/* View Details Button */}
+                    <div className="border-t pt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setIsDetailsDialogOpen(true);
+                        }}
+                        className="w-full"
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        Ver Detalhes
+                      </Button>
                     </div>
                   </Card>
                 );
