@@ -733,7 +733,8 @@ const Cashier = () => {
                 </div>
               </Card>
             ) : (
-              pendingOrders.map((order) => {
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {pendingOrders.map((order) => {
                 const paymentStatus = getPaymentStatus(order);
                 const PaymentIcon = paymentStatus.icon;
                 
@@ -855,7 +856,8 @@ const Cashier = () => {
                     </div>
                   </Card>
                 );
-              })
+              })}
+              </div>
             )}
           </TabsContent>
 
@@ -906,7 +908,8 @@ const Cashier = () => {
                 </div>
               </Card>
             ) : (
-              inProgressOrders.map((order) => {
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {inProgressOrders.map((order) => {
                 const paymentStatus = getPaymentStatus(order);
                 const PaymentIcon = paymentStatus.icon;
                 const orderNotificationHistory = notificationHistory.get(order.id);
@@ -1037,7 +1040,8 @@ const Cashier = () => {
                     </div>
                   </Card>
                 );
-              })
+              })}
+              </div>
             )}
           </TabsContent>
 
@@ -1088,7 +1092,8 @@ const Cashier = () => {
                 </div>
               </Card>
             ) : (
-              readyOrders.map((order) => {
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {readyOrders.map((order) => {
                 const paymentStatus = getPaymentStatus(order);
                 const PaymentIcon = paymentStatus.icon;
                 const orderNotificationHistory = notificationHistory.get(order.id);
@@ -1233,7 +1238,8 @@ const Cashier = () => {
                     </div>
                   </Card>
                 );
-              })
+              })}
+              </div>
             )}
           </TabsContent>
 
@@ -1284,7 +1290,8 @@ const Cashier = () => {
                 </div>
               </Card>
             ) : (
-              completedOrders.map((order) => {
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {completedOrders.map((order) => {
                 const paymentStatus = getPaymentStatus(order);
                 const PaymentIcon = paymentStatus.icon;
                 
@@ -1334,7 +1341,8 @@ const Cashier = () => {
                     </div>
                   </Card>
                 );
-              })
+              })}
+              </div>
             )}
           </TabsContent>
 
@@ -1350,7 +1358,8 @@ const Cashier = () => {
                 </div>
               </Card>
             ) : (
-              cancelledOrders.map((order) => {
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {cancelledOrders.map((order) => {
                 const paymentStatus = getPaymentStatus(order);
                 const PaymentIcon = paymentStatus.icon;
                 
@@ -1389,7 +1398,8 @@ const Cashier = () => {
                     </div>
                   </Card>
                 );
-              })
+              })}
+              </div>
             )}
           </TabsContent>
         </Tabs>
