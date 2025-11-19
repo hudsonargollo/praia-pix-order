@@ -14,12 +14,21 @@ const authSchema = z.object({
   password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }).max(100),
 });
 
+const greetings = [
+  "Olá! Que bom te ver! 👋",
+  "Bem-vindo de volta! 🌟",
+  "Oi! Pronto para começar? 🚀",
+  "E aí! Vamos nessa? 💪",
+  "Olá! Bom te ver aqui! 😊"
+];
+
 const Auth = () => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [greetingIndex, setGreetingIndex] = useState(0);
 
   const redirectToRolePage = async (session: any) => {
     try {
@@ -76,6 +85,15 @@ const Auth = () => {
       navigate("/admin", { replace: true });
     }
   };
+
+  useEffect(() => {
+    // Rotate greetings every 3 seconds
+    const interval = setInterval(() => {
+      setGreetingIndex((prev) => (prev + 1) % greetings.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -179,8 +197,10 @@ const Auth = () => {
             </div>
           </div>
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-500 delay-200">
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              Olá! Que bom te ver! 👋
+            <CardTitle className="text-2xl font-bold text-gray-900 transition-all duration-500">
+              <span key={greetingIndex} className="inline-block animate-in fade-in slide-in-from-top-1 duration-500">
+                {greetings[greetingIndex]}
+              </span>
             </CardTitle>
             <CardDescription className="text-gray-700 text-sm font-medium">
               Faça login para continuar
