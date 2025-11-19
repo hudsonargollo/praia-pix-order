@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -133,6 +133,17 @@ export function usePrintOrder() {
     `,
   });
 
+  // Trigger print when orderData is set and we're in printing state
+  useEffect(() => {
+    if (orderData && isPrinting && printRef.current) {
+      // Small delay to ensure DOM is updated
+      const timer = setTimeout(() => {
+        handlePrint();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [orderData, isPrinting, handlePrint]);
+
   // Main print function
   const printOrder = useCallback(async (orderId: string) => {
     if (isPrinting) {
@@ -151,19 +162,14 @@ export function usePrintOrder() {
         return;
       }
 
-      // Set order data for rendering
+      // Set order data for rendering - useEffect will trigger print
       setOrderData(data);
-
-      // Wait for next tick to ensure component is rendered
-      setTimeout(() => {
-        handlePrint();
-      }, 100);
     } catch (error) {
       console.error('Error preparing print:', error);
       toast.error('Erro ao preparar impressão');
       setIsPrinting(false);
     }
-  }, [isPrinting, fetchOrderData, handlePrint]);
+  }, [isPrinting, fetchOrderData]);
 
   return {
     printOrder,
