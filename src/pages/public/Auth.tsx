@@ -167,10 +167,10 @@ const Auth = () => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
 
-      <Card className="w-full max-w-md shadow-2xl border-0 bg-white relative z-10 rounded-3xl overflow-hidden">
-        <CardHeader className="text-center space-y-5 pt-8 pb-6 bg-gradient-to-br from-purple-50 via-white to-indigo-50">
-          <div className="flex justify-center">
-            <div className="bg-gradient-to-br from-white to-purple-50 p-4 rounded-2xl shadow-md ring-2 ring-purple-200/50">
+      <Card className="w-full max-w-md shadow-2xl border-0 bg-white relative z-10 rounded-3xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <CardHeader className="text-center space-y-5 pt-8 pb-6 bg-gradient-to-br from-purple-100 via-white to-indigo-100">
+          <div className="flex justify-center animate-in zoom-in duration-500 delay-100">
+            <div className="bg-gradient-to-br from-white to-purple-100 p-4 rounded-2xl shadow-lg ring-2 ring-purple-300/60">
               <img 
                 src={logo} 
                 alt="Coco Loko Açaiteria" 
@@ -178,24 +178,24 @@ const Auth = () => {
               />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Bem-vindo de volta! 👋
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-500 delay-200">
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              Olá! Que bom te ver! 👋
             </CardTitle>
-            <CardDescription className="text-gray-600 text-sm">
-              Entre com suas credenciais para acessar o sistema
+            <CardDescription className="text-gray-700 text-sm font-medium">
+              Faça login para continuar
             </CardDescription>
           </div>
         </CardHeader>
         
-        <CardContent className="px-8 py-6 bg-white">
+        <CardContent className="px-8 py-6 bg-white animate-in fade-in duration-500 delay-300">
           <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="email" className="text-sm font-semibold text-gray-800">
                 Email
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-500 text-lg">
                   📧
                 </span>
                 <Input
@@ -206,17 +206,17 @@ const Auth = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   maxLength={255}
-                  className="h-11 text-base pl-10 border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-lg transition-all"
+                  className="h-12 text-base pl-11 pr-4 border-2 border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-lg transition-all bg-gray-50 focus:bg-white"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="password" className="text-sm font-semibold text-gray-800">
                 Senha
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-500 text-lg">
                   🔒
                 </span>
                 <Input
@@ -228,25 +228,25 @@ const Auth = () => {
                   required
                   minLength={6}
                   maxLength={100}
-                  className="h-11 text-base pl-10 border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-lg transition-all"
+                  className="h-12 text-base pl-11 pr-4 border-2 border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-lg transition-all bg-gray-50 focus:bg-white"
                 />
               </div>
             </div>
             
             <Button 
               type="submit" 
-              className="w-full h-11 text-base font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 mt-6 rounded-lg" 
+              className="w-full h-12 text-base font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200 mt-6 rounded-lg" 
               disabled={loading}
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   <span>Entrando...</span>
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
-                  <span>🚀</span>
-                  <span>Entrar</span>
+                  <span className="text-lg">🚀</span>
+                  <span>Entrar no Sistema</span>
                 </span>
               )}
             </Button>
