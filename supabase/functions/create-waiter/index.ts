@@ -140,16 +140,81 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey)
 
-    console.log('[create-waiter] Using service role client for RPC call')
+    console.log('[create-waiter] Using admin API to create user')
 
-    // Use database function with service role client
-    const { data, error: createError } = await supabaseAdmin
-      .rpc('create_waiter_user', {
-        p_email: email,
-        p_password: password,
-        p_full_name: full_name,
-        p_phone_number: phone_number || null
+    // Use Supabase Admin API to create user (proper way)
+    const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: email,
+      password: password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: full_name,
+      },
+    })
+
+    if (createError) {
+      console.error('[create-waiter] Error creating user via admin API:', createError)
+      
+      if (createError.message.includes('already exists') || createError.message.includes('already registered')) {
+        return new Response(
+          JSON.stringify({ error: 'Este email já está cadastrado' }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        )
+      }
+
+      return new Response(
+        JSON.stringify({ error: createError.message }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    if (!userData.user) {
+      console.error('[create-waiter] No user returned from admin API')
+      return new Response(
+        JSON.stringify({ error: 'Failed to create user' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    const userId = userData.user.id
+
+    console.log('[create-waiter] User created via admin API:', userId)
+
+    // Add waiter role
+    const { error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .insert({ user_id: userId, role: 'waiter' })
+
+    if (roleError) {
+      console.error('[create-waiter] Error adding role:', roleError)
+      // Continue anyway, role might already exist
+    }
+
+    // Create profile
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: userId,
+        role: 'waiter',
+        full_name: full_name,
+        phone_number: phone_number || null,
       })
+
+    if (profileError) {
+      console.error('[create-waiter] Error creating profile:', profileError)
+      // Continue anyway
+    }
+
+    const data = { user_id: userId }
 
     if (createError) {
       console.error('[create-waiter] Error creating user:', {

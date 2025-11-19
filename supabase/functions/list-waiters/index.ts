@@ -83,22 +83,50 @@ serve(async (req) => {
     console.log('🔵 Fetching waiter profiles');
 
     // Get all profiles with waiter role
-    const { data: waiters, error: waitersError } = await supabaseAdmin
+    const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, full_name, display_name, created_at')
+      .select('id, full_name, phone_number, created_at')
       .eq('role', 'waiter')
       .order('created_at', { ascending: false });
 
-    if (waitersError) {
-      console.error('❌ Error fetching waiter profiles:', waitersError);
+    if (profilesError) {
+      console.error('❌ Error fetching waiter profiles:', profilesError);
       return new Response(
         JSON.stringify({ 
           error: 'Failed to fetch waiters',
-          details: waitersError.message 
+          details: profilesError.message 
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('✅ Found profiles:', profiles?.length || 0);
+
+    // Get emails from auth.users for each profile
+    const waiters = await Promise.all(
+      (profiles || []).map(async (profile) => {
+        try {
+          const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+          if (authError) {
+            console.error('❌ Error fetching auth user:', profile.id, authError);
+            return {
+              ...profile,
+              email: 'N/A',
+            };
+          }
+          return {
+            ...profile,
+            email: authUser?.user?.email || 'N/A',
+          };
+        } catch (err) {
+          console.error('❌ Exception fetching auth user:', profile.id, err);
+          return {
+            ...profile,
+            email: 'N/A',
+          };
+        }
+      })
+    );
 
     console.log('✅ Found waiters:', waiters?.length || 0);
 
