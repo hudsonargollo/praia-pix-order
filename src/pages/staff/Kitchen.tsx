@@ -622,15 +622,12 @@ const Kitchen = () => {
 
       {/* Hidden OrderReceipt component for printing */}
       {orderData && (
-        <div className="receipt-container">
-          <div ref={printRef}>
-            <OrderReceipt
-              order={orderData.order}
-              items={orderData.items}
-              waiterName={orderData.waiterName}
-            />
-          </div>
-        </div>
+        <OrderReceipt
+          ref={printRef}
+          order={orderData.order}
+          items={orderData.items}
+          waiterName={orderData.waiterName}
+        />
       )}
     </div>
   );
