@@ -426,92 +426,90 @@ const Menu = () => {
                             isSortingMode={isSortingMode}
                           >
                             <div 
-                              className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4"
+                              className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex flex-col h-full"
                             >
                       {/* Image */}
                       <div 
-                        className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
+                        className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 cursor-pointer mb-3"
                         onClick={() => setSelectedItem(item)}
                       >
                         {item.image_url && !hasImageError ? (
                           <img
                             src={item.image_url}
                             alt={item.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             onError={() => handleImageError(item.id)}
                             loading="lazy"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-purple-50">
-                            <ShoppingCart className="w-8 h-8 text-purple-400" />
+                            <ShoppingCart className="w-12 h-12 text-purple-400" />
                           </div>
                         )}
                       </div>
 
                       {/* Info */}
                       <div 
-                        className="flex-1 min-w-0 cursor-pointer"
+                        className="flex-1 cursor-pointer mb-3"
                         onClick={() => setSelectedItem(item)}
                       >
-                        <h3 className="font-bold text-gray-900 text-base md:text-lg">
+                        <h3 className="font-bold text-gray-900 text-base line-clamp-2 mb-1">
                           {item.name}
                         </h3>
                         {item.description && (
-                          <p className="text-xs md:text-sm text-gray-600 line-clamp-2 mt-1">
+                          <p className="text-xs text-gray-600 line-clamp-2 mb-2">
                             {item.description}
                           </p>
                         )}
-                        <p className="text-purple-600 font-bold text-lg md:text-xl mt-2">
+                        <p className="text-purple-600 font-bold text-xl">
                           R$ {item.price.toFixed(2)}
                         </p>
                       </div>
 
                       {/* Add/Quantity Controls */}
-                      <div className="flex-shrink-0">
+                      <div className="w-full">
                         {quantity > 0 ? (
-                          <div className="flex flex-col gap-2">
+                          <div className="space-y-2">
                             {/* Quantity Controls */}
-                            <div className="flex items-center gap-2 bg-purple-50 rounded-xl p-2">
+                            <div className="flex items-center justify-center gap-3 bg-purple-50 rounded-xl p-2">
                               <button
                                 onClick={() => removeItem(item.id)}
-                                className="w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
+                                className="w-10 h-10 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
                                 aria-label="Remover um"
                                 disabled={isSortingMode}
                               >
-                                <Minus className="w-4 h-4" />
+                                <Minus className="w-5 h-5" />
                               </button>
-                              <span className="font-bold text-purple-900 text-lg min-w-[24px] text-center">
+                              <span className="font-bold text-purple-900 text-xl min-w-[32px] text-center">
                                 {quantity}
                               </span>
                               <button
                                 onClick={() => handleAddToCart(item)}
-                                className="w-8 h-8 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
+                                className="w-10 h-10 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
                                 aria-label="Adicionar mais"
                                 disabled={isSortingMode}
                               >
-                                <Plus className="w-4 h-4" />
+                                <Plus className="w-5 h-5" />
                               </button>
                             </div>
                             {/* Remove All Button */}
                             <button
                               onClick={() => {
-                                // Remove all items of this type
                                 for (let i = 0; i < quantity; i++) {
                                   removeItem(item.id);
                                 }
                                 toast.success(`${item.name} removido do carrinho`);
                               }}
-                              className="w-full px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition-all flex items-center justify-center gap-1"
+                              className="w-full px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-all"
                               disabled={isSortingMode}
                             >
-                              <span className="text-base">×</span>
-                              <span>Remover</span>
+                              Remover Todos
                             </button>
                           </div>
                         ) : (
                           <Button
                             onClick={() => handleAddToCart(item)}
-                            className={`bg-purple-600 hover:bg-purple-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl text-sm md:text-base font-semibold shadow-md hover:shadow-lg transition-all ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl text-base font-semibold shadow-md hover:shadow-lg transition-all ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                             disabled={isSortingMode}
                           >
                             Adicionar
@@ -573,92 +571,90 @@ const Menu = () => {
                               isSortingMode={isSortingMode}
                             >
                               <div 
-                                className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4"
+                                className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all flex flex-col h-full"
                               >
                       {/* Image */}
                       <div 
-                        className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
+                        className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 cursor-pointer mb-3"
                         onClick={() => setSelectedItem(item)}
                       >
                         {item.image_url && !hasImageError ? (
                           <img
                             src={item.image_url}
                             alt={item.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             onError={() => handleImageError(item.id)}
                             loading="lazy"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-purple-50">
-                            <ShoppingCart className="w-8 h-8 text-purple-400" />
+                            <ShoppingCart className="w-12 h-12 text-purple-400" />
                           </div>
                         )}
                       </div>
 
                       {/* Info */}
                       <div 
-                        className="flex-1 min-w-0 cursor-pointer"
+                        className="flex-1 cursor-pointer mb-3"
                         onClick={() => setSelectedItem(item)}
                       >
-                        <h3 className="font-bold text-gray-900 text-lg">
+                        <h3 className="font-bold text-gray-900 text-lg line-clamp-2 mb-1">
                           {item.name}
                         </h3>
                         {item.description && (
-                          <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                             {item.description}
                           </p>
                         )}
-                        <p className="text-purple-600 font-bold text-xl mt-2">
+                        <p className="text-purple-600 font-bold text-xl">
                           R$ {item.price.toFixed(2)}
                         </p>
                       </div>
 
                       {/* Add/Quantity Controls */}
-                      <div className="flex-shrink-0">
+                      <div className="w-full">
                         {quantity > 0 ? (
-                          <div className="flex flex-col gap-2">
+                          <div className="space-y-2">
                             {/* Quantity Controls */}
-                            <div className="flex items-center gap-2 bg-purple-50 rounded-xl p-2">
+                            <div className="flex items-center justify-center gap-3 bg-purple-50 rounded-xl p-2">
                               <button
                                 onClick={() => removeItem(item.id)}
-                                className="w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
+                                className="w-10 h-10 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
                                 aria-label="Remover um"
                                 disabled={isSortingMode}
                               >
-                                <Minus className="w-4 h-4" />
+                                <Minus className="w-5 h-5" />
                               </button>
-                              <span className="font-bold text-purple-900 text-lg min-w-[24px] text-center">
+                              <span className="font-bold text-purple-900 text-xl min-w-[32px] text-center">
                                 {quantity}
                               </span>
                               <button
                                 onClick={() => handleAddToCart(item)}
-                                className="w-8 h-8 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
+                                className="w-10 h-10 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
                                 aria-label="Adicionar mais"
                                 disabled={isSortingMode}
                               >
-                                <Plus className="w-4 h-4" />
+                                <Plus className="w-5 h-5" />
                               </button>
                             </div>
                             {/* Remove All Button */}
                             <button
                               onClick={() => {
-                                // Remove all items of this type
                                 for (let i = 0; i < quantity; i++) {
                                   removeItem(item.id);
                                 }
                                 toast.success(`${item.name} removido do carrinho`);
                               }}
-                              className="w-full px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition-all flex items-center justify-center gap-1"
+                              className="w-full px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-all"
                               disabled={isSortingMode}
                             >
-                              <span className="text-base">×</span>
-                              <span>Remover</span>
+                              Remover Todos
                             </button>
                           </div>
                         ) : (
                           <Button
                             onClick={() => handleAddToCart(item)}
-                            className={`bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl text-base font-semibold shadow-md hover:shadow-lg transition-all ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl text-base font-semibold shadow-md hover:shadow-lg transition-all ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                             disabled={isSortingMode}
                           >
                             Adicionar
