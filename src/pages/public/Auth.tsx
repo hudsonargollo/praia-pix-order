@@ -168,29 +168,29 @@ const Auth = () => {
       </div>
 
       <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm relative z-10 rounded-2xl">
-        <CardHeader className="text-center space-y-6 pt-10 pb-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-t-2xl">
+        <CardHeader className="text-center space-y-6 pt-10 pb-6 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-t-2xl">
           <div className="flex justify-center">
-            <div className="bg-white p-5 rounded-2xl shadow-lg ring-4 ring-purple-100">
+            <div className="bg-white p-4 rounded-2xl shadow-lg ring-4 ring-purple-100">
               <img 
                 src={logo} 
                 alt="Coco Loko Açaiteria" 
-                className="h-20 w-auto"
+                className="h-16 w-auto"
               />
             </div>
           </div>
           <div className="space-y-2">
-            <CardTitle className="text-3xl font-bold text-gray-900">
+            <CardTitle className="text-2xl font-bold text-gray-900">
               Bem-vindo de volta! 👋
             </CardTitle>
-            <CardDescription className="text-gray-600 text-base leading-relaxed px-4">
+            <CardDescription className="text-gray-600 text-sm leading-relaxed px-4">
               Entre com suas credenciais para acessar o sistema
             </CardDescription>
           </div>
         </CardHeader>
         
-        <CardContent className="px-8 pt-6 pb-8">
-          <form onSubmit={handleAuth} className="space-y-6">
-            <div className="space-y-3">
+        <CardContent className="px-8 py-6">
+          <form onSubmit={handleAuth} className="space-y-5">
+            <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <span className="text-lg">📧</span>
                 Email
@@ -203,11 +203,11 @@ const Auth = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 maxLength={255}
-                className="h-14 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl transition-all px-4"
+                className="h-12 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-lg transition-all px-4"
               />
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <span className="text-lg">🔒</span>
                 Senha
@@ -221,13 +221,13 @@ const Auth = () => {
                 required
                 minLength={6}
                 maxLength={100}
-                className="h-14 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl transition-all px-4"
+                className="h-12 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-lg transition-all px-4"
               />
             </div>
             
             <Button 
               type="submit" 
-              className="w-full h-14 text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 mt-8 rounded-xl" 
+              className="w-full h-12 text-base font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 mt-6 rounded-lg" 
               disabled={loading}
             >
               {loading ? (
