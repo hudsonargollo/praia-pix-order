@@ -364,46 +364,13 @@ const Menu = () => {
               </div>
             </div>
 
-            {/* Category Navigation */}
-            {categorizedItems.length > 0 && (
-              <div className="flex items-center justify-center gap-3 flex-wrap">
-                {categorizedItems.map((category) => {
-                  const isSelected = selectedCategory === category.id;
-                  
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategoryScroll(category.id)}
-                      className={`
-                        px-6 py-3 rounded-full transition-all font-semibold text-base shadow-md hover:shadow-lg
-                        ${isSelected 
-                          ? 'bg-white text-purple-700 scale-105' 
-                          : 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
-                        }
-                      `}
-                    >
-                      {category.name}
-                    </button>
-                  );
-                })}
-                
-                {/* Sorting Toggle - Desktop */}
-                {isAdmin && !adminLoading && (
-                  <SortingToggle
-                    isSortingMode={isSortingMode}
-                    onToggle={toggleSortingMode}
-                    disabled={isSaving}
-                  />
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>
 
       {/* Cart Button - Top Position */}
       {cartState.items.length > 0 && (
-        <div className="fixed top-[180px] md:top-[200px] left-0 right-0 p-4 z-30 animate-in slide-in-from-top duration-300">
+        <div className="fixed top-[180px] md:top-[120px] left-0 right-0 p-4 z-30 animate-in slide-in-from-top duration-300">
           <div className="max-w-2xl mx-auto">
             <Button
               onClick={goToCheckout}
@@ -422,7 +389,7 @@ const Menu = () => {
       )}
 
       {/* Menu Content - Adjusted padding for fixed header and cart */}
-      <div className={`relative z-10 max-w-2xl lg:max-w-6xl mx-auto px-4 pb-8 ${cartState.items.length > 0 ? 'pt-64 md:pt-72' : 'pt-48 md:pt-44'}`}>
+      <div className={`relative z-10 max-w-2xl lg:max-w-6xl mx-auto px-4 pb-8 ${cartState.items.length > 0 ? 'pt-64 md:pt-52' : 'pt-48 md:pt-36'}`}>
         {categorizedItems.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <div className="text-4xl mb-3">🥥</div>
