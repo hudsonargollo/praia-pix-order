@@ -12,6 +12,8 @@ interface OrderCardInfoProps {
   customerName: string;
   customerPhone: string;
   waiterId: string | null;
+  cashierId?: string | null;
+  createdByCashier?: boolean;
   createdAt: string;
   paymentConfirmedAt?: string | null;
   readyAt?: string | null;
@@ -24,6 +26,8 @@ export function OrderCardInfo({
   customerName,
   customerPhone,
   waiterId,
+  cashierId,
+  createdByCashier,
   createdAt,
   paymentConfirmedAt,
   readyAt,
@@ -70,12 +74,17 @@ export function OrderCardInfo({
           <span className="font-bold">Telefone:</span> {formatPhoneNumber(customerPhone)}
         </div>
 
-        {/* Waiter Badge and Print Button */}
+        {/* Waiter/Cashier Badge and Print Button */}
         <div className="pt-1 flex items-center gap-2">
           {waiterId && (
             <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200 h-5 px-2">
               <User className="mr-1 h-3 w-3" />
               {getWaiterName(waiterId)}
+            </Badge>
+          )}
+          {createdByCashier && !waiterId && (
+            <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200 h-5 px-2 font-bold">
+              🏪 CAIXA
             </Badge>
           )}
           

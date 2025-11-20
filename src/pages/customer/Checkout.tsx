@@ -171,9 +171,12 @@ const Checkout = () => {
     setIsSubmitting(true);
     
     try {
-      // Check if user is a waiter
+      // Check if user is a waiter or admin/cashier
       const { data: { user } } = await supabase.auth.getUser();
-      const isWaiter = user?.user_metadata?.role === 'waiter';
+      const userRole = user?.user_metadata?.role;
+      const isWaiter = userRole === 'waiter';
+      const isAdmin = userRole === 'admin' || userRole === 'cashier';
+      const isStaff = isWaiter || isAdmin;
       
       // Capitalize and normalize name
       const capitalizedName = capitalizeName(name);
@@ -210,12 +213,12 @@ const Checkout = () => {
       const totalAmount = cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const commissionAmount = isWaiter ? totalAmount * 0.1 : 0;
 
-      // Create order with different status for waiters
+      // Create order with different status for staff (waiter/admin)
       const orderData: any = {
         customer_name: capitalizedName,
         customer_phone: normalizedPhone,
         table_number: '-',
-        status: isWaiter ? 'in_preparation' : 'pending_payment',
+        status: isStaff ? 'in_preparation' : 'pending_payment',
         payment_status: 'pending',
         total_amount: totalAmount
       };
@@ -224,6 +227,14 @@ const Checkout = () => {
       if (isWaiter && user) {
         orderData.waiter_id = user.id;
         orderData.commission_amount = commissionAmount;
+        orderData.created_by_waiter = true;
+      }
+      
+      // Add created_by_cashier flag for admin/cashier orders
+      if (isAdmin && user) {
+        orderData.created_by_cashier = true;
+        // Store the cashier/admin user ID for tracking
+        orderData.cashier_id = user.id;
       }
 
       const { data: order, error: orderError } = await supabase
@@ -266,8 +277,8 @@ const Checkout = () => {
       // Clear cart after successful order creation
       clearCart();
 
-      if (isWaiter) {
-        // Waiter flow: Send WhatsApp notification immediately and redirect to dashboard
+      if (isStaff) {
+        // Staff flow (waiter/admin): Send WhatsApp notification immediately and redirect to appropriate dashboard
         toast.success("Pedido criado! Enviando notificação ao cliente...");
         
         // Send WhatsApp notification immediately (don't wait)
@@ -275,7 +286,7 @@ const Checkout = () => {
           (async () => {
             try {
               await notificationTriggers.onOrderPreparing(order.id);
-              console.log('✅ WhatsApp notification sent for waiter order:', order.id);
+              console.log('✅ WhatsApp notification sent for staff order:', order.id);
               toast.success("Notificação enviada ao cliente! 📱");
             } catch (notifError) {
               console.error('❌ Failed to send WhatsApp notification:', notifError);
@@ -286,8 +297,13 @@ const Checkout = () => {
           });
         }, 100);
 
-        // Redirect to waiter dashboard
-        navigate('/waiter/dashboard');
+        // Redirect based on role
+        if (isWaiter) {
+          navigate('/waiter/dashboard');
+        } else {
+          // Admin/Cashier goes back to cashier panel
+          navigate('/staff/cashier');
+        }
       } else {
         // Customer flow: Navigate to payment page
         toast.success("Pedido criado com sucesso!");

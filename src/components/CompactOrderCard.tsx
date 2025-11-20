@@ -113,6 +113,8 @@ export const CompactOrderCard = ({
             customerName={order.customer_name}
             customerPhone={order.customer_phone}
             waiterId={order.waiter_id}
+            cashierId={(order as any).cashier_id}
+            createdByCashier={(order as any).created_by_cashier}
             createdAt={order.created_at}
           />
           
