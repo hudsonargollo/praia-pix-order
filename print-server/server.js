@@ -7,8 +7,7 @@
 
 const express = require('express');
 const cors = require('cors');
-const escpos = require('escpos');
-escpos.USB = require('escpos-usb');
+const { ThermalPrinter, PrinterTypes } = require('node-thermal-printer');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -19,53 +18,40 @@ app.use(express.json());
 
 // Global printer instance
 let printer = null;
-let device = null;
 
 /**
  * Initialize printer connection
  */
 function initializePrinter() {
   try {
-    console.log('🔍 Searching for USB thermal printers...');
+    console.log('🔍 Initializing thermal printer...');
     
-    // Find USB printer
-    const devices = escpos.USB.findPrinter();
-    
-    console.log(`📍 Found ${devices.length} printer(s)`);
-    
-    if (devices.length === 0) {
-      console.log('⚠️  No USB thermal printer found');
-      console.log('   Make sure:');
-      console.log('   1. Printer is connected via USB');
-      console.log('   2. Printer is powered on');
-      console.log('   3. You have USB permissions (may need sudo on Mac/Linux)');
-      return false;
-    }
-
-    // Log all found printers
-    devices.forEach((d, i) => {
-      console.log(`   Printer ${i + 1}:`);
-      console.log(`     Vendor ID: ${d.deviceDescriptor.idVendor}`);
-      console.log(`     Product ID: ${d.deviceDescriptor.idProduct}`);
+    // Create printer instance
+    // This library auto-detects USB printers
+    printer = new ThermalPrinter({
+      type: PrinterTypes.EPSON,  // Most thermal printers are ESC/POS compatible
+      interface: 'printer:auto',  // Auto-detect printer
+      characterSet: 'PC437_USA',
+      removeSpecialCharacters: false,
+      lineCharacter: "=",
+      options: {
+        timeout: 5000
+      }
     });
-
-    // Use first available printer
-    console.log('🔌 Connecting to first printer...');
-    device = new escpos.USB(devices[0].deviceDescriptor.idVendor, devices[0].deviceDescriptor.idProduct);
-    printer = new escpos.Printer(device);
     
-    console.log('✅ Thermal printer connected successfully');
-    console.log(`   Using: Vendor ${devices[0].deviceDescriptor.idVendor}, Product ${devices[0].deviceDescriptor.idProduct}`);
+    console.log('✅ Thermal printer initialized successfully');
+    console.log('   Type: ESC/POS compatible');
+    console.log('   Interface: Auto-detect');
     
     return true;
   } catch (error) {
     console.error('❌ Failed to initialize printer:');
     console.error('   Error:', error.message);
-    console.error('   Stack:', error.stack);
     console.error('');
     console.error('   Possible solutions:');
-    console.error('   - On Mac: Run with sudo or grant USB permissions');
-    console.error('   - Check if another app is using the printer');
+    console.error('   - Make sure printer is connected via USB');
+    console.error('   - Make sure printer is powered on');
+    console.error('   - On Mac: Run with sudo for USB access');
     console.error('   - Try unplugging and replugging the printer');
     return false;
   }
@@ -88,17 +74,11 @@ app.get('/health', (req, res) => {
  */
 app.get('/status', (req, res) => {
   try {
-    const devices = escpos.USB.findPrinter();
-    
     res.json({
       serverRunning: true,
       printerConnected: printer !== null,
-      printers: devices.map(d => ({
-        vendorId: d.deviceDescriptor.idVendor,
-        productId: d.deviceDescriptor.idProduct,
-        manufacturer: d.deviceDescriptor.iManufacturer,
-        product: d.deviceDescriptor.iProduct
-      }))
+      printerType: printer ? 'ESC/POS' : null,
+      interface: printer ? 'USB Auto-detect' : null
     });
   } catch (error) {
     res.status(500).json({
@@ -141,50 +121,38 @@ app.post('/print', async (req, res) => {
       }
     }
 
-    console.log('📤 Opening printer device...');
+    console.log('✍️  Sending content to printer...');
 
-    // Open device and print
-    device.open(function(error) {
-      if (error) {
-        console.error('❌ Failed to open printer device:');
-        console.error('   Error:', error.message);
-        return res.status(500).json({
-          error: 'Failed to open printer',
-          message: error.message
-        });
-      }
+    try {
+      // Clear any previous content
+      printer.clear();
+      
+      // Print the raw content
+      printer.println(content);
+      
+      // Cut paper
+      printer.cut();
+      
+      // Execute print job
+      await printer.execute();
 
-      try {
-        console.log('✍️  Sending content to printer...');
-        
-        // Print the content
-        printer
-          .font('a')
-          .align('ct')
-          .style('normal')
-          .size(1, 1)
-          .text(content)
-          .cut()
-          .close();
-
-        console.log(`✅ Successfully printed order #${orderNumber || 'N/A'}`);
-        console.log('');
-        
-        res.json({
-          success: true,
-          message: 'Print job sent successfully',
-          orderNumber
-        });
-      } catch (printError) {
-        console.error('❌ Print error:');
-        console.error('   Error:', printError.message);
-        console.error('   Stack:', printError.stack);
-        res.status(500).json({
-          error: 'Print failed',
-          message: printError.message
-        });
-      }
-    });
+      console.log(`✅ Successfully printed order #${orderNumber || 'N/A'}`);
+      console.log('');
+      
+      res.json({
+        success: true,
+        message: 'Print job sent successfully',
+        orderNumber
+      });
+    } catch (printError) {
+      console.error('❌ Print error:');
+      console.error('   Error:', printError.message);
+      console.error('   Stack:', printError.stack);
+      res.status(500).json({
+        error: 'Print failed',
+        message: printError.message
+      });
+    }
 
   } catch (error) {
     console.error('❌ Print endpoint error:');
@@ -200,7 +168,7 @@ app.post('/print', async (req, res) => {
 /**
  * Test print endpoint
  */
-app.post('/test-print', (req, res) => {
+app.post('/test-print', async (req, res) => {
   try {
     if (!printer) {
       const initialized = initializePrinter();
@@ -212,15 +180,7 @@ app.post('/test-print', (req, res) => {
       }
     }
 
-    device.open(function(error) {
-      if (error) {
-        return res.status(500).json({
-          error: 'Failed to open printer',
-          message: error.message
-        });
-      }
-
-      const testContent = `
+    const testContent = `
 ================================
       TESTE DE IMPRESSAO
 ================================
@@ -237,19 +197,16 @@ Data: ${new Date().toLocaleString('pt-BR')}
 
 `;
 
-      printer
-        .font('a')
-        .align('ct')
-        .text(testContent)
-        .cut()
-        .close();
+    printer.clear();
+    printer.println(testContent);
+    printer.cut();
+    await printer.execute();
 
-      console.log('✅ Test print completed');
-      
-      res.json({
-        success: true,
-        message: 'Test print sent successfully'
-      });
+    console.log('✅ Test print completed');
+    
+    res.json({
+      success: true,
+      message: 'Test print sent successfully'
     });
 
   } catch (error) {
@@ -266,17 +223,8 @@ Data: ${new Date().toLocaleString('pt-BR')}
  */
 app.post('/reconnect', (req, res) => {
   try {
-    // Close existing connection
-    if (device) {
-      try {
-        device.close();
-      } catch (e) {
-        // Ignore close errors
-      }
-    }
-    
+    // Reset printer
     printer = null;
-    device = null;
 
     // Reinitialize
     const initialized = initializePrinter();
@@ -328,15 +276,6 @@ app.listen(PORT, () => {
 // Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\n\n🛑 Shutting down print server...');
-  
-  if (device) {
-    try {
-      device.close();
-      console.log('✅ Printer connection closed');
-    } catch (e) {
-      // Ignore close errors
-    }
-  }
-  
+  console.log('✅ Server stopped');
   process.exit(0);
 });
