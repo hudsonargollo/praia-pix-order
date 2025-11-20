@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { printServerClient } from '@/integrations/print-server/client';
@@ -21,7 +22,7 @@ interface OrderItem {
   unit_price: number;
 }
 
-interface PrintOrderData {
+export interface PrintOrderData {
   order: OrderData;
   items: OrderItem[];
   waiterName?: string | null;
@@ -37,6 +38,8 @@ interface PrintOrderData {
  */
 export function usePrintOrder() {
   const [isPrinting, setIsPrinting] = useState(false);
+  const [currentOrderData, setCurrentOrderData] = useState<PrintOrderData | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   // Fetch order data including items and waiter name
   const fetchOrderData = useCallback(async (orderId: string): Promise<PrintOrderData | null> => {
@@ -158,172 +161,15 @@ export function usePrintOrder() {
     return receipt;
   };
 
-  // Generate HTML for receipt (for browser preview)
-  const generateReceiptHTML = (data: PrintOrderData): string => {
-    const plainText = generatePlainTextReceipt(data);
-    
-    const formatCurrency = (value: number) => {
-      return `R$ ${value.toFixed(2).replace('.', ',')}`;
-    };
-
-    const formatDate = (dateString: string) => {
-      const date = new Date(dateString);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
-    };
-
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Pedido #${data.order.order_number}</title>
-        <style>
-          @page {
-            size: 80mm auto;
-            margin: 0;
-          }
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          body {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
-            line-height: 1.3;
-            color: #000;
-            background: #fff;
-            width: 80mm;
-            padding: 4px;
-          }
-          pre {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
-            line-height: 1.3;
-            white-space: pre;
-            margin: 0;
-            padding: 0;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 8px;
-          }
-          .logo h1 {
-            font-size: 20px;
-            font-weight: bold;
-            margin: 0 0 4px 0;
-            letter-spacing: 2px;
-          }
-          .logo p {
-            font-size: 14px;
-            margin: 0 0 8px 0;
-          }
-          .divider {
-            font-size: 10px;
-            margin: 4px 0;
-          }
-          .row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 2px;
-            font-size: 11px;
-          }
-          .label {
-            font-weight: bold;
-          }
-          .items {
-            margin: 8px 0;
-          }
-          .items-header {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-            font-size: 10px;
-            margin-bottom: 4px;
-          }
-          .item {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            margin-bottom: 4px;
-          }
-          .item-qty {
-            width: 15%;
-            font-weight: bold;
-          }
-          .item-name {
-            width: 55%;
-          }
-          .item-price {
-            width: 30%;
-            text-align: right;
-            font-weight: bold;
-          }
-          .notes {
-            margin: 8px 0;
-            padding: 4px 0;
-          }
-          .notes-label {
-            font-weight: bold;
-            font-size: 11px;
-            margin-bottom: 4px;
-          }
-          .notes-text {
-            font-size: 11px;
-            white-space: pre-wrap;
-          }
-          .total {
-            margin: 8px 0;
-          }
-          .total-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 16px;
-            font-weight: bold;
-            padding: 4px 0;
-          }
-          .total-value {
-            font-size: 18px;
-          }
-          .footer {
-            text-align: center;
-            margin-top: 8px;
-          }
-          .thanks {
-            font-size: 12px;
-            font-weight: bold;
-            margin: 8px 0 4px 0;
-          }
-          .contact {
-            font-size: 10px;
-          }
-          @media print {
-            body {
-              width: 80mm;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <pre>${plainText}</pre>
-        <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() {
-              window.close();
-            };
-          };
-        </script>
-      </body>
-      </html>
-    `;
-  };
+  // React-to-print handler
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Pedido #${currentOrderData?.order.order_number || ''}`,
+    onAfterPrint: () => {
+      setIsPrinting(false);
+      setCurrentOrderData(null);
+    },
+  });
 
   // Main print function
   const printOrder = useCallback(async (orderId: string) => {
@@ -364,27 +210,25 @@ export function usePrintOrder() {
         }
       }
 
-      // Fallback to browser printing
-      const html = generateReceiptHTML(data);
-      const printWindow = window.open('', '_blank', 'width=302,height=600');
+      // Fallback to react-to-print
+      setCurrentOrderData(data);
+      // Trigger print after state update
+      setTimeout(() => {
+        handlePrint();
+      }, 100);
       
-      if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-      } else {
-        toast.error('Não foi possível abrir janela de impressão');
-      }
-      
-      setIsPrinting(false);
     } catch (error) {
       console.error('Error preparing print:', error);
       toast.error('Erro ao preparar impressão');
       setIsPrinting(false);
     }
-  }, [isPrinting, fetchOrderData, generatePlainTextReceipt, generateReceiptHTML]);
+  }, [isPrinting, fetchOrderData, generatePlainTextReceipt, handlePrint]);
 
   return {
     printOrder,
     isPrinting,
+    printRef,
+    currentOrderData,
+    generatePlainTextReceipt,
   };
 }
