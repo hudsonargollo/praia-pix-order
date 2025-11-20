@@ -305,6 +305,8 @@ export function usePrintOrder() {
         <div class="footer">
           <div class="divider">================================</div>
           <p class="thanks">Obrigado pela preferencia!</p>
+          <p class="contact">Tel: ${data.order.customer_phone}</p>
+          <br><br><br>
         </div>
 
         <script>
