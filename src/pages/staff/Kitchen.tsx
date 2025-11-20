@@ -87,7 +87,7 @@ const Kitchen = () => {
     setNewOrderIds(prev => new Set([...prev, order.id]));
     
     // Show notification
-    notificationUtils.paymentConfirmed(order.order_number, order.customer_phone);
+    notificationUtils.paymentConfirmed(order.order_number, order.customer_name);
     
     // Reload orders to get the latest data with items
     loadOrders();
@@ -104,13 +104,13 @@ const Kitchen = () => {
     // Show appropriate notification based on status
     switch (order.status) {
       case 'in_preparation':
-        notificationUtils.orderInPreparation(order.order_number, order.customer_phone);
+        notificationUtils.orderInPreparation(order.order_number, order.customer_name);
         break;
       case 'ready':
-        notificationUtils.orderReady(order.order_number, order.customer_phone);
+        notificationUtils.orderReady(order.order_number, order.customer_name);
         break;
       case 'completed':
-        notificationUtils.orderCompleted(order.order_number, order.customer_phone);
+        notificationUtils.orderCompleted(order.order_number, order.customer_name);
         break;
     }
     

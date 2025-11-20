@@ -83,60 +83,123 @@ export function RealtimeNotifications({
 
 // Utility functions for common notification types
 export const notificationUtils = {
-  newOrder: (orderNumber: number, customerPhone: string) => {
+  newOrder: (orderNumber: number, customerName: string) => {
     const notification = (window as any).realtimeNotifications;
     if (notification) {
+      // Play notification sound (simple beep using Web Audio API)
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+      } catch (e) {
+        console.log('Could not play notification sound:', e);
+      }
+      
       notification.showOrderNotification(
         'Novo Pedido',
-        `Pedido #${orderNumber} - ${customerPhone}`,
+        `Pedido #${orderNumber} - ${customerName}`,
         'info',
         <Bell className="h-4 w-4" />
       );
     }
   },
 
-  paymentConfirmed: (orderNumber: number, customerPhone: string) => {
+  paymentConfirmed: (orderNumber: number, customerName: string) => {
     const notification = (window as any).realtimeNotifications;
     if (notification) {
+      // Play notification sound (simple beep using Web Audio API)
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+      } catch (e) {
+        console.log('Could not play notification sound:', e);
+      }
+      
       notification.showOrderNotification(
         'Pagamento Confirmado',
-        `Pedido #${orderNumber} - ${customerPhone}`,
+        `Pedido #${orderNumber} - ${customerName}`,
         'success',
         <CheckCircle className="h-4 w-4" />
       );
     }
   },
 
-  orderInPreparation: (orderNumber: number, customerPhone: string) => {
+  orderInPreparation: (orderNumber: number, customerName: string) => {
     const notification = (window as any).realtimeNotifications;
     if (notification) {
       notification.showOrderNotification(
         'Pedido em Preparo',
-        `Pedido #${orderNumber} - ${customerPhone}`,
+        `Pedido #${orderNumber} - ${customerName}`,
         'info',
         <Clock className="h-4 w-4" />
       );
     }
   },
 
-  orderReady: (orderNumber: number, customerPhone: string) => {
+  orderReady: (orderNumber: number, customerName: string) => {
     const notification = (window as any).realtimeNotifications;
     if (notification) {
+      // Play notification sound (simple beep using Web Audio API)
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+      } catch (e) {
+        console.log('Could not play notification sound:', e);
+      }
+      
       notification.showOrderNotification(
         'Pedido Pronto',
-        `Pedido #${orderNumber} - ${customerPhone}`,
+        `Pedido #${orderNumber} - ${customerName}`,
         'success',
         <Package className="h-4 w-4" />
       );
     }
   },
 
-  orderCompleted: (orderNumber: number, customerPhone: string) => {
+  orderCompleted: (orderNumber: number, customerName: string) => {
     const notification = (window as any).realtimeNotifications;
     if (notification) {
       notification.showOrderNotification(
         'Pedido Concluído',
-        `Pedido #${orderNumber} - ${customerPhone}`,
+        `Pedido #${orderNumber} - ${customerName}`,
         'success',
         <CheckCircle className="h-4 w-4" />
       );

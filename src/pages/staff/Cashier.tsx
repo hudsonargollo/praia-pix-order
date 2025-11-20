@@ -143,7 +143,7 @@ const Cashier = () => {
     }
     
     setOrders(prevOrders => [order, ...prevOrders]);
-    notificationUtils.newOrder(order.order_number, order.customer_phone);
+    notificationUtils.newOrder(order.order_number, order.customer_name);
   }, [selectedWaiterId]);
 
   const handleOrderUpdate = useCallback((order: Order) => {
@@ -170,13 +170,13 @@ const Cashier = () => {
     // Show appropriate notification based on status change
     switch (order.status) {
       case 'in_preparation':
-        notificationUtils.orderInPreparation(order.order_number, order.customer_phone);
+        notificationUtils.orderInPreparation(order.order_number, order.customer_name);
         break;
       case 'ready':
-        notificationUtils.orderReady(order.order_number, order.customer_phone);
+        notificationUtils.orderReady(order.order_number, order.customer_name);
         break;
       case 'completed':
-        notificationUtils.orderCompleted(order.order_number, order.customer_phone);
+        notificationUtils.orderCompleted(order.order_number, order.customer_name);
         break;
     }
   }, [selectedWaiterId]);
@@ -189,7 +189,7 @@ const Cashier = () => {
       return;
     }
     
-    notificationUtils.paymentConfirmed(order.order_number, order.customer_phone);
+    notificationUtils.paymentConfirmed(order.order_number, order.customer_name);
   }, [selectedWaiterId]);
 
   const { connectionStatus, reconnect } = useConnectionMonitor();
