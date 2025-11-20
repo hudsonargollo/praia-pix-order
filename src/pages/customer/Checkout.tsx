@@ -171,6 +171,10 @@ const Checkout = () => {
     setIsSubmitting(true);
     
     try {
+      // Check if user is a waiter
+      const { data: { user } } = await supabase.auth.getUser();
+      const isWaiter = user?.user_metadata?.role === 'waiter';
+      
       // Capitalize and normalize name
       const capitalizedName = capitalizeName(name);
       
@@ -204,18 +208,27 @@ const Checkout = () => {
 
       // Calculate total
       const totalAmount = cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const commissionAmount = isWaiter ? totalAmount * 0.1 : 0;
 
-      // Create order
+      // Create order with different status for waiters
+      const orderData: any = {
+        customer_name: capitalizedName,
+        customer_phone: normalizedPhone,
+        table_number: '-',
+        status: isWaiter ? 'in_preparation' : 'pending_payment',
+        payment_status: 'pending',
+        total_amount: totalAmount
+      };
+
+      // Add waiter_id and commission if user is a waiter
+      if (isWaiter && user) {
+        orderData.waiter_id = user.id;
+        orderData.commission_amount = commissionAmount;
+      }
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
-        .insert({
-          customer_name: capitalizedName,
-          customer_phone: normalizedPhone,
-          table_number: '-',
-          status: 'pending_payment',
-          payment_status: 'pending',
-          total_amount: totalAmount
-        })
+        .insert(orderData)
         .select()
         .single();
 
@@ -253,26 +266,49 @@ const Checkout = () => {
       // Clear cart after successful order creation
       clearCart();
 
-      // Navigate directly to payment (original behavior)
-      toast.success("Pedido criado com sucesso!");
-      navigate(`/payment/${order.id}`);
+      if (isWaiter) {
+        // Waiter flow: Send WhatsApp notification immediately and redirect to dashboard
+        toast.success("Pedido criado! Enviando notificação ao cliente...");
+        
+        // Send WhatsApp notification immediately (don't wait)
+        setTimeout(() => {
+          (async () => {
+            try {
+              await notificationTriggers.onOrderPreparing(order.id);
+              console.log('✅ WhatsApp notification sent for waiter order:', order.id);
+              toast.success("Notificação enviada ao cliente! 📱");
+            } catch (notifError) {
+              console.error('❌ Failed to send WhatsApp notification:', notifError);
+              toast.error("Erro ao enviar notificação WhatsApp");
+            }
+          })().catch(err => {
+            console.error('❌ WhatsApp notification error (caught):', err);
+          });
+        }, 100);
 
-      // Send WhatsApp notification asynchronously (don't block navigation)
-      // Wrapped in setTimeout to ensure it doesn't interfere with navigation
-      setTimeout(() => {
-        (async () => {
-          try {
-            const baseUrl = window.location.origin;
-            await notificationTriggers.onOrderCreatedWithLinks(order.id, baseUrl);
-            console.log('✅ WhatsApp notification triggered for order:', order.id);
-          } catch (notifError) {
-            console.error('❌ Failed to trigger WhatsApp notification:', notifError);
-            // Silently fail - notification is not critical for order flow
-          }
-        })().catch(err => {
-          console.error('❌ WhatsApp notification error (caught):', err);
-        });
-      }, 100);
+        // Redirect to waiter dashboard
+        navigate('/waiter/dashboard');
+      } else {
+        // Customer flow: Navigate to payment page
+        toast.success("Pedido criado com sucesso!");
+        navigate(`/payment/${order.id}`);
+
+        // Send WhatsApp notification asynchronously (don't block navigation)
+        setTimeout(() => {
+          (async () => {
+            try {
+              const baseUrl = window.location.origin;
+              await notificationTriggers.onOrderCreatedWithLinks(order.id, baseUrl);
+              console.log('✅ WhatsApp notification triggered for order:', order.id);
+            } catch (notifError) {
+              console.error('❌ Failed to trigger WhatsApp notification:', notifError);
+              // Silently fail - notification is not critical for order flow
+            }
+          })().catch(err => {
+            console.error('❌ WhatsApp notification error (caught):', err);
+          });
+        }, 100);
+      }
       
     } catch (error) {
       console.error('Exception in handleGoToPayment:', error);
