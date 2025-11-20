@@ -24,6 +24,7 @@ const AdminWaiterReportsPage = lazy(() => import("./pages/admin/AdminWaiterRepor
 const Reports = lazy(() => import("./pages/admin/Reports"));
 const WhatsAppAdmin = lazy(() => import("./pages/admin/WhatsAppAdmin"));
 const CustomerManagement = lazy(() => import("./pages/admin/CustomerManagement"));
+const PrintServerConfig = lazy(() => import("./pages/admin/PrintServerConfig"));
 
 // Lazy load staff pages
 const Cashier = lazy(() => import("./pages/staff/Cashier"));
@@ -229,6 +230,16 @@ const App = () => {
               <ProtectedRoute requiredRole="admin">
                 <Suspense fallback={<LoadingFallback />}>
                   <WhatsAppAdmin />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/print-server-config"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <Suspense fallback={<LoadingFallback />}>
+                  <PrintServerConfig />
                 </Suspense>
               </ProtectedRoute>
             }

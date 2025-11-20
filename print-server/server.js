@@ -1,155 +1,302 @@
 /**
- * Local Print Server for Thermal Printers
+ * Coco Loko Print Server
  * 
- * This server receives print jobs from the web app and sends them
- * directly to thermal printers using ESC/POS commands.
- * 
- * Supports: Elgin, Bematech, Epson, Star, and other ESC/POS printers
+ * Local server for thermal printer communication
+ * Runs on Windows/Mac/Linux and connects to USB thermal printers
  */
 
-import express from 'express';
-import cors from 'cors';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+const express = require('express');
+const cors = require('cors');
+const escpos = require('escpos');
+escpos.USB = require('escpos-usb');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-// Enable CORS for your web app
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Printer configuration
-const PRINTER_NAME = 'Printer_POS_80';
+// Global printer instance
+let printer = null;
+let device = null;
 
 /**
- * Convert Portuguese characters to ASCII equivalents
- * This ensures compatibility with thermal printers that don't support UTF-8
+ * Initialize printer connection
  */
-function normalizeText(text) {
-  const replacements = {
-    'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a', 'ä': 'a',
-    'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
-    'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
-    'ó': 'o', 'ò': 'o', 'õ': 'o', 'ô': 'o', 'ö': 'o',
-    'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u',
-    'ç': 'c',
-    'ñ': 'n',
-    'Á': 'A', 'À': 'A', 'Ã': 'A', 'Â': 'A', 'Ä': 'A',
-    'É': 'E', 'È': 'E', 'Ê': 'E', 'Ë': 'E',
-    'Í': 'I', 'Ì': 'I', 'Î': 'I', 'Ï': 'I',
-    'Ó': 'O', 'Ò': 'O', 'Õ': 'O', 'Ô': 'O', 'Ö': 'O',
-    'Ú': 'U', 'Ù': 'U', 'Û': 'U', 'Ü': 'U',
-    'Ç': 'C',
-    'Ñ': 'N'
-  };
-  
-  return text.replace(/[áàãâäéèêëíìîïóòõôöúùûüçñÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÔÖÚÙÛÜÇÑ]/g, 
-    char => replacements[char] || char);
-}
-
-/**
- * Check if printer is available
- */
-async function checkPrinter() {
+function initializePrinter() {
   try {
-    const { stdout } = await execAsync('lpstat -p');
-    return stdout.includes(PRINTER_NAME);
+    // Find USB printer
+    const devices = escpos.USB.findPrinter();
+    
+    if (devices.length === 0) {
+      console.log('⚠️  No USB thermal printer found');
+      return false;
+    }
+
+    // Use first available printer
+    device = new escpos.USB(devices[0].deviceDescriptor.idVendor, devices[0].deviceDescriptor.idProduct);
+    printer = new escpos.Printer(device);
+    
+    console.log('✅ Thermal printer connected');
+    console.log(`   Vendor ID: ${devices[0].deviceDescriptor.idVendor}`);
+    console.log(`   Product ID: ${devices[0].deviceDescriptor.idProduct}`);
+    
+    return true;
   } catch (error) {
-    console.error('Error checking printer:', error);
+    console.error('❌ Failed to initialize printer:', error.message);
     return false;
   }
 }
 
 /**
- * Print receipt
+ * Health check endpoint
+ */
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    serverRunning: true,
+    printerConnected: printer !== null,
+    timestamp: new Date().toISOString()
+  });
+});
+
+/**
+ * Get printer status
+ */
+app.get('/status', (req, res) => {
+  try {
+    const devices = escpos.USB.findPrinter();
+    
+    res.json({
+      serverRunning: true,
+      printerConnected: printer !== null,
+      printers: devices.map(d => ({
+        vendorId: d.deviceDescriptor.idVendor,
+        productId: d.deviceDescriptor.idProduct,
+        manufacturer: d.deviceDescriptor.iManufacturer,
+        product: d.deviceDescriptor.iProduct
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to get printer status',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Print receipt endpoint
  */
 app.post('/print', async (req, res) => {
   try {
     const { content, orderNumber } = req.body;
 
     if (!content) {
-      return res.status(400).json({ error: 'No content provided' });
+      return res.status(400).json({
+        error: 'Missing content',
+        message: 'Content is required for printing'
+      });
     }
 
-    // Check if printer is available
-    const printerAvailable = await checkPrinter();
-    if (!printerAvailable) {
-      return res.status(503).json({ error: 'Printer not available' });
+    // Try to initialize printer if not connected
+    if (!printer) {
+      const initialized = initializePrinter();
+      if (!initialized) {
+        return res.status(503).json({
+          error: 'Printer not available',
+          message: 'No thermal printer found. Please connect a USB thermal printer.'
+        });
+      }
     }
 
-    // Normalize text to ASCII (remove Portuguese special characters)
-    const normalizedContent = normalizeText(content);
+    // Open device and print
+    device.open(function(error) {
+      if (error) {
+        console.error('Failed to open printer:', error);
+        return res.status(500).json({
+          error: 'Failed to open printer',
+          message: error.message
+        });
+      }
 
-    // Write to temporary file and print from file
-    const tmpFile = `/tmp/print-${Date.now()}.txt`;
-    const fs = await import('fs/promises');
-    await fs.writeFile(tmpFile, normalizedContent, 'ascii');
-    
-    // Send file to printer with raw option (no processing)
-    await execAsync(`lp -d ${PRINTER_NAME} -o raw ${tmpFile}`);
-    
-    // Clean up temp file
-    await fs.unlink(tmpFile);
+      try {
+        // Print the content
+        printer
+          .font('a')
+          .align('ct')
+          .style('normal')
+          .size(1, 1)
+          .text(content)
+          .cut()
+          .close();
 
-    console.log(`✅ Printed order #${orderNumber || 'N/A'}`);
-    res.json({ success: true, message: 'Print job sent' });
+        console.log(`✅ Printed order #${orderNumber || 'N/A'}`);
+        
+        res.json({
+          success: true,
+          message: 'Print job sent successfully',
+          orderNumber
+        });
+      } catch (printError) {
+        console.error('Print error:', printError);
+        res.status(500).json({
+          error: 'Print failed',
+          message: printError.message
+        });
+      }
+    });
 
   } catch (error) {
-    console.error('Error printing:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Print endpoint error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
+    });
   }
 });
 
 /**
- * Check printer status
+ * Test print endpoint
  */
-app.get('/status', async (req, res) => {
+app.post('/test-print', (req, res) => {
   try {
-    const { stdout } = await execAsync('lpstat -p');
-    const printers = stdout.split('\n').filter(line => line.includes('printer'));
-    const printerConnected = stdout.includes(PRINTER_NAME);
-    
-    res.json({
-      printerConnected,
-      printerName: PRINTER_NAME,
-      printers: printers.map(p => p.trim()),
-      serverRunning: true
+    if (!printer) {
+      const initialized = initializePrinter();
+      if (!initialized) {
+        return res.status(503).json({
+          error: 'Printer not available',
+          message: 'No thermal printer found'
+        });
+      }
+    }
+
+    device.open(function(error) {
+      if (error) {
+        return res.status(500).json({
+          error: 'Failed to open printer',
+          message: error.message
+        });
+      }
+
+      const testContent = `
+================================
+      TESTE DE IMPRESSAO
+================================
+
+Coco Loko Acaiteria
+Print Server v1.0
+
+Data: ${new Date().toLocaleString('pt-BR')}
+
+================================
+  Impressora funcionando!
+================================
+
+
+`;
+
+      printer
+        .font('a')
+        .align('ct')
+        .text(testContent)
+        .cut()
+        .close();
+
+      console.log('✅ Test print completed');
+      
+      res.json({
+        success: true,
+        message: 'Test print sent successfully'
+      });
     });
+
   } catch (error) {
-    res.json({
-      printerConnected: false,
-      error: error.message,
-      serverRunning: true
+    console.error('Test print error:', error);
+    res.status(500).json({
+      error: 'Test print failed',
+      message: error.message
     });
   }
 });
 
 /**
- * Health check
+ * Reconnect printer endpoint
  */
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.post('/reconnect', (req, res) => {
+  try {
+    // Close existing connection
+    if (device) {
+      try {
+        device.close();
+      } catch (e) {
+        // Ignore close errors
+      }
+    }
+    
+    printer = null;
+    device = null;
+
+    // Reinitialize
+    const initialized = initializePrinter();
+    
+    if (initialized) {
+      res.json({
+        success: true,
+        message: 'Printer reconnected successfully'
+      });
+    } else {
+      res.status(503).json({
+        success: false,
+        message: 'Failed to reconnect printer'
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      error: 'Reconnect failed',
+      message: error.message
+    });
+  }
 });
 
-// Start server - listen on all network interfaces
-app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`🖨️  Print Server running on:`);
-  console.log(`   - Local: http://localhost:${PORT}`);
-  console.log(`   - Network: http://<your-ip>:${PORT}`);
-  console.log('📡 Checking for printers...');
+// Start server
+app.listen(PORT, () => {
+  console.log('');
+  console.log('🖨️  Coco Loko Print Server');
+  console.log('================================');
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🌐 URL: http://localhost:${PORT}`);
+  console.log('================================');
+  console.log('');
   
-  const printerAvailable = await checkPrinter();
-  if (printerAvailable) {
-    console.log(`✅ Printer found: ${PRINTER_NAME}`);
-  } else {
-    console.log(`❌ Printer not found: ${PRINTER_NAME}`);
+  // Try to initialize printer on startup
+  initializePrinter();
+  
+  console.log('');
+  console.log('📝 Available endpoints:');
+  console.log(`   GET  /health       - Health check`);
+  console.log(`   GET  /status       - Printer status`);
+  console.log(`   POST /print        - Print receipt`);
+  console.log(`   POST /test-print   - Test printer`);
+  console.log(`   POST /reconnect    - Reconnect printer`);
+  console.log('');
+  console.log('Press Ctrl+C to stop the server');
+  console.log('');
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\n\n🛑 Shutting down print server...');
+  
+  if (device) {
+    try {
+      device.close();
+      console.log('✅ Printer connection closed');
+    } catch (e) {
+      // Ignore close errors
+    }
   }
   
-  console.log('\n💡 To use from other computers:');
-  console.log('   1. Find this computer\'s IP address');
-  console.log('   2. Configure print server URL in the web app');
-  console.log('   3. Make sure firewall allows port 3001\n');
+  process.exit(0);
 });

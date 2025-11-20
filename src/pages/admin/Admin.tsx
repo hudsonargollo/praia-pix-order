@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, ShoppingBag, BarChart3, ChefHat, MessageCircle } from "lucide-react";
+import { Users, ShoppingBag, BarChart3, ChefHat, MessageCircle, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UniformHeader } from "@/components/UniformHeader";
@@ -30,6 +30,7 @@ const Admin = () => {
     { title: "Garçons", icon: Users, path: "/waiter-management", description: "Gerenciar equipe" },
     { title: "Clientes", icon: Users, path: "/customers", description: "Gerenciar clientes" },
     { title: "WhatsApp", icon: MessageCircle, path: "/whatsapp-admin", description: "Configurar WhatsApp" },
+    { title: "Impressão", icon: Printer, path: "/print-server-config", description: "Configurar impressora" },
   ];
 
   return (
