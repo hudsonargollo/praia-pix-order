@@ -12,28 +12,37 @@ SELECT
 FROM orders;
 
 -- Delete related data first (to avoid foreign key constraints)
+-- Order matters: delete child tables before parent tables
 
--- 1. Delete WhatsApp chat messages
+-- 1. Delete WhatsApp error logs (references orders and notifications)
+DELETE FROM whatsapp_error_logs WHERE order_id IS NOT NULL;
+SELECT 'Deleted WhatsApp error logs' as status;
+
+-- 2. Delete WhatsApp chat messages
 DELETE FROM whatsapp_chat_messages;
 SELECT 'Deleted WhatsApp chat messages' as status;
 
--- 2. Delete WhatsApp notifications
+-- 3. Delete WhatsApp notifications
 DELETE FROM whatsapp_notifications;
 SELECT 'Deleted WhatsApp notifications' as status;
 
--- 3. Delete payment webhooks
+-- 4. Delete payment webhooks
 DELETE FROM payment_webhooks;
 SELECT 'Deleted payment webhooks' as status;
 
--- 4. Delete order audit logs
+-- 5. Delete payment confirmation logs
+DELETE FROM payment_confirmation_log;
+SELECT 'Deleted payment confirmation logs' as status;
+
+-- 6. Delete order audit logs
 DELETE FROM order_audit_log;
 SELECT 'Deleted order audit logs' as status;
 
--- 5. Delete order items
+-- 7. Delete order items
 DELETE FROM order_items;
 SELECT 'Deleted order items' as status;
 
--- 6. Finally, delete all orders
+-- 8. Finally, delete all orders
 DELETE FROM orders;
 SELECT 'Deleted all orders' as status;
 
