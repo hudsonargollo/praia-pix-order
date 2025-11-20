@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { printServerClient } from '@/integrations/print-server/client';
 
 interface OrderData {
   id: string;
@@ -342,7 +343,28 @@ export function usePrintOrder() {
         return;
       }
 
-      // Generate HTML and open print window
+      // Try local print server first
+      const serverAvailable = await printServerClient.checkAvailability();
+      
+      if (serverAvailable) {
+        try {
+          const plainText = generatePlainTextReceipt(data);
+          const success = await printServerClient.print(plainText, data.order.order_number);
+          
+          if (success) {
+            toast.success('Imprimindo pedido...');
+            setIsPrinting(false);
+            return;
+          } else {
+            console.log('Print server failed, falling back to browser print');
+            toast.warning('Servidor de impressão indisponível, usando navegador');
+          }
+        } catch (error) {
+          console.error('Print server error:', error);
+        }
+      }
+
+      // Fallback to browser printing
       const html = generateReceiptHTML(data);
       const printWindow = window.open('', '_blank', 'width=302,height=600');
       
@@ -359,7 +381,7 @@ export function usePrintOrder() {
       toast.error('Erro ao preparar impressão');
       setIsPrinting(false);
     }
-  }, [isPrinting, fetchOrderData, generateReceiptHTML]);
+  }, [isPrinting, fetchOrderData, generatePlainTextReceipt, generateReceiptHTML]);
 
   return {
     printOrder,
