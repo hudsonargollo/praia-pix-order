@@ -5,7 +5,14 @@
  * Falls back to browser printing if server is not available.
  */
 
-const PRINT_SERVER_URL = 'http://localhost:3001';
+// Get print server URL from localStorage (configurable per computer)
+const getServerUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('print_server_url');
+    if (stored) return stored;
+  }
+  return 'http://localhost:3001';
+};
 
 interface PrintServerStatus {
   printerConnected: boolean;
@@ -15,13 +22,31 @@ interface PrintServerStatus {
 
 class PrintServerClient {
   private isAvailable: boolean | null = null;
+  private serverUrl: string = getServerUrl();
+
+  /**
+   * Set custom print server URL
+   */
+  setServerUrl(url: string): void {
+    this.serverUrl = url;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('print_server_url', url);
+    }
+  }
+
+  /**
+   * Get current server URL
+   */
+  getServerUrl(): string {
+    return this.serverUrl;
+  }
 
   /**
    * Check if print server is running
    */
   async checkAvailability(): Promise<boolean> {
     try {
-      const response = await fetch(`${PRINT_SERVER_URL}/health`, {
+      const response = await fetch(`${this.serverUrl}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(1000), // 1 second timeout
       });
@@ -39,7 +64,7 @@ class PrintServerClient {
    */
   async getStatus(): Promise<PrintServerStatus | null> {
     try {
-      const response = await fetch(`${PRINT_SERVER_URL}/status`, {
+      const response = await fetch(`${this.serverUrl}/status`, {
         method: 'GET',
         signal: AbortSignal.timeout(2000),
       });
@@ -59,7 +84,7 @@ class PrintServerClient {
    */
   async print(content: string, orderNumber?: number): Promise<boolean> {
     try {
-      const response = await fetch(`${PRINT_SERVER_URL}/print`, {
+      const response = await fetch(`${this.serverUrl}/print`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
