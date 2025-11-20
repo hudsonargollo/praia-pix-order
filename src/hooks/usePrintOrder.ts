@@ -100,8 +100,56 @@ export function usePrintOrder() {
     }
   }, []);
 
-  // Generate plain text receipt for thermal printers
-  const generatePlainTextReceipt = (data: PrintOrderData): string => {
+  // Generate kitchen receipt (includes waiter info, focused on preparation)
+  const generateKitchenReceipt = (data: PrintOrderData): string => {
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    };
+
+    const divider = '================================';
+    const divider2 = '--------------------------------';
+    
+    let receipt = '';
+    receipt += '\n';
+    receipt += '      *** COZINHA ***\n';
+    receipt += divider + '\n';
+    receipt += `PEDIDO: #${data.order.order_number}\n`;
+    receipt += `HORA: ${formatDate(data.order.created_at)}\n`;
+    if (data.waiterName && data.waiterName !== 'Cliente') {
+      receipt += `GARCOM: ${data.waiterName}\n`;
+    }
+    receipt += divider + '\n';
+    receipt += '\n';
+    receipt += 'ITENS:\n';
+    receipt += divider2 + '\n';
+    
+    data.items.forEach(item => {
+      receipt += `\n`;
+      receipt += `[ ] ${item.quantity}x ${item.item_name}\n`;
+    });
+    
+    receipt += '\n';
+    receipt += divider2 + '\n';
+    
+    if (data.order.order_notes) {
+      receipt += '\n';
+      receipt += '*** OBSERVACOES ***\n';
+      receipt += `${data.order.order_notes}\n`;
+      receipt += divider + '\n';
+    }
+    
+    receipt += '\n';
+    receipt += `Cliente: ${data.order.customer_name}\n`;
+    receipt += '\n\n\n\n\n\n\n\n';
+    
+    return receipt;
+  };
+
+  // Generate customer receipt (clean format with prices)
+  const generateCustomerReceipt = (data: PrintOrderData): string => {
     const formatCurrency = (value: number) => {
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
     };
@@ -161,145 +209,34 @@ export function usePrintOrder() {
     return receipt;
   };
 
+  // State to track receipt type
+  const [receiptType, setReceiptType] = useState<'kitchen' | 'customer'>('customer');
+
   // React-to-print handler
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: `Pedido #${currentOrderData?.order.order_number || ''}`,
+    documentTitle: `Pedido #${currentOrderData?.order.order_number || ''} - ${receiptType === 'kitchen' ? 'Cozinha' : 'Cliente'}`,
     onAfterPrint: () => {
       setIsPrinting(false);
       setCurrentOrderData(null);
     },
   });
 
-  // Generate HTML for receipt (for browser preview/popup method)
-  const generateReceiptHTML = (data: PrintOrderData): string => {
-    const plainText = generatePlainTextReceipt(data);
 
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Pedido #${data.order.order_number}</title>
-        <style>
-          @page {
-            size: 80mm auto;
-            margin: 0;
-          }
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          body {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
-            line-height: 1.3;
-            color: #000;
-            background: #fff;
-            width: 80mm;
-            padding: 4px;
-          }
-          pre {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
-            line-height: 1.3;
-            white-space: pre;
-            margin: 0;
-            padding: 0;
-          }
-          @media print {
-            body {
-              width: 80mm;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <pre>${plainText}</pre>
-        <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() {
-              window.close();
-            };
-          };
-        </script>
-      </body>
-      </html>
-    `;
-  };
 
-  // Alternative print method using window.open (for compatibility)
-  const printOrderPopup = useCallback(async (orderId: string) => {
+
+
+  // Print kitchen receipt
+  const printKitchenReceipt = useCallback(async (orderId: string) => {
     if (isPrinting) {
       console.log('Print already in progress');
       return;
     }
 
     setIsPrinting(true);
+    setReceiptType('kitchen');
 
     try {
-      // Fetch order data
-      const data = await fetchOrderData(orderId);
-
-      if (!data) {
-        setIsPrinting(false);
-        return;
-      }
-
-      // Try local print server first
-      const serverAvailable = await printServerClient.checkAvailability();
-
-      if (serverAvailable) {
-        try {
-          const plainText = generatePlainTextReceipt(data);
-          const success = await printServerClient.print(plainText, data.order.order_number);
-
-          if (success) {
-            toast.success('Imprimindo pedido...');
-            setIsPrinting(false);
-            return;
-          } else {
-            console.log('Print server failed, falling back to browser print');
-            toast.warning('Servidor de impressão indisponível, usando navegador');
-          }
-        } catch (error) {
-          console.error('Print server error:', error);
-        }
-      }
-
-      // Fallback to browser printing via popup
-      const html = generateReceiptHTML(data);
-      const printWindow = window.open('', '_blank', 'width=302,height=600');
-
-      if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-      } else {
-        toast.error('Não foi possível abrir janela de impressão');
-      }
-
-      setIsPrinting(false);
-    } catch (error) {
-      console.error('Error preparing print:', error);
-      toast.error('Erro ao preparar impressão');
-      setIsPrinting(false);
-    }
-  }, [isPrinting, fetchOrderData, generatePlainTextReceipt, generateReceiptHTML]);
-
-  // Main print function (uses react-to-print)
-  const printOrder = useCallback(async (orderId: string) => {
-    if (isPrinting) {
-      console.log('Print already in progress');
-      return;
-    }
-
-    setIsPrinting(true);
-
-    try {
-      // Fetch order data
       const data = await fetchOrderData(orderId);
       
       if (!data) {
@@ -312,16 +249,15 @@ export function usePrintOrder() {
       
       if (serverAvailable) {
         try {
-          const plainText = generatePlainTextReceipt(data);
+          const plainText = generateKitchenReceipt(data);
           const success = await printServerClient.print(plainText, data.order.order_number);
           
           if (success) {
-            toast.success('Imprimindo pedido...');
+            toast.success('Imprimindo comanda da cozinha...');
             setIsPrinting(false);
             return;
           } else {
             console.log('Print server failed, falling back to browser print');
-            toast.warning('Servidor de impressão indisponível, usando navegador');
           }
         } catch (error) {
           console.error('Print server error:', error);
@@ -330,7 +266,6 @@ export function usePrintOrder() {
 
       // Fallback to react-to-print
       setCurrentOrderData(data);
-      // Trigger print after state update
       setTimeout(() => {
         handlePrint();
       }, 100);
@@ -340,14 +275,69 @@ export function usePrintOrder() {
       toast.error('Erro ao preparar impressão');
       setIsPrinting(false);
     }
-  }, [isPrinting, fetchOrderData, generatePlainTextReceipt, handlePrint]);
+  }, [isPrinting, fetchOrderData, generateKitchenReceipt, handlePrint]);
+
+  // Print customer receipt
+  const printCustomerReceipt = useCallback(async (orderId: string) => {
+    if (isPrinting) {
+      console.log('Print already in progress');
+      return;
+    }
+
+    setIsPrinting(true);
+    setReceiptType('customer');
+
+    try {
+      const data = await fetchOrderData(orderId);
+      
+      if (!data) {
+        setIsPrinting(false);
+        return;
+      }
+
+      // Try local print server first
+      const serverAvailable = await printServerClient.checkAvailability();
+      
+      if (serverAvailable) {
+        try {
+          const plainText = generateCustomerReceipt(data);
+          const success = await printServerClient.print(plainText, data.order.order_number);
+          
+          if (success) {
+            toast.success('Imprimindo comprovante do cliente...');
+            setIsPrinting(false);
+            return;
+          } else {
+            console.log('Print server failed, falling back to browser print');
+          }
+        } catch (error) {
+          console.error('Print server error:', error);
+        }
+      }
+
+      // Fallback to react-to-print
+      setCurrentOrderData(data);
+      setTimeout(() => {
+        handlePrint();
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error preparing print:', error);
+      toast.error('Erro ao preparar impressão');
+      setIsPrinting(false);
+    }
+  }, [isPrinting, fetchOrderData, generateCustomerReceipt, handlePrint]);
+
+
 
   return {
-    printOrder,
-    printOrderPopup,
+    printKitchenReceipt,
+    printCustomerReceipt,
     isPrinting,
     printRef,
     currentOrderData,
-    generatePlainTextReceipt,
+    receiptType,
+    generateKitchenReceipt,
+    generateCustomerReceipt,
   };
 }

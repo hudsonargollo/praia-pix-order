@@ -24,14 +24,23 @@ export const CompactOrderCard = ({
   formatTimeWithAMPM 
 }: CompactOrderCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { printOrder, printOrderPopup, isPrinting, currentOrderData, printRef, generatePlainTextReceipt } = usePrintOrder();
+  const { 
+    printKitchenReceipt, 
+    printCustomerReceipt, 
+    isPrinting, 
+    currentOrderData, 
+    printRef, 
+    receiptType,
+    generateKitchenReceipt,
+    generateCustomerReceipt 
+  } = usePrintOrder();
 
-  const handlePrint = () => {
-    printOrder(order.id);
+  const handlePrintKitchen = () => {
+    printKitchenReceipt(order.id);
   };
 
-  const handlePrintPopup = () => {
-    printOrderPopup(order.id);
+  const handlePrintCustomer = () => {
+    printCustomerReceipt(order.id);
   };
 
   return (
@@ -141,23 +150,24 @@ export const CompactOrderCard = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={handlePrint}
+              onClick={handlePrintKitchen}
               disabled={isPrinting}
               className="flex-1"
+              title="Imprimir comanda da cozinha"
             >
               <Printer className="h-3 w-3 mr-1" />
-              {isPrinting ? 'Imprimindo...' : 'Imprimir'}
+              {isPrinting ? 'Imprimindo...' : 'Cozinha'}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={handlePrintPopup}
+              onClick={handlePrintCustomer}
               disabled={isPrinting}
               className="flex-1"
-              title="Método alternativo de impressão"
+              title="Imprimir comprovante do cliente"
             >
               <Printer className="h-3 w-3 mr-1" />
-              Alt
+              Cliente
             </Button>
           </div>
         </div>
@@ -168,7 +178,8 @@ export const CompactOrderCard = ({
         <div style={{ display: 'none' }}>
           <OrderReceipt
             ref={printRef}
-            plainText={generatePlainTextReceipt(currentOrderData)}
+            plainText={receiptType === 'kitchen' ? generateKitchenReceipt(currentOrderData) : generateCustomerReceipt(currentOrderData)}
+            type={receiptType}
           />
         </div>
       )}

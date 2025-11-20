@@ -57,14 +57,23 @@ const Kitchen = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Print functionality
-  const { printOrder, printRef, currentOrderData, generatePlainTextReceipt } = usePrintOrder();
+  const { 
+    printKitchenReceipt, 
+    printCustomerReceipt, 
+    printRef, 
+    currentOrderData, 
+    receiptType,
+    generateKitchenReceipt,
+    generateCustomerReceipt,
+    isPrinting: isPrintingReceipt 
+  } = usePrintOrder();
 
-  // Auto-print functionality
+  // Auto-print functionality - prints kitchen receipt when order enters preparation
   const { isAutoPrintEnabled, toggleAutoPrint } = useAutoPrint({
     enabled: true,
     onPrint: (orderId) => {
-      console.log('Auto-printing order:', orderId);
-      printOrder(orderId);
+      console.log('Auto-printing kitchen receipt for order:', orderId);
+      printKitchenReceipt(orderId);
     },
     onError: (error) => {
       console.error('Auto-print error:', error);
@@ -330,7 +339,8 @@ const Kitchen = () => {
         <div style={{ display: 'none' }}>
           <OrderReceipt 
             ref={printRef}
-            plainText={generatePlainTextReceipt(currentOrderData)}
+            plainText={receiptType === 'kitchen' ? generateKitchenReceipt(currentOrderData) : generateCustomerReceipt(currentOrderData)}
+            type={receiptType}
           />
         </div>
       )}
