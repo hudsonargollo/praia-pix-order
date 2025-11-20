@@ -29,7 +29,7 @@ export function OrderCardInfo({
   readyAt,
   kitchenNotifiedAt,
 }: OrderCardInfoProps) {
-  const { printOrder, isPrinting, orderData, printRef } = usePrintOrder();
+  const { printOrder, printOrderPopup, isPrinting, currentOrderData, printRef, generatePlainTextReceipt } = usePrintOrder();
 
   const formatTimestamp = (timestamp: string | null | undefined) => {
     if (!timestamp) return null;
@@ -44,6 +44,10 @@ export function OrderCardInfo({
 
   const handlePrint = () => {
     printOrder(orderId);
+  };
+
+  const handlePrintPopup = () => {
+    printOrderPopup(orderId);
   };
 
   return (
@@ -66,7 +70,7 @@ export function OrderCardInfo({
             </Badge>
           )}
           
-          {/* Print Button */}
+          {/* Print Buttons */}
           <Button
             variant="outline"
             size="sm"
@@ -77,17 +81,26 @@ export function OrderCardInfo({
             <Printer className="h-3 w-3 mr-1" />
             {isPrinting ? 'Imprimindo...' : 'Imprimir'}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrintPopup}
+            disabled={isPrinting}
+            className="h-5 px-2 text-xs"
+            title="Método alternativo de impressão"
+          >
+            <Printer className="h-3 w-3 mr-1" />
+            Alt
+          </Button>
         </div>
       </div>
 
       {/* Hidden OrderReceipt for printing */}
-      {orderData && (
+      {currentOrderData && (
         <div style={{ display: 'none' }}>
           <OrderReceipt
             ref={printRef}
-            order={orderData.order}
-            items={orderData.items}
-            waiterName={orderData.waiterName}
+            plainText={generatePlainTextReceipt(currentOrderData)}
           />
         </div>
       )}

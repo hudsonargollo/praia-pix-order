@@ -24,10 +24,14 @@ export const CompactOrderCard = ({
   formatTimeWithAMPM 
 }: CompactOrderCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { printOrder, isPrinting, orderData, printRef } = usePrintOrder();
+  const { printOrder, printOrderPopup, isPrinting, currentOrderData, printRef, generatePlainTextReceipt } = usePrintOrder();
 
   const handlePrint = () => {
     printOrder(order.id);
+  };
+
+  const handlePrintPopup = () => {
+    printOrderPopup(order.id);
   };
 
   return (
@@ -144,18 +148,27 @@ export const CompactOrderCard = ({
               <Printer className="h-3 w-3 mr-1" />
               {isPrinting ? 'Imprimindo...' : 'Imprimir'}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrintPopup}
+              disabled={isPrinting}
+              className="flex-1"
+              title="Método alternativo de impressão"
+            >
+              <Printer className="h-3 w-3 mr-1" />
+              Alt
+            </Button>
           </div>
         </div>
       )}
 
       {/* Hidden OrderReceipt for printing */}
-      {orderData && (
+      {currentOrderData && (
         <div style={{ display: 'none' }}>
           <OrderReceipt
             ref={printRef}
-            order={orderData.order}
-            items={orderData.items}
-            waiterName={orderData.waiterName}
+            plainText={generatePlainTextReceipt(currentOrderData)}
           />
         </div>
       )}

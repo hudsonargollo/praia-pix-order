@@ -171,7 +171,125 @@ export function usePrintOrder() {
     },
   });
 
-  // Main print function
+  // Generate HTML for receipt (for browser preview/popup method)
+  const generateReceiptHTML = (data: PrintOrderData): string => {
+    const plainText = generatePlainTextReceipt(data);
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Pedido #${data.order.order_number}</title>
+        <style>
+          @page {
+            size: 80mm auto;
+            margin: 0;
+          }
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            line-height: 1.3;
+            color: #000;
+            background: #fff;
+            width: 80mm;
+            padding: 4px;
+          }
+          pre {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            line-height: 1.3;
+            white-space: pre;
+            margin: 0;
+            padding: 0;
+          }
+          @media print {
+            body {
+              width: 80mm;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <pre>${plainText}</pre>
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() {
+              window.close();
+            };
+          };
+        </script>
+      </body>
+      </html>
+    `;
+  };
+
+  // Alternative print method using window.open (for compatibility)
+  const printOrderPopup = useCallback(async (orderId: string) => {
+    if (isPrinting) {
+      console.log('Print already in progress');
+      return;
+    }
+
+    setIsPrinting(true);
+
+    try {
+      // Fetch order data
+      const data = await fetchOrderData(orderId);
+
+      if (!data) {
+        setIsPrinting(false);
+        return;
+      }
+
+      // Try local print server first
+      const serverAvailable = await printServerClient.checkAvailability();
+
+      if (serverAvailable) {
+        try {
+          const plainText = generatePlainTextReceipt(data);
+          const success = await printServerClient.print(plainText, data.order.order_number);
+
+          if (success) {
+            toast.success('Imprimindo pedido...');
+            setIsPrinting(false);
+            return;
+          } else {
+            console.log('Print server failed, falling back to browser print');
+            toast.warning('Servidor de impressão indisponível, usando navegador');
+          }
+        } catch (error) {
+          console.error('Print server error:', error);
+        }
+      }
+
+      // Fallback to browser printing via popup
+      const html = generateReceiptHTML(data);
+      const printWindow = window.open('', '_blank', 'width=302,height=600');
+
+      if (printWindow) {
+        printWindow.document.write(html);
+        printWindow.document.close();
+      } else {
+        toast.error('Não foi possível abrir janela de impressão');
+      }
+
+      setIsPrinting(false);
+    } catch (error) {
+      console.error('Error preparing print:', error);
+      toast.error('Erro ao preparar impressão');
+      setIsPrinting(false);
+    }
+  }, [isPrinting, fetchOrderData, generatePlainTextReceipt, generateReceiptHTML]);
+
+  // Main print function (uses react-to-print)
   const printOrder = useCallback(async (orderId: string) => {
     if (isPrinting) {
       console.log('Print already in progress');
@@ -226,6 +344,7 @@ export function usePrintOrder() {
 
   return {
     printOrder,
+    printOrderPopup,
     isPrinting,
     printRef,
     currentOrderData,
