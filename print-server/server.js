@@ -26,25 +26,47 @@ let device = null;
  */
 function initializePrinter() {
   try {
+    console.log('🔍 Searching for USB thermal printers...');
+    
     // Find USB printer
     const devices = escpos.USB.findPrinter();
     
+    console.log(`📍 Found ${devices.length} printer(s)`);
+    
     if (devices.length === 0) {
       console.log('⚠️  No USB thermal printer found');
+      console.log('   Make sure:');
+      console.log('   1. Printer is connected via USB');
+      console.log('   2. Printer is powered on');
+      console.log('   3. You have USB permissions (may need sudo on Mac/Linux)');
       return false;
     }
 
+    // Log all found printers
+    devices.forEach((d, i) => {
+      console.log(`   Printer ${i + 1}:`);
+      console.log(`     Vendor ID: ${d.deviceDescriptor.idVendor}`);
+      console.log(`     Product ID: ${d.deviceDescriptor.idProduct}`);
+    });
+
     // Use first available printer
+    console.log('🔌 Connecting to first printer...');
     device = new escpos.USB(devices[0].deviceDescriptor.idVendor, devices[0].deviceDescriptor.idProduct);
     printer = new escpos.Printer(device);
     
-    console.log('✅ Thermal printer connected');
-    console.log(`   Vendor ID: ${devices[0].deviceDescriptor.idVendor}`);
-    console.log(`   Product ID: ${devices[0].deviceDescriptor.idProduct}`);
+    console.log('✅ Thermal printer connected successfully');
+    console.log(`   Using: Vendor ${devices[0].deviceDescriptor.idVendor}, Product ${devices[0].deviceDescriptor.idProduct}`);
     
     return true;
   } catch (error) {
-    console.error('❌ Failed to initialize printer:', error.message);
+    console.error('❌ Failed to initialize printer:');
+    console.error('   Error:', error.message);
+    console.error('   Stack:', error.stack);
+    console.error('');
+    console.error('   Possible solutions:');
+    console.error('   - On Mac: Run with sudo or grant USB permissions');
+    console.error('   - Check if another app is using the printer');
+    console.error('   - Try unplugging and replugging the printer');
     return false;
   }
 }
@@ -93,7 +115,13 @@ app.post('/print', async (req, res) => {
   try {
     const { content, orderNumber } = req.body;
 
+    console.log('');
+    console.log('🖨️  Print request received');
+    console.log(`   Order: #${orderNumber || 'N/A'}`);
+    console.log(`   Content length: ${content ? content.length : 0} characters`);
+
     if (!content) {
+      console.log('❌ No content provided');
       return res.status(400).json({
         error: 'Missing content',
         message: 'Content is required for printing'
@@ -102,8 +130,10 @@ app.post('/print', async (req, res) => {
 
     // Try to initialize printer if not connected
     if (!printer) {
+      console.log('⚠️  Printer not initialized, attempting to connect...');
       const initialized = initializePrinter();
       if (!initialized) {
+        console.log('❌ Failed to initialize printer');
         return res.status(503).json({
           error: 'Printer not available',
           message: 'No thermal printer found. Please connect a USB thermal printer.'
@@ -111,10 +141,13 @@ app.post('/print', async (req, res) => {
       }
     }
 
+    console.log('📤 Opening printer device...');
+
     // Open device and print
     device.open(function(error) {
       if (error) {
-        console.error('Failed to open printer:', error);
+        console.error('❌ Failed to open printer device:');
+        console.error('   Error:', error.message);
         return res.status(500).json({
           error: 'Failed to open printer',
           message: error.message
@@ -122,6 +155,8 @@ app.post('/print', async (req, res) => {
       }
 
       try {
+        console.log('✍️  Sending content to printer...');
+        
         // Print the content
         printer
           .font('a')
@@ -132,7 +167,8 @@ app.post('/print', async (req, res) => {
           .cut()
           .close();
 
-        console.log(`✅ Printed order #${orderNumber || 'N/A'}`);
+        console.log(`✅ Successfully printed order #${orderNumber || 'N/A'}`);
+        console.log('');
         
         res.json({
           success: true,
@@ -140,7 +176,9 @@ app.post('/print', async (req, res) => {
           orderNumber
         });
       } catch (printError) {
-        console.error('Print error:', printError);
+        console.error('❌ Print error:');
+        console.error('   Error:', printError.message);
+        console.error('   Stack:', printError.stack);
         res.status(500).json({
           error: 'Print failed',
           message: printError.message
@@ -149,7 +187,9 @@ app.post('/print', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Print endpoint error:', error);
+    console.error('❌ Print endpoint error:');
+    console.error('   Error:', error.message);
+    console.error('   Stack:', error.stack);
     res.status(500).json({
       error: 'Internal server error',
       message: error.message
