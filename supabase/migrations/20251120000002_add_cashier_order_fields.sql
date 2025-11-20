@@ -27,8 +27,12 @@ WHERE cashier_id IS NOT NULL;
 -- Cashiers can view all orders (they already have this permission as admin)
 -- But we add a specific policy for clarity
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Cashiers can create orders" ON public.orders;
+DROP POLICY IF EXISTS "Cashiers can update their orders" ON public.orders;
+
 -- Allow cashiers to insert orders with their cashier_id
-CREATE POLICY IF NOT EXISTS "Cashiers can create orders"
+CREATE POLICY "Cashiers can create orders"
   ON public.orders
   FOR INSERT
   TO authenticated
@@ -44,7 +48,7 @@ CREATE POLICY IF NOT EXISTS "Cashiers can create orders"
   );
 
 -- Allow cashiers to update their own orders
-CREATE POLICY IF NOT EXISTS "Cashiers can update their orders"
+CREATE POLICY "Cashiers can update their orders"
   ON public.orders
   FOR UPDATE
   TO authenticated
