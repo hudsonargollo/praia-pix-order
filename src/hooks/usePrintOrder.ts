@@ -96,10 +96,72 @@ export function usePrintOrder() {
     }
   }, []);
 
-  // Generate HTML for receipt
-  const generateReceiptHTML = (data: PrintOrderData): string => {
+  // Generate plain text receipt for thermal printers
+  const generatePlainTextReceipt = (data: PrintOrderData): string => {
     const formatCurrency = (value: number) => {
-      // Format as "R$ 123.45" using simple string formatting
+      return `R$ ${value.toFixed(2).replace('.', ',')}`;
+    };
+
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    };
+
+    const divider = '================================';
+    const divider2 = '--------------------------------';
+    
+    let receipt = '';
+    receipt += '        COCO LOKO\n';
+    receipt += '       Acaiteria\n';
+    receipt += divider + '\n';
+    receipt += `Pedido: #${data.order.order_number}\n`;
+    receipt += `Data: ${formatDate(data.order.created_at)}\n`;
+    receipt += `Cliente: ${data.order.customer_name}\n`;
+    if (data.waiterName && data.waiterName !== 'Cliente') {
+      receipt += `Garcom: ${data.waiterName}\n`;
+    }
+    receipt += divider + '\n';
+    receipt += 'QTD  ITEM                  VALOR\n';
+    receipt += divider2 + '\n';
+    
+    data.items.forEach(item => {
+      const qty = `${item.quantity}x`.padEnd(5);
+      const price = formatCurrency(item.unit_price * item.quantity).padStart(10);
+      const nameWidth = 32 - qty.length - price.length;
+      let name = item.item_name;
+      if (name.length > nameWidth) {
+        name = name.substring(0, nameWidth - 3) + '...';
+      }
+      receipt += `${qty}${name.padEnd(nameWidth)}${price}\n`;
+    });
+    
+    receipt += divider2 + '\n';
+    
+    if (data.order.order_notes) {
+      receipt += 'OBSERVACOES:\n';
+      receipt += `${data.order.order_notes}\n`;
+      receipt += divider + '\n';
+    }
+    
+    receipt += `TOTAL: ${formatCurrency(data.order.total_amount)}\n`;
+    receipt += divider + '\n';
+    receipt += '  Obrigado pela preferencia!\n';
+    receipt += `  Tel: ${data.order.customer_phone}\n`;
+    receipt += '\n\n\n';
+    
+    return receipt;
+  };
+
+  // Generate HTML for receipt (for browser preview)
+  const generateReceiptHTML = (data: PrintOrderData): string => {
+    const plainText = generatePlainTextReceipt(data);
+    
+    const formatCurrency = (value: number) => {
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
     };
 
@@ -132,12 +194,20 @@ export function usePrintOrder() {
           }
           body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 11px;
+            line-height: 1.3;
             color: #000;
             background: #fff;
             width: 80mm;
-            padding: 8px;
+            padding: 4px;
+          }
+          pre {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            line-height: 1.3;
+            white-space: pre;
+            margin: 0;
+            padding: 0;
           }
           .header {
             text-align: center;
@@ -240,75 +310,7 @@ export function usePrintOrder() {
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="logo">
-            <h1>COCO LOKO</h1>
-            <p>Acaiteria</p>
-          </div>
-          <div class="divider">================================</div>
-        </div>
-
-        <div class="order-info">
-          <div class="row">
-            <span class="label">Pedido:</span>
-            <span>#${data.order.order_number}</span>
-          </div>
-          <div class="row">
-            <span class="label">Data:</span>
-            <span>${formatDate(data.order.created_at)}</span>
-          </div>
-          <div class="row">
-            <span class="label">Cliente:</span>
-            <span>${data.order.customer_name}</span>
-          </div>
-          ${data.waiterName && data.waiterName !== 'Cliente' ? `
-          <div class="row">
-            <span class="label">Garcom:</span>
-            <span>${data.waiterName}</span>
-          </div>
-          ` : ''}
-          <div class="divider">================================</div>
-        </div>
-
-        <div class="items">
-          <div class="items-header">
-            <span>QTD</span>
-            <span>ITEM</span>
-            <span>VALOR</span>
-          </div>
-          <div class="divider">--------------------------------</div>
-          ${data.items.map(item => `
-          <div class="item">
-            <span class="item-qty">${item.quantity}x</span>
-            <span class="item-name">${item.item_name}</span>
-            <span class="item-price">${formatCurrency(item.unit_price * item.quantity)}</span>
-          </div>
-          `).join('')}
-          <div class="divider">--------------------------------</div>
-        </div>
-
-        ${data.order.order_notes ? `
-        <div class="notes">
-          <div class="notes-label">OBSERVACOES:</div>
-          <div class="notes-text">${data.order.order_notes}</div>
-          <div class="divider">================================</div>
-        </div>
-        ` : ''}
-
-        <div class="total">
-          <div class="total-row">
-            <span>TOTAL:</span>
-            <span class="total-value">${formatCurrency(data.order.total_amount)}</span>
-          </div>
-        </div>
-
-        <div class="footer">
-          <div class="divider">================================</div>
-          <p class="thanks">Obrigado pela preferencia!</p>
-          <p class="contact">Tel: ${data.order.customer_phone}</p>
-          <br><br><br>
-        </div>
-
+        <pre>${plainText}</pre>
         <script>
           window.onload = function() {
             window.print();
