@@ -371,8 +371,8 @@ const Cashier = () => {
 
       if (error) throw error;
 
-      // Trigger WhatsApp payment confirmation notification
-      await notificationTriggers.onPaymentConfirmed(orderId);
+      // Note: WhatsApp notification is handled by database trigger
+      // No need to manually trigger it here to avoid duplicates
 
       toast.success("Pagamento confirmado! Pedido enviado para a cozinha.");
     } catch (error) {
