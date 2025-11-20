@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { notificationTriggers } from "@/integrations/whatsapp";
 import { useKitchenOrders } from "@/hooks/useRealtimeOrders";
 import { RealtimeNotifications, notificationUtils } from "@/components/RealtimeNotifications";
-import { ConnectionMonitor, useConnectionMonitor } from "@/components/ConnectionMonitor";
+import { ConnectionMonitor } from "@/components/ConnectionMonitor";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UniformHeader } from "@/components/UniformHeader";
 import { AutoPrintToggle } from "@/components/AutoPrintToggle";
@@ -15,17 +15,6 @@ import { OrderReceipt } from "@/components/printable/OrderReceipt";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { CheckCircle, Clock, ChefHat, Package, Bell, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import type { Order } from "@/integrations/supabase/realtime";
@@ -51,40 +40,37 @@ const Kitchen = () => {
   const [orders, setOrders] = useState<OrderWithWaiter[]>([]);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [loading, setLoading] = useState(true);
-  const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [processingOrders, setProcessingOrders] = useState<Set<string>>(new Set());
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Print functionality
   const { 
     printKitchenReceipt, 
-    printCustomerReceipt, 
     printRef, 
     currentOrderData, 
     receiptType,
     generateKitchenReceipt,
-    generateCustomerReceipt,
-    isPrinting: isPrintingReceipt 
+    generateCustomerReceipt
   } = usePrintOrder();
 
   // Auto-print functionality - prints kitchen receipt when order enters preparation
+  // Requirements: 2.1, 2.2, 2.3, 2.4
   const { isAutoPrintEnabled, toggleAutoPrint } = useAutoPrint({
     enabled: true,
     onPrint: (orderId) => {
-      console.log('Auto-printing kitchen receipt for order:', orderId);
+      console.log('[Kitchen] Auto-printing kitchen receipt for order:', orderId);
       printKitchenReceipt(orderId);
     },
     onError: (error) => {
-      console.error('Auto-print error:', error);
+      console.error('[Kitchen] Auto-print error:', error);
       toast.error('Erro na impressão automática');
     }
   });
 
   // Real-time order updates
+  // This subscription handles UI updates and notifications
+  // Auto-print is handled separately by useAutoPrint hook
   const handleNewPaidOrder = useCallback((order: Order) => {
-    console.log('New paid order received:', order);
-    setNewOrderIds(prev => new Set([...prev, order.id]));
+    console.log('[Kitchen] New paid order received:', order);
     
     // Show notification
     notificationUtils.paymentConfirmed(order.order_number, order.customer_name);
@@ -94,7 +80,7 @@ const Kitchen = () => {
   }, []);
 
   const handleOrderStatusChange = useCallback((order: Order) => {
-    console.log('Order status changed:', order);
+    console.log('[Kitchen] Order status changed:', order);
     
     // Update the order in the current list
     setOrders(prevOrders => 
@@ -113,19 +99,9 @@ const Kitchen = () => {
         notificationUtils.orderCompleted(order.order_number, order.customer_name);
         break;
     }
-    
-    // Remove from new orders set if status changed from paid
-    if (order.status !== 'paid') {
-      setNewOrderIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(order.id);
-        return newSet;
-      });
-    }
   }, []);
-
-  const { connectionStatus, reconnect } = useConnectionMonitor();
   
+  // Subscribe to kitchen orders for UI updates
   useKitchenOrders({
     onNewPaidOrder: handleNewPaidOrder,
     onOrderStatusChange: handleOrderStatusChange,
@@ -290,27 +266,6 @@ const Kitchen = () => {
     // Don't remove from processing set - keep button disabled
   };
 
-  const cancelOrder = async (orderId: string) => {
-    try {
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          status: "cancelled",
-        })
-        .eq("id", orderId);
-
-      if (error) throw error;
-
-      toast.success("Pedido cancelado!");
-      loadOrders(); // Reload to remove from view
-    } catch (error) {
-      console.error("Error cancelling order:", error);
-      toast.error("Erro ao cancelar pedido");
-    }
-  };
-
-
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -329,7 +284,7 @@ const Kitchen = () => {
     <div className="min-h-screen bg-background">
       <RealtimeNotifications 
         enabled={true}
-        soundEnabled={soundEnabled}
+        soundEnabled={true}
         showToasts={true}
       />
       <ConnectionMonitor />

@@ -359,25 +359,63 @@ const Cashier = () => {
 
   const confirmPaymentManually = async (orderId: string) => {
     try {
-      // Update order status to paid and send to kitchen
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          status: "in_preparation",
-          payment_status: "confirmed",
-          payment_confirmed_at: new Date().toISOString(),
-        })
-        .eq("id", orderId);
+      console.log('Confirming payment manually for order:', orderId);
+      
+      // Get Supabase URL for edge function call
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) {
+        throw new Error('Supabase URL not configured');
+      }
 
-      if (error) throw error;
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
 
-      // Note: WhatsApp notification is handled by database trigger
-      // No need to manually trigger it here to avoid duplicates
+      // Call centralized payment confirmation edge function
+      const response = await fetch(`${supabaseUrl}/functions/v1/confirm-payment`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          source: 'manual',
+        }),
+      });
 
-      toast.success("Pagamento confirmado! Pedido enviado para a cozinha.");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Payment confirmation failed');
+      }
+
+      console.log('Payment confirmed successfully:', result);
+
+      // Show success message
+      if (result.notificationSent) {
+        toast.success("✅ Pagamento confirmado! Pedido enviado para a cozinha e cliente notificado via WhatsApp.");
+      } else {
+        toast.success("✅ Pagamento confirmado! Pedido enviado para a cozinha.");
+        toast.info("ℹ️ Notificação WhatsApp não foi enviada (pode já ter sido enviada anteriormente).");
+      }
+
+      // Close payment dialog if open
+      setPaymentDialogOpen(false);
+      
     } catch (error) {
       console.error("Error confirming payment:", error);
-      toast.error("Erro ao confirmar pagamento");
+      
+      // Show user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(`❌ Erro ao confirmar pagamento: ${errorMessage}`);
     }
   };
 

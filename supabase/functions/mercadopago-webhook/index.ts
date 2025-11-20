@@ -83,49 +83,10 @@ serve(async (req) => {
     // This will be: credit_card, debit_card, pix, bank_transfer, ticket, account_money
     const paymentMethod = payment.payment_type_id || 'pix'; // Default to pix if not specified
 
-    // Initialize Supabase client with service role key
+    // Initialize Supabase client with service role key for logging
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Determine order status based on payment status
-    let orderStatus = 'pending_payment';
-    let paymentStatus = 'pending';
-    let paymentConfirmedAt = null;
-
-    if (payment.status === 'approved') {
-      orderStatus = 'paid';
-      paymentStatus = 'confirmed';
-      paymentConfirmedAt = new Date().toISOString();
-      console.log('Payment approved, updating order to paid via', paymentMethod);
-    } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
-      orderStatus = 'cancelled';
-      paymentStatus = 'failed';
-      console.log('Payment rejected/cancelled');
-    } else {
-      console.log('Payment status not final:', payment.status);
-    }
-
-    // Update order status with payment method
-    const { data: updatedOrder, error: updateError } = await supabase
-      .from('orders')
-      .update({
-        status: orderStatus,
-        payment_status: paymentStatus,
-        payment_confirmed_at: paymentConfirmedAt,
-        mercadopago_payment_id: paymentId,
-        payment_method: paymentMethod,
-      })
-      .eq('id', orderId)
-      .select()
-      .single();
-
-    if (updateError) {
-      console.error('Error updating order:', updateError);
-      throw updateError;
-    }
-
-    console.log('Order updated successfully:', updatedOrder);
 
     // Log webhook processing
     await supabase.from('payment_webhooks').insert({
@@ -142,23 +103,99 @@ serve(async (req) => {
       console.error('Error logging webhook:', err);
     });
 
-    // If payment approved, trigger notifications
+    // Handle payment status
     if (payment.status === 'approved') {
-      console.log('Payment approved, triggering notifications for order:', orderId);
+      console.log('Payment approved, calling centralized confirmation service');
       
-      // TODO: Trigger WhatsApp notification
-      // This would call your WhatsApp notification service
-    }
+      // Call the centralized confirm-payment edge function
+      try {
+        const confirmResponse = await fetch(`${supabaseUrl}/functions/v1/confirm-payment`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId,
+            source: 'mercadopago',
+            paymentMethod,
+            paymentId,
+          }),
+        });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Webhook processed successfully',
-        orderId,
-        status: orderStatus,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    );
+        if (!confirmResponse.ok) {
+          const errorData = await confirmResponse.json();
+          console.error('Payment confirmation failed:', errorData);
+          throw new Error(errorData.error || 'Payment confirmation failed');
+        }
+
+        const confirmResult = await confirmResponse.json();
+        console.log('Payment confirmation result:', confirmResult);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'Webhook processed successfully',
+            orderId,
+            status: 'in_preparation',
+            notificationSent: confirmResult.notificationSent,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+        );
+      } catch (confirmError) {
+        console.error('Error calling confirm-payment service:', confirmError);
+        
+        // Return error response
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: `Payment confirmation failed: ${confirmError.message}`,
+            orderId,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
+      }
+    } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
+      console.log('Payment rejected/cancelled, updating order status');
+      
+      // For rejected/cancelled payments, update directly (no notification needed)
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          status: 'cancelled',
+          payment_status: 'failed',
+          mercadopago_payment_id: paymentId,
+          payment_method: paymentMethod,
+        })
+        .eq('id', orderId);
+
+      if (updateError) {
+        console.error('Error updating order:', updateError);
+        throw updateError;
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Webhook processed successfully',
+          orderId,
+          status: 'cancelled',
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    } else {
+      console.log('Payment status not final:', payment.status);
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Webhook processed - payment status not final',
+          orderId,
+          status: payment.status,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
 
   } catch (error) {
     console.error('Error processing webhook:', error);

@@ -14,26 +14,38 @@ export class NotificationTriggerService {
    */
   async onOrderCreatedWithLinks(orderId: string, baseUrl: string): Promise<void> {
     try {
-      console.log('Order created with links trigger:', { orderId, baseUrl });
+      console.log('[NotificationTriggers] Order created with links trigger:', {
+        orderId,
+        baseUrl,
+        timestamp: new Date().toISOString(),
+      });
       
       // Get order data
       const orderData = await this.getOrderData(orderId);
       if (!orderData) {
-        console.error('Order not found for creation notification:', orderId);
+        console.error('[NotificationTriggers] Order not found for creation notification:', {
+          orderId,
+          timestamp: new Date().toISOString(),
+        });
         return;
       }
 
       // Check if notification was already sent to prevent duplicates
       const { data: existingNotifications } = await supabase
         .from('whatsapp_notifications')
-        .select('id')
+        .select('id, sent_at, dedupe_key')
         .eq('order_id', orderId)
         .eq('notification_type', 'order_created')
         .eq('status', 'sent')
         .limit(1);
 
       if (existingNotifications && existingNotifications.length > 0) {
-        console.log('Order creation notification already sent, skipping:', { orderId });
+        console.log('[NotificationTriggers] Order creation notification already sent, skipping:', {
+          orderId,
+          existingNotificationId: existingNotifications[0].id,
+          sentAt: existingNotifications[0].sent_at,
+          dedupeKey: existingNotifications[0].dedupe_key,
+        });
         return;
       }
 
@@ -64,10 +76,21 @@ export class NotificationTriggerService {
         customMessage: message,
       };
 
-      await queueManager.enqueue(notification);
-      console.log('Order creation notification queued:', { orderId });
+      const notificationId = await queueManager.enqueue(notification);
+      console.log('[NotificationTriggers] Order creation notification queued successfully:', {
+        orderId,
+        notificationId,
+        orderNumber: orderData.orderNumber,
+        customerName: orderData.customerName,
+        totalAmount: orderData.totalAmount,
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
-      console.error('Error triggering order creation notification:', error);
+      console.error('[NotificationTriggers] Error triggering order creation notification:', {
+        orderId,
+        error: error instanceof Error ? error.message : error,
+        timestamp: new Date().toISOString(),
+      });
       // Log error for tracking
       await errorLogger.logError(error as Error, {
         operation: 'trigger_order_creation',
@@ -83,12 +106,18 @@ export class NotificationTriggerService {
    */
   async onPaymentConfirmed(orderId: string): Promise<void> {
     try {
-      console.log('Payment confirmed trigger:', { orderId });
+      console.log('[NotificationTriggers] Payment confirmed trigger:', {
+        orderId,
+        timestamp: new Date().toISOString(),
+      });
       
       // Get order data
       const orderData = await this.getOrderData(orderId);
       if (!orderData) {
-        console.error('Order not found for payment confirmation notification:', orderId);
+        console.error('[NotificationTriggers] Order not found for payment confirmation notification:', {
+          orderId,
+          timestamp: new Date().toISOString(),
+        });
         return;
       }
 
@@ -96,7 +125,7 @@ export class NotificationTriggerService {
       const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data: recentNotifications } = await supabase
         .from('whatsapp_notifications')
-        .select('id, notification_type, sent_at')
+        .select('id, notification_type, sent_at, dedupe_key')
         .eq('order_id', orderId)
         .in('notification_type', ['order_created', 'payment_confirmed'])
         .eq('status', 'sent')
@@ -105,10 +134,13 @@ export class NotificationTriggerService {
         .limit(1);
 
       if (recentNotifications && recentNotifications.length > 0) {
-        console.log('Recent notification already sent, skipping payment confirmation:', { 
-          orderId, 
+        console.log('[NotificationTriggers] Recent notification already sent, skipping payment confirmation:', {
+          orderId,
+          recentNotificationId: recentNotifications[0].id,
           recentType: recentNotifications[0].notification_type,
-          sentAt: recentNotifications[0].sent_at
+          sentAt: recentNotifications[0].sent_at,
+          dedupeKey: recentNotifications[0].dedupe_key,
+          timeSinceLastNotification: `${Math.round((Date.now() - new Date(recentNotifications[0].sent_at).getTime()) / 1000)}s`,
         });
         return;
       }
@@ -122,10 +154,22 @@ export class NotificationTriggerService {
         orderDetails: orderData,
       };
 
-      await queueManager.enqueue(notification);
-      console.log('Payment confirmation notification queued:', { orderId });
+      const notificationId = await queueManager.enqueue(notification);
+      console.log('[NotificationTriggers] Payment confirmation notification queued successfully:', {
+        orderId,
+        notificationId,
+        orderNumber: orderData.orderNumber,
+        customerName: orderData.customerName,
+        paymentMethod: orderData.paymentMethod,
+        totalAmount: orderData.totalAmount,
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
-      console.error('Error triggering payment confirmation notification:', error);
+      console.error('[NotificationTriggers] Error triggering payment confirmation notification:', {
+        orderId,
+        error: error instanceof Error ? error.message : error,
+        timestamp: new Date().toISOString(),
+      });
       // Log error for tracking
       await errorLogger.logError(error as Error, {
         operation: 'trigger_payment_confirmation',

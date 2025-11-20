@@ -80,7 +80,11 @@ export class NotificationQueueManager {
       console.warn('Notification compliance warnings:', complianceCheck.warnings);
     }
 
-    // Insert into queue
+    // Generate dedupe key for tracking
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const dedupeKey = `${notification.orderId}:${notification.notificationType}:${today}`;
+
+    // Insert into queue with dedupe key
     const { data, error } = await supabase
       .from('whatsapp_notifications')
       .insert({
@@ -91,16 +95,28 @@ export class NotificationQueueManager {
         status: 'pending',
         attempts: 0,
         scheduled_at: new Date().toISOString(),
+        dedupe_key: dedupeKey,
       })
       .select()
       .single();
 
     if (error || !data) {
-      console.error('Failed to enqueue notification:', error);
+      console.error('[QueueManager] Failed to enqueue notification:', {
+        error: error?.message,
+        orderId: notification.orderId,
+        type: notification.notificationType,
+        dedupeKey,
+      });
       throw new Error(`Failed to enqueue notification: ${error?.message}`);
     }
 
-    console.log('Notification enqueued:', { id: data.id, orderId: notification.orderId, type: notification.notificationType });
+    console.log('[QueueManager] Notification enqueued successfully:', {
+      id: data.id,
+      orderId: notification.orderId,
+      type: notification.notificationType,
+      dedupeKey,
+      scheduledAt: data.scheduled_at,
+    });
     
     // Trigger immediate processing
     this.processPendingNotifications().catch(err => 
@@ -138,11 +154,22 @@ export class NotificationQueueManager {
       }
 
       if (!notifications || notifications.length === 0) {
-        console.log('No pending notifications to process');
+        console.log('[QueueManager] No pending notifications to process');
         return results;
       }
 
-      console.log(`Processing ${notifications.length} pending notifications`);
+      console.log(`[QueueManager] Processing batch:`, {
+        count: notifications.length,
+        batchSize: PROCESSING_CONFIG.batchSize,
+        maxConcurrent: PROCESSING_CONFIG.maxConcurrent,
+        notifications: notifications.map(n => ({
+          id: n.id,
+          orderId: n.order_id,
+          type: n.notification_type,
+          attempts: n.attempts,
+          scheduledAt: n.scheduled_at,
+        })),
+      });
 
       // Process notifications with concurrency limit
       for (let i = 0; i < notifications.length; i += PROCESSING_CONFIG.maxConcurrent) {
@@ -171,9 +198,18 @@ export class NotificationQueueManager {
         }
       }
 
-      console.log(`Processed ${results.length} notifications:`, {
-        successful: results.filter(r => r.success).length,
-        failed: results.filter(r => !r.success).length,
+      const successful = results.filter(r => r.success);
+      const failed = results.filter(r => !r.success);
+      
+      console.log(`[QueueManager] Batch processing complete:`, {
+        total: results.length,
+        successful: successful.length,
+        failed: failed.length,
+        successRate: results.length > 0 ? ((successful.length / results.length) * 100).toFixed(1) + '%' : '0%',
+        failedNotifications: failed.map(f => ({
+          id: f.notificationId,
+          error: f.error,
+        })),
       });
 
       return results;
@@ -227,18 +263,25 @@ export class NotificationQueueManager {
       const messageId = response.key?.id || 'unknown';
 
       // Mark as sent
+      const sentAt = new Date().toISOString();
       await supabase
         .from('whatsapp_notifications')
         .update({
           status: 'sent',
-          sent_at: new Date().toISOString(),
+          sent_at: sentAt,
           whatsapp_message_id: messageId,
         })
         .eq('id', notificationId);
 
-      console.log(`Notification ${notificationId} sent successfully to ${decryptedPhone}`, {
+      console.log(`[QueueManager] Notification sent successfully:`, {
+        notificationId,
+        orderId: notification.order_id,
+        type: notification.notification_type,
+        phone: decryptedPhone,
         messageId,
-        type: notification.notification_type
+        sentAt,
+        dedupeKey: notification.dedupe_key,
+        attempts: notification.attempts + 1,
       });
 
       return {
