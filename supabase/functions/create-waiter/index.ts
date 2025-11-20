@@ -143,12 +143,14 @@ serve(async (req) => {
     console.log('[create-waiter] Using admin API to create user')
 
     // Use Supabase Admin API to create user (proper way)
+    // IMPORTANT: Set role in user_metadata so the handle_new_user trigger creates profile with correct role
     const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: password,
       email_confirm: true,
       user_metadata: {
         full_name: full_name,
+        role: 'waiter', // This ensures the trigger creates profile with waiter role
       },
     })
 
@@ -204,24 +206,23 @@ serve(async (req) => {
       console.log('[create-waiter] ✅ Successfully added waiter role to user_roles')
     }
 
-    // Create profile with waiter role
+    // Update profile with waiter role (trigger may have already created it with customer role)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
+      .upsert({
         id: userId,
         role: 'waiter',
         full_name: full_name,
         phone_number: phone_number || null,
+      }, {
+        onConflict: 'id'
       })
 
     if (profileError) {
-      console.error('[create-waiter] Error creating profile:', profileError)
-      // If it's not a duplicate error, this is a problem
-      if (!profileError.message.includes('duplicate') && !profileError.message.includes('already exists')) {
-        console.error('[create-waiter] CRITICAL: Failed to create profile!')
-      }
+      console.error('[create-waiter] Error upserting profile:', profileError)
+      console.error('[create-waiter] CRITICAL: Failed to set waiter role in profile!')
     } else {
-      console.log('[create-waiter] ✅ Successfully created profile with waiter role')
+      console.log('[create-waiter] ✅ Successfully set waiter role in profile')
     }
 
     const data = { user_id: userId }
