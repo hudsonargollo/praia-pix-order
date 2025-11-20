@@ -25,11 +25,15 @@ SELECT 'Deleted WhatsApp notifications' as status;
 DELETE FROM payment_webhooks;
 SELECT 'Deleted payment webhooks' as status;
 
--- 4. Delete order items
+-- 4. Delete order audit logs
+DELETE FROM order_audit_log;
+SELECT 'Deleted order audit logs' as status;
+
+-- 5. Delete order items
 DELETE FROM order_items;
 SELECT 'Deleted order items' as status;
 
--- 5. Finally, delete all orders
+-- 6. Finally, delete all orders
 DELETE FROM orders;
 SELECT 'Deleted all orders' as status;
 
@@ -53,6 +57,11 @@ SELECT
   'Remaining WhatsApp chat messages:' as info,
   COUNT(*) as count 
 FROM whatsapp_chat_messages;
+
+SELECT 
+  'Remaining order audit logs:' as info,
+  COUNT(*) as count 
+FROM order_audit_log;
 
 -- Commit the transaction
 -- IMPORTANT: Review the output above before committing!
