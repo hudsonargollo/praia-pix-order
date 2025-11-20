@@ -22,23 +22,21 @@ interface PrintServerStatus {
 
 class PrintServerClient {
   private isAvailable: boolean | null = null;
-  private serverUrl: string = getServerUrl();
 
   /**
    * Set custom print server URL
    */
   setServerUrl(url: string): void {
-    this.serverUrl = url;
     if (typeof window !== 'undefined') {
       localStorage.setItem('print_server_url', url);
     }
   }
 
   /**
-   * Get current server URL
+   * Get current server URL (always fresh from localStorage)
    */
   getServerUrl(): string {
-    return this.serverUrl;
+    return getServerUrl();
   }
 
   /**
@@ -46,7 +44,8 @@ class PrintServerClient {
    */
   async checkAvailability(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.serverUrl}/health`, {
+      const serverUrl = this.getServerUrl();
+      const response = await fetch(`${serverUrl}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(1000), // 1 second timeout
       });
@@ -64,7 +63,8 @@ class PrintServerClient {
    */
   async getStatus(): Promise<PrintServerStatus | null> {
     try {
-      const response = await fetch(`${this.serverUrl}/status`, {
+      const serverUrl = this.getServerUrl();
+      const response = await fetch(`${serverUrl}/status`, {
         method: 'GET',
         signal: AbortSignal.timeout(2000),
       });
@@ -84,7 +84,12 @@ class PrintServerClient {
    */
   async print(content: string, orderNumber?: number): Promise<boolean> {
     try {
-      const response = await fetch(`${this.serverUrl}/print`, {
+      const serverUrl = this.getServerUrl();
+      console.log('[PrintServerClient] Attempting to print to:', serverUrl);
+      console.log('[PrintServerClient] Order number:', orderNumber);
+      console.log('[PrintServerClient] Content length:', content.length);
+      
+      const response = await fetch(`${serverUrl}/print`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,14 +102,15 @@ class PrintServerClient {
       });
 
       if (response.ok) {
+        console.log('[PrintServerClient] Print successful');
         return true;
       }
       
       const error = await response.json();
-      console.error('Print server error:', error);
+      console.error('[PrintServerClient] Print server error:', error);
       return false;
     } catch (error) {
-      console.error('Failed to print via print server:', error);
+      console.error('[PrintServerClient] Failed to print via print server:', error);
       return false;
     }
   }

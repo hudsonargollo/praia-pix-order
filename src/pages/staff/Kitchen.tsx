@@ -15,7 +15,7 @@ import { OrderReceipt } from "@/components/printable/OrderReceipt";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, ChefHat, Package, Bell, Loader2, User } from "lucide-react";
+import { CheckCircle, Clock, ChefHat, Package, Bell, Loader2, User, Printer } from "lucide-react";
 import { toast } from "sonner";
 import type { Order } from "@/integrations/supabase/realtime";
 
@@ -470,23 +470,33 @@ const Kitchen = () => {
                           <p className="text-xs text-yellow-700">{order.order_notes}</p>
                         </div>
                       )}
-                      <Button
-                        className="w-full"
-                        onClick={() => markAsReady(order.id)}
-                        disabled={processingOrders.has(order.id)}
-                      >
-                        {processingOrders.has(order.id) ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Marcando...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Marcar como Pronto
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => printKitchenReceipt(order.id)}
+                          className="flex-shrink-0"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          onClick={() => markAsReady(order.id)}
+                          disabled={processingOrders.has(order.id)}
+                        >
+                          {processingOrders.has(order.id) ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Marcando...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Marcar como Pronto
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </Card>
                   );
                 })

@@ -107,9 +107,230 @@ const PrintServerConfig = () => {
     }
   };
 
-  const downloadPrintServer = () => {
-    // In a real implementation, this would download the print-server folder as a zip
-    toast.info('Baixe o servidor de impressão do repositório do projeto');
+  const downloadFile = (filename: string, content: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadInstallScript = () => {
+    const content = `@echo off
+REM Coco Loko Print Server - Windows Service Installer
+
+echo.
+echo ========================================
+echo   Coco Loko Print Server
+echo   Windows Service Installer
+echo ========================================
+echo.
+
+REM Check for administrator privileges
+net session >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: This script requires administrator privileges!
+    echo.
+    echo Please right-click this file and select "Run as administrator"
+    echo.
+    pause
+    exit /b 1
+)
+
+echo Running with administrator privileges...
+echo.
+
+REM Check if Node.js is installed
+where node >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: Node.js is not installed!
+    echo.
+    echo Please install Node.js from: https://nodejs.org
+    echo Then run this script again.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo Node.js found: 
+node --version
+echo.
+
+REM Check if dependencies are installed
+if not exist "node_modules" (
+    echo Installing dependencies...
+    echo This may take a few minutes...
+    echo.
+    call npm install
+    if %ERRORLEVEL% NEQ 0 (
+        echo.
+        echo ERROR: Failed to install dependencies!
+        echo.
+        pause
+        exit /b 1
+    )
+    echo.
+    echo Dependencies installed successfully!
+    echo.
+)
+
+echo Installing Windows service...
+echo This may take a few moments...
+echo.
+
+REM Install the service
+node install-service.js
+
+echo.
+echo ========================================
+echo   Installation Complete!
+echo ========================================
+echo.
+echo The print server is now installed as a Windows service.
+echo It will start automatically when Windows starts.
+echo.
+echo To manage the service:
+echo   1. Press Win+R
+echo   2. Type: services.msc
+echo   3. Find "Coco Loko Print Server"
+echo   4. Right-click to Stop, Start, or Restart
+echo.
+echo To uninstall the service:
+echo   Run: uninstall-windows-service.bat
+echo.
+pause`;
+    
+    downloadFile('install-windows-service.bat', content);
+    toast.success('Script de instalação baixado!');
+  };
+
+  const downloadStartScript = () => {
+    const content = `@echo off
+REM Coco Loko Print Server - Windows Startup Script
+
+echo.
+echo ========================================
+echo   Coco Loko Print Server
+echo ========================================
+echo.
+
+REM Check if Node.js is installed
+where node >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: Node.js is not installed!
+    echo.
+    echo Please install Node.js from: https://nodejs.org
+    echo.
+    pause
+    exit /b 1
+)
+
+echo Node.js found: 
+node --version
+echo.
+
+REM Check if dependencies are installed
+if not exist "node_modules" (
+    echo Installing dependencies...
+    echo This may take a few minutes...
+    echo.
+    call npm install
+    echo.
+)
+
+echo Starting print server...
+echo.
+echo The server will run at: http://localhost:3001
+echo.
+echo Press Ctrl+C to stop the server
+echo.
+echo ========================================
+echo.
+
+REM Start the server
+node server.js
+
+pause`;
+    
+    downloadFile('start-server.bat', content);
+    toast.success('Script de inicialização baixado!');
+  };
+
+  const downloadGuide = () => {
+    const content = `# Guia de Instalação - Servidor de Impressão (Windows)
+
+## Requisitos
+
+- Windows 10 ou 11
+- Node.js 16 ou superior (baixe em: https://nodejs.org)
+- Impressora Térmica USB (compatível com ESC/POS)
+- Privilégios de Administrador
+
+## Passo 1: Instalar Node.js
+
+1. Acesse https://nodejs.org
+2. Baixe a versão LTS (recomendada)
+3. Execute o instalador
+4. Reinicie o computador
+
+## Passo 2: Baixar Arquivos do Servidor
+
+1. Baixe todos os arquivos do servidor de impressão
+2. Coloque em uma pasta permanente: C:\\CocoLoko\\print-server\\
+
+Arquivos necessários:
+- server.js
+- package.json
+- install-service.js
+- install-windows-service.bat (já baixado)
+- start-server.bat (já baixado)
+
+## Passo 3: Conectar a Impressora
+
+1. Conecte a impressora térmica via USB
+2. Ligue a impressora
+3. Aguarde o Windows reconhecer
+
+## Passo 4: Instalar como Serviço
+
+1. Clique com botão direito em install-windows-service.bat
+2. Selecione "Executar como administrador"
+3. Aguarde a instalação
+
+## Passo 5: Testar
+
+1. Abra o navegador
+2. Acesse: http://localhost:3001/health
+3. Deve mostrar: "status": "ok"
+
+## Gerenciar o Serviço
+
+Abrir Serviços do Windows:
+1. Pressione Win + R
+2. Digite: services.msc
+3. Procure "Coco Loko Print Server"
+
+## Solução de Problemas
+
+### Servidor não inicia
+- Verifique se Node.js está instalado
+- Execute como administrador
+- Verifique se a porta 3001 não está em uso
+
+### Impressora não detectada
+- Verifique conexão USB
+- Certifique-se que está ligada
+- Tente outra porta USB
+- Reinicie o serviço
+
+Para mais informações, acesse o repositório do projeto.`;
+    
+    downloadFile('GUIA_INSTALACAO.txt', content);
+    toast.success('Guia de instalação baixado!');
   };
 
   return (
@@ -121,6 +342,93 @@ const PrintServerConfig = () => {
 
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-4xl mx-auto space-y-6">
+          
+          {/* Quick Download Card */}
+          <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="h-5 w-5 text-purple-600" />
+                Download Rápido
+              </CardTitle>
+              <CardDescription>
+                Baixe os arquivos necessários para instalar o servidor de impressão
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Button 
+                  onClick={downloadInstallScript} 
+                  variant="outline"
+                  className="h-auto py-4 flex-col items-start bg-white hover:bg-purple-50"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Download className="h-4 w-4" />
+                    <span className="font-semibold">Script de Instalação</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    install-windows-service.bat
+                  </span>
+                </Button>
+                
+                <Button 
+                  onClick={downloadStartScript} 
+                  variant="outline"
+                  className="h-auto py-4 flex-col items-start bg-white hover:bg-purple-50"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <PlayCircle className="h-4 w-4" />
+                    <span className="font-semibold">Script de Teste</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    start-server.bat
+                  </span>
+                </Button>
+                
+                <Button 
+                  onClick={downloadGuide} 
+                  variant="outline"
+                  className="h-auto py-4 flex-col items-start bg-white hover:bg-purple-50"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Download className="h-4 w-4" />
+                    <span className="font-semibold">Guia de Instalação</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    GUIA_INSTALACAO.txt
+                  </span>
+                </Button>
+                
+                <Button 
+                  onClick={() => window.open('https://github.com/hudsonargollo/praia-pix-order/tree/main/print-server', '_blank')}
+                  variant="outline"
+                  className="h-auto py-4 flex-col items-start bg-white hover:bg-purple-50"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Download className="h-4 w-4" />
+                    <span className="font-semibold">Arquivos Completos</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    GitHub Repository
+                  </span>
+                </Button>
+              </div>
+              
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  <strong>Importante:</strong> Além dos scripts acima, você precisará baixar os arquivos server.js, package.json e install-service.js do{' '}
+                  <a 
+                    href="https://github.com/hudsonargollo/praia-pix-order/tree/main/print-server" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline font-semibold"
+                  >
+                    repositório GitHub
+                  </a>
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
           
           {/* Status Card */}
           <Card>
@@ -321,19 +629,40 @@ const PrintServerConfig = () => {
                   <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-700 font-bold">
                     2
                   </div>
-                  <div>
-                    <p className="font-medium">Baixe o Servidor de Impressão</p>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Copie a pasta <code className="bg-gray-100 px-1 rounded">print-server</code> do repositório do projeto
+                  <div className="flex-1">
+                    <p className="font-medium mb-2">Baixe os Arquivos de Instalação</p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Baixe os scripts necessários para instalar o servidor
                     </p>
-                    <Button 
-                      onClick={downloadPrintServer} 
-                      variant="outline" 
-                      size="sm"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Instruções de Download
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button 
+                        onClick={downloadInstallScript} 
+                        variant="outline" 
+                        size="sm"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        install-windows-service.bat
+                      </Button>
+                      <Button 
+                        onClick={downloadStartScript} 
+                        variant="outline" 
+                        size="sm"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        start-server.bat
+                      </Button>
+                      <Button 
+                        onClick={downloadGuide} 
+                        variant="outline" 
+                        size="sm"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Guia Completo
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Nota: Você também precisará dos arquivos server.js, package.json e install-service.js do repositório
+                    </p>
                   </div>
                 </div>
 
