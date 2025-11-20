@@ -315,6 +315,319 @@ The application requires these environment variables:
 
 **Important**: The `VITE_MERCADOPAGO_ACCESS_TOKEN` must be available in both frontend and backend environments for the credit card payment feature to work properly.
 
+## WhatsApp Webhook Configuration
+
+The application includes a two-way WhatsApp chat feature that requires webhook configuration in Evolution API.
+
+### Webhook URL Format
+
+Your webhook endpoint URL should be:
+
+```
+https://your-domain.pages.dev/api/whatsapp/webhook
+```
+
+Or with custom domain:
+
+```
+https://your-custom-domain.com/api/whatsapp/webhook
+```
+
+### Configuring Evolution API Webhook
+
+1. **Access Evolution API Admin Panel**
+   - Login to your Evolution API instance
+   - Navigate to the instance settings (e.g., "cocooo" instance)
+
+2. **Configure Webhook Settings**
+   - Find the "Webhook" or "Events" configuration section
+   - Set the webhook URL to your Cloudflare endpoint
+   - Enable the following events:
+     - ✅ `messages.upsert` - Required for incoming messages
+   - Disable or ignore other events (they will be filtered by the webhook)
+
+3. **Webhook Configuration Example**
+
+   ```json
+   {
+     "webhook": {
+       "url": "https://coco-loko-acaiteria.pages.dev/api/whatsapp/webhook",
+       "enabled": true,
+       "events": ["messages.upsert"]
+     }
+   }
+   ```
+
+4. **Environment Variables Required**
+
+   Ensure these are set in Cloudflare Pages:
+   - `SUPABASE_URL` - Your Supabase project URL
+   - `SUPABASE_SERVICE_ROLE_KEY` - Service role key (not anon key)
+   - `VITE_EVOLUTION_API_URL` - Evolution API base URL
+   - `VITE_EVOLUTION_API_KEY` - Evolution API key
+   - `VITE_EVOLUTION_INSTANCE_NAME` - Instance name (e.g., "cocooo")
+
+### Testing Webhook Delivery
+
+#### Method 1: Send Test Message from WhatsApp
+
+1. Create an active order with a customer phone number
+2. Send a WhatsApp message from that phone number
+3. Check the admin dashboard - message should appear in the order chat
+4. Audio notification should play when message arrives
+
+#### Method 2: Manual Webhook Test with curl
+
+```bash
+# Replace with your actual webhook URL
+WEBHOOK_URL="https://coco-loko-acaiteria.pages.dev/api/whatsapp/webhook"
+
+# Send test payload
+curl -X POST $WEBHOOK_URL \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event": "messages.upsert",
+    "instance": "cocooo",
+    "data": {
+      "key": {
+        "id": "test123",
+        "remoteJid": "5573999988888@s.whatsapp.net",
+        "fromMe": false
+      },
+      "message": {
+        "conversation": "Test message from webhook"
+      },
+      "messageTimestamp": 1700000000
+    }
+  }'
+```
+
+Expected response: `200 OK` with message "Webhook processed successfully"
+
+#### Method 3: Check Cloudflare Logs
+
+```bash
+# Monitor webhook activity in real-time
+wrangler tail --format pretty
+
+# Or view logs in Cloudflare Dashboard:
+# Dashboard > Workers & Pages > Your Project > Logs
+```
+
+### Webhook Payload Structure
+
+The webhook expects this payload format from Evolution API:
+
+```json
+{
+  "event": "messages.upsert",
+  "instance": "cocooo",
+  "data": {
+    "key": {
+      "id": "3EB0123456789ABCDEF",
+      "remoteJid": "5573999988888@s.whatsapp.net",
+      "fromMe": false
+    },
+    "message": {
+      "conversation": "Message text here"
+    },
+    "messageTimestamp": 1700000000
+  }
+}
+```
+
+**Key Fields:**
+- `event`: Must be "messages.upsert"
+- `data.key.remoteJid`: Customer's WhatsApp ID (phone@s.whatsapp.net)
+- `data.key.fromMe`: Must be `false` (inbound messages only)
+- `data.message.conversation`: Message text content
+- `data.message.extendedTextMessage.text`: Alternative message text location
+
+### How Webhook Processing Works
+
+1. **Receives Message** - Evolution API sends webhook when customer sends message
+2. **Extracts Phone** - Parses phone number from `remoteJid` (e.g., "5573999988888@s.whatsapp.net" → "5573999988888")
+3. **Finds Active Orders** - Queries database for orders with matching `customer_phone` and status NOT 'completed' or 'cancelled'
+4. **Selects Most Recent** - If multiple active orders exist, associates with the newest one
+5. **Stores Message** - Inserts into `whatsapp_chat_messages` table with `direction='inbound'`
+6. **Real-time Broadcast** - Supabase notifies connected admin clients
+7. **Ignores if No Match** - Messages without active orders are not stored
+
+### Verifying Webhook Deployment
+
+After deploying to Cloudflare Pages, verify the webhook is accessible:
+
+**1. Check Function Deployment**
+```bash
+# View deployed functions in Cloudflare Dashboard
+# Navigate to: Workers & Pages > Your Project > Functions
+# Verify: /api/whatsapp/webhook is listed
+```
+
+**2. Run Automated Tests**
+```bash
+# Test webhook endpoint
+node scripts/test-whatsapp-webhook.js
+
+# Expected: 6/6 tests passed
+# If tests fail with 405 errors, function is not deployed
+```
+
+**3. Manual Verification**
+```bash
+# Quick test with curl
+curl -X POST https://your-domain.pages.dev/api/whatsapp/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"event":"messages.upsert","data":{"key":{"remoteJid":"5573999988888@s.whatsapp.net","fromMe":false},"message":{"conversation":"test"}}}'
+
+# Expected: 200 OK with JSON response
+# If 405: Function not deployed or routing issue
+```
+
+**4. Check Cloudflare Logs**
+```bash
+# Monitor webhook activity
+wrangler tail --format pretty
+
+# Or view in dashboard:
+# Cloudflare Dashboard > Workers & Pages > Your Project > Logs
+```
+
+### Webhook Response Codes
+
+| Code | Status | Description |
+|------|--------|-------------|
+| 200 | Success | Message processed and stored successfully |
+| 200 | Ignored | Event ignored (outbound message, no active order, etc.) |
+| 400 | Bad Request | Invalid payload structure or missing required fields |
+| 405 | Method Not Allowed | Non-POST request received |
+| 500 | Server Error | Database error or processing failure |
+
+### Troubleshooting Webhook Issues
+
+#### Messages Not Appearing in Admin UI
+
+**Symptoms:**
+- Customer sends WhatsApp message
+- Message doesn't appear in order chat panel
+- No audio notification plays
+
+**Solutions:**
+1. Verify webhook is configured in Evolution API with correct URL
+2. Check customer has an active order (not completed/cancelled)
+3. Verify phone number in order matches WhatsApp sender
+4. Check Cloudflare Functions logs for webhook errors
+5. Ensure `SUPABASE_SERVICE_ROLE_KEY` is set (not anon key)
+6. Verify `whatsapp_chat_messages` table exists in database
+
+**Debug Steps:**
+```bash
+# Check webhook logs
+wrangler tail --format pretty | grep webhook
+
+# Test webhook manually
+curl -X POST https://your-domain.pages.dev/api/whatsapp/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"event":"messages.upsert","data":{"key":{"remoteJid":"5573999988888@s.whatsapp.net","fromMe":false},"message":{"conversation":"test"}}}'
+
+# Check database for messages
+# Run in Supabase SQL Editor:
+SELECT * FROM whatsapp_chat_messages 
+ORDER BY created_at DESC 
+LIMIT 10;
+```
+
+#### Webhook Returns 500 Error
+
+**Symptoms:**
+- Webhook logs show 500 Internal Server Error
+- Messages not being stored
+
+**Solutions:**
+1. Check `SUPABASE_SERVICE_ROLE_KEY` is set correctly
+2. Verify database table exists: `whatsapp_chat_messages`
+3. Check RLS policies allow service role inserts
+4. Review Cloudflare Functions logs for detailed error
+5. Verify Supabase project is accessible
+
+#### Phone Number Not Matching
+
+**Symptoms:**
+- Webhook processes but says "No active orders found"
+- Customer has active order but message not associated
+
+**Solutions:**
+1. Check phone number format in orders table
+2. Verify normalization removes all non-digits
+3. Ensure `customer_phone` field is populated
+4. Check for country code differences
+5. Review webhook logs for extracted phone number
+
+**Debug Steps:**
+```sql
+-- Check order phone format
+SELECT id, customer_phone, status, created_at
+FROM orders
+WHERE customer_phone LIKE '%999988888%'
+ORDER BY created_at DESC;
+
+-- Verify active orders
+SELECT id, customer_phone, status
+FROM orders
+WHERE status NOT IN ('completed', 'cancelled')
+  AND customer_phone IS NOT NULL
+ORDER BY created_at DESC;
+```
+
+#### Multiple Orders for Same Phone
+
+**Behavior:**
+- Webhook associates message with most recently created active order
+- This is expected behavior
+
+**To verify:**
+```sql
+-- Check multiple orders for same phone
+SELECT id, customer_phone, status, created_at
+FROM orders
+WHERE customer_phone = '5573999988888'
+  AND status NOT IN ('completed', 'cancelled')
+ORDER BY created_at DESC;
+```
+
+### Security Considerations
+
+- Webhook validates payload structure before processing
+- Uses service role key for database access (not exposed to client)
+- RLS policies enforce data access rules
+- Consider adding webhook signature verification for production
+- Rate limiting handled by Cloudflare automatically
+
+### Monitoring Webhook Activity
+
+**Key Log Messages to Monitor:**
+
+```
+✅ "Received webhook: messages.upsert" - Webhook received
+✅ "Extracted phone number: 5573999988888" - Phone parsed
+✅ "Found X orders for phone" - Orders found
+✅ "Found X active orders" - Active orders filtered
+✅ "Associating message with order: xxx" - Order selected
+✅ "Message stored successfully: xxx" - Message saved
+ℹ️  "No active orders found, ignoring message" - Expected when no active orders
+ℹ️  "Ignoring outbound message" - Expected for staff messages
+```
+
+**Error Messages to Watch:**
+
+```
+❌ "Invalid payload structure" - Check Evolution API configuration
+❌ "Database error" - Check Supabase connection and credentials
+❌ "Failed to store message" - Check RLS policies and table schema
+```
+
+For detailed webhook setup instructions, see: `functions/api/whatsapp/WEBHOOK_SETUP.md`
+
 ## Supabase Edge Functions
 
 The application uses several Supabase Edge Functions for backend operations:

@@ -40,19 +40,20 @@ This feature enables a two-way WhatsApp chat interface embedded directly within 
 2. THE System SHALL query the orders table for records where customer_phone matches the normalized sender phone number
 3. THE System SHALL filter results to include only Active Orders
 4. WHERE multiple orders match the phone number, THE System SHALL associate the message with the most recently created order
-5. IF no active order matches, THEN THE System SHALL store the message with a null order_id for future reference
+5. IF no active order matches, THEN THE System SHALL ignore and not store the message
 
 ### Requirement 3
 
-**User Story:** As a staff member, I want to see new messages appear instantly, so that I can respond to customers in real-time.
+**User Story:** As a staff member, I want to see new messages appear instantly with audio notification, so that I can respond to customers in real-time.
 
 #### Acceptance Criteria
 
 1. WHEN a new chat message is inserted into the database, THE System SHALL broadcast a real-time event to subscribed clients
 2. THE System SHALL update the chat timeline immediately upon receiving a real-time event without requiring page refresh
 3. WHEN an order has unread incoming messages, THE System SHALL display a visual indicator (badge or icon) on the Order Card in the dashboard
-4. THE System SHALL maintain real-time subscription while the Order Details View is open
-5. THE System SHALL clean up subscriptions when the Order Details View is closed
+4. WHEN a new inbound message arrives for an active order, THE System SHALL play an audio notification sound
+5. THE System SHALL maintain real-time subscription while the Order Details View is open
+6. THE System SHALL clean up subscriptions when the Order Details View is closed
 
 ### Requirement 4
 
@@ -80,7 +81,7 @@ This feature enables a two-way WhatsApp chat interface embedded directly within 
 
 ### Requirement 6
 
-**User Story:** As a developer, I want chat messages stored separately from system notifications, so that the data model remains clean and maintainable.
+**User Story:** As a developer, I want chat messages stored separately from system notifications and only for active orders, so that the data model remains clean and maintainable.
 
 #### Acceptance Criteria
 
@@ -89,6 +90,7 @@ This feature enables a two-way WhatsApp chat interface embedded directly within 
 3. THE System SHALL define message_direction enum with values 'inbound' and 'outbound'
 4. THE System SHALL define message_status enum with values 'pending', 'sent', 'delivered', 'read', 'failed'
 5. THE System SHALL create indexes on phone_number, order_id, and created_at columns for query performance
+6. THE System SHALL only store messages that are associated with active orders
 
 ### Requirement 7
 

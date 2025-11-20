@@ -15,13 +15,15 @@ interface CompactOrderCardProps {
   onViewDetails?: () => void;
   onNotify?: () => void;
   formatTimeWithAMPM: (timestamp: string) => string;
+  unreadMessageCount?: number;
 }
 
 export const CompactOrderCard = ({ 
   order, 
   onViewDetails, 
   onNotify,
-  formatTimeWithAMPM 
+  formatTimeWithAMPM,
+  unreadMessageCount = 0
 }: CompactOrderCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { 
@@ -58,6 +60,16 @@ export const CompactOrderCard = ({
               showBoth={false}
               compact={true}
             />
+            {unreadMessageCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="h-5 px-1.5 text-xs font-semibold animate-pulse"
+                title={`${unreadMessageCount} mensagem${unreadMessageCount > 1 ? 'ns' : ''} não lida${unreadMessageCount > 1 ? 's' : ''}`}
+              >
+                <MessageSquare className="h-3 w-3 mr-1" />
+                {unreadMessageCount}
+              </Badge>
+            )}
           </div>
           <p className="text-sm font-medium text-gray-700 truncate">
             {order.customer_name}

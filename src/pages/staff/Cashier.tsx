@@ -4,6 +4,7 @@ import { notificationTriggers } from "@/integrations/whatsapp";
 import { useCashierOrders } from "@/hooks/useRealtimeOrders";
 import { useNotificationHistory } from "@/hooks/useNotificationHistory";
 import { useWhatsAppErrors } from "@/hooks/useWhatsAppErrors";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { RealtimeNotifications, notificationUtils } from "@/components/RealtimeNotifications";
 import { ConnectionMonitor, useConnectionMonitor } from "@/components/ConnectionMonitor";
 import { NotificationControls } from "@/components/NotificationControls";
@@ -47,7 +48,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Eye, Edit, BarChart3, X, Users, Plus } from "lucide-react";
+import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Eye, Edit, BarChart3, X, Users, Plus, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { Order } from "@/integrations/supabase/realtime";
@@ -93,6 +94,9 @@ const Cashier = () => {
   
   // Load WhatsApp errors for all orders
   const { errors: whatsappErrors, refresh: refreshErrors } = useWhatsAppErrors(orderIds);
+
+  // Track unread messages for all orders
+  const { unreadCounts, markAsRead } = useUnreadMessages(orderIds);
 
   // Persist waiter filter selection to localStorage
   useEffect(() => {
@@ -498,6 +502,12 @@ const Cashier = () => {
     }
   };
 
+  const openEditDialog = (orderId: string) => {
+    setEditingOrderId(orderId);
+    setIsEditDialogOpen(true);
+    markAsRead(orderId);
+  };
+
   const softDeleteOrder = async (orderId: string) => {
     try {
       const { error } = await supabase
@@ -843,9 +853,21 @@ const Cashier = () => {
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft">
                     {/* Order Number + Status Badges */}
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <h3 className="font-bold text-base sm:text-xl text-gray-900">
-                        Pedido #{order.order_number}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-base sm:text-xl text-gray-900">
+                          Pedido #{order.order_number}
+                        </h3>
+                        {(unreadCounts.get(order.id) || 0) > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="h-5 px-1.5 text-xs font-semibold animate-pulse"
+                            title={`${unreadCounts.get(order.id)} mensagem${(unreadCounts.get(order.id) || 0) > 1 ? 'ns' : ''} não lida${(unreadCounts.get(order.id) || 0) > 1 ? 's' : ''}`}
+                          >
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            {unreadCounts.get(order.id)}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex gap-1.5 items-center flex-wrap justify-end">
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-1 whitespace-nowrap">
                           Criado em: {formatTimeWithAMPM(order.created_at)}
@@ -910,10 +932,7 @@ const Cashier = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            setEditingOrderId(order.id);
-                            setIsEditDialogOpen(true);
-                          }}
+                          onClick={() => openEditDialog(order.id)}
                           className="flex-1"
                         >
                           <Edit className="mr-2 h-4 w-4" />
@@ -1040,9 +1059,21 @@ const Cashier = () => {
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft">
                     {/* Order Number + Status Badges */}
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <h3 className="font-bold text-base sm:text-xl text-gray-900">
-                        Pedido #{order.order_number}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-base sm:text-xl text-gray-900">
+                          Pedido #{order.order_number}
+                        </h3>
+                        {(unreadCounts.get(order.id) || 0) > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="h-5 px-1.5 text-xs font-semibold animate-pulse"
+                            title={`${unreadCounts.get(order.id)} mensagem${(unreadCounts.get(order.id) || 0) > 1 ? 'ns' : ''} não lida${(unreadCounts.get(order.id) || 0) > 1 ? 's' : ''}`}
+                          >
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            {unreadCounts.get(order.id)}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex gap-1.5 items-center flex-wrap justify-end">
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-1 whitespace-nowrap">
                           Criado em: {formatTimeWithAMPM(order.created_at)}
@@ -1110,10 +1141,7 @@ const Cashier = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            setEditingOrderId(order.id);
-                            setIsEditDialogOpen(true);
-                          }}
+                          onClick={() => openEditDialog(order.id)}
                           className="flex-1"
                         >
                           <Edit className="mr-2 h-4 w-4" />
@@ -1242,9 +1270,21 @@ const Cashier = () => {
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-green-500">
                     {/* Order Number + Status Badges */}
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <h3 className="font-bold text-base sm:text-xl text-gray-900">
-                        Pedido #{order.order_number}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-base sm:text-xl text-gray-900">
+                          Pedido #{order.order_number}
+                        </h3>
+                        {(unreadCounts.get(order.id) || 0) > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="h-5 px-1.5 text-xs font-semibold animate-pulse"
+                            title={`${unreadCounts.get(order.id)} mensagem${(unreadCounts.get(order.id) || 0) > 1 ? 'ns' : ''} não lida${(unreadCounts.get(order.id) || 0) > 1 ? 's' : ''}`}
+                          >
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            {unreadCounts.get(order.id)}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex gap-1.5 items-center flex-wrap justify-end">
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-1 whitespace-nowrap">
                           Criado em: {formatTimeWithAMPM(order.created_at)}
@@ -1324,10 +1364,7 @@ const Cashier = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            setEditingOrderId(order.id);
-                            setIsEditDialogOpen(true);
-                          }}
+                          onClick={() => openEditDialog(order.id)}
                           className="flex-1"
                         >
                           <Edit className="mr-2 h-4 w-4" />
@@ -1417,9 +1454,21 @@ const Cashier = () => {
                   <Card key={order.id} className="p-3 sm:p-6 shadow-soft border-l-4 border-l-purple-500">
                     {/* Order Number + Status Badges */}
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <h3 className="font-bold text-base sm:text-xl text-gray-900">
-                        Pedido #{order.order_number}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-base sm:text-xl text-gray-900">
+                          Pedido #{order.order_number}
+                        </h3>
+                        {(unreadCounts.get(order.id) || 0) > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="h-5 px-1.5 text-xs font-semibold animate-pulse"
+                            title={`${unreadCounts.get(order.id)} mensagem${(unreadCounts.get(order.id) || 0) > 1 ? 'ns' : ''} não lida${(unreadCounts.get(order.id) || 0) > 1 ? 's' : ''}`}
+                          >
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            {unreadCounts.get(order.id)}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex gap-1.5 items-center flex-wrap justify-end">
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs px-2 py-1 whitespace-nowrap">
                           Criado em: {formatTimeWithAMPM(order.created_at)}

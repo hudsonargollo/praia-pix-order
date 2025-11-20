@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Minus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { OrderChatPanel } from "@/components/OrderChatPanel";
 
 interface OrderItem {
   id: string;
@@ -44,9 +45,11 @@ export function OrderEditDialog({
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [customerPhone, setCustomerPhone] = useState<string>("");
 
   useEffect(() => {
     if (open && orderId) {
+      loadOrderData();
       loadOrderItems();
       loadMenuItems();
     } else if (!open) {
@@ -54,10 +57,29 @@ export function OrderEditDialog({
       setTimeout(() => {
         setItems([]);
         setMenuItems([]);
+        setCustomerPhone("");
         setLoading(false);
       }, 200);
     }
   }, [open, orderId]);
+
+  const loadOrderData = async () => {
+    if (!orderId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("customer_phone")
+        .eq("id", orderId)
+        .single();
+
+      if (error) throw error;
+      setCustomerPhone(data?.customer_phone || "");
+    } catch (error) {
+      console.error("Error loading order data:", error);
+      toast.error("Erro ao carregar dados do pedido");
+    }
+  };
 
   const loadOrderItems = async () => {
     if (!orderId) return;
@@ -252,7 +274,7 @@ export function OrderEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 gap-0">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-purple-600 to-indigo-600">
           <DialogTitle className="text-2xl font-bold text-white">✏️ Editar Pedido</DialogTitle>
         </DialogHeader>
@@ -263,7 +285,9 @@ export function OrderEditDialog({
             <p>Carregando...</p>
           </div>
         ) : (
-          <div className="px-6 py-4 space-y-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-6 py-4 overflow-y-auto max-h-[calc(90vh-200px)]">
+            {/* Left Column: Order Items */}
+            <div className="space-y-6">
             {/* Current Items */}
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-3">📋 Itens do Pedido</h3>
@@ -364,6 +388,18 @@ export function OrderEditDialog({
                 <span className="text-xl font-bold text-white">💰 Total:</span>
                 <span className="text-3xl font-bold text-white">R$ {totalAmount.toFixed(2)}</span>
               </div>
+            </div>
+            </div>
+
+            {/* Right Column: Chat Panel */}
+            <div className="flex flex-col h-full min-h-[500px]">
+              {orderId && customerPhone ? (
+                <OrderChatPanel orderId={orderId} customerPhone={customerPhone} />
+              ) : (
+                <div className="flex items-center justify-center h-full bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  <p className="text-gray-400 text-sm">Carregando chat...</p>
+                </div>
+              )}
             </div>
           </div>
         )}

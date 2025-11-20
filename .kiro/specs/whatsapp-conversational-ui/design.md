@@ -107,7 +107,8 @@ interface WebhookPayload {
 // 2. Normalize by removing non-digits
 // 3. Query orders table for active orders with matching customer_phone
 // 4. If multiple matches, select most recently created order
-// 5. If no match, store with null order_id
+// 5. If no match, ignore message (do not store)
+// 6. Only store messages that have an associated active order
 ```
 
 **Environment Variables:**
@@ -198,6 +199,7 @@ interface OrderChatPanelProps {
 - Visual distinction between message types
 - Timestamp display
 - Message status indicators (sent, delivered, read)
+- Audio notification on new inbound messages
 - Loading states
 - Error handling
 
@@ -276,13 +278,14 @@ interface UnifiedMessage {
 - Missing phone number
 - Database connection failure
 - Order lookup failure
+- No active order found for phone number
 
 **Strategy:**
-- Return 200 OK for ignorable events (outbound messages, non-message events)
+- Return 200 OK for ignorable events (outbound messages, non-message events, no active order)
 - Return 400 Bad Request for invalid payloads
 - Return 500 Internal Server Error for system failures
-- Log all errors for debugging
-- Store messages with null `order_id` if no match found (graceful degradation)
+- Log all events for debugging
+- Do not store messages if no active order is found (only listen to customers with active orders)
 
 ### Frontend Errors
 
@@ -342,13 +345,15 @@ interface UnifiedMessage {
 ### Manual Testing
 
 **Test Cases:**
-1. Send message from customer WhatsApp → Verify appears in admin UI
+1. Send message from customer WhatsApp with active order → Verify appears in admin UI with audio notification
 2. Send reply from admin UI → Verify customer receives on WhatsApp
 3. Multiple active orders for same phone → Verify associates with most recent
-4. No active orders for phone → Verify message stored with null order_id
-5. Real-time updates → Open order on multiple devices, verify sync
-6. Unread message indicator → Verify badge appears on order card
-7. Message status updates → Verify delivery/read receipts
+4. No active orders for phone → Verify message is ignored (not stored)
+5. Order completed → Send message from customer → Verify message is ignored
+6. Real-time updates → Open order on multiple devices, verify sync
+7. Unread message indicator → Verify badge appears on order card
+8. Message status updates → Verify delivery/read receipts
+9. Audio notification → Verify sound plays only for inbound messages on active orders
 
 ### Performance Testing
 
