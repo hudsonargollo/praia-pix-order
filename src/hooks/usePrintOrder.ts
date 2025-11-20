@@ -156,7 +156,7 @@ export function usePrintOrder() {
     receipt += divider + '\n';
     receipt += '  Obrigado pela preferencia!\n';
     receipt += `  Tel: ${data.order.customer_phone}\n`;
-    receipt += '\n\n\n';
+    receipt += '\n\n\n\n\n\n\n\n';
     
     return receipt;
   };
