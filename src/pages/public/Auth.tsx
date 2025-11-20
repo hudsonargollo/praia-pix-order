@@ -43,46 +43,61 @@ const Auth = () => {
       const { data: { user } } = await supabase.auth.getUser();
       let role = user?.user_metadata?.role || user?.app_metadata?.role;
       
-      console.log('🔵 LATEST AUTH CODE v2.1 LOADED! User role:', role);
-      console.log('🔵 User metadata:', user?.user_metadata);
-      console.log('🔵 App metadata:', user?.app_metadata);
+      console.log('🔵 AUTH v3.0 - User role from metadata:', role);
       console.log('🔵 User ID:', user?.id);
       console.log('🔵 User email:', user?.email);
       
-      // If no role in metadata, try RPC function
-      if (!role && user?.id) {
-        console.log('🔵 No role in metadata, trying RPC function...');
+      // Always try to get role from database (most reliable)
+      if (user?.id) {
+        console.log('🔵 Fetching role from profiles table...');
         try {
-          const { data: rpcRole, error: rpcError } = await (supabase.rpc as any)('get_user_role', {
-            user_id: user.id
-          });
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
           
-          if (!rpcError && rpcRole) {
-            role = rpcRole;
-            console.log('🔵 Got role from RPC:', role);
+          if (!profileError && profileData?.role) {
+            role = profileData.role;
+            console.log('🔵 Got role from profiles table:', role);
           } else {
-            console.log('🔵 RPC error or no role:', rpcError);
+            console.log('🔵 Profile query error or no role:', profileError);
+            
+            // Try RPC function as fallback
+            console.log('🔵 Trying RPC function...');
+            const { data: rpcRole, error: rpcError } = await (supabase.rpc as any)('get_user_role', {
+              user_id: user.id
+            });
+            
+            if (!rpcError && rpcRole) {
+              role = rpcRole;
+              console.log('🔵 Got role from RPC:', role);
+            } else {
+              console.log('🔵 RPC error or no role:', rpcError);
+            }
           }
-        } catch (rpcErr) {
-          console.log('🔵 RPC call failed:', rpcErr);
+        } catch (err) {
+          console.log('🔵 Database query failed:', err);
         }
       }
       
       // Redirect based on role
+      console.log('🔵 Final role for redirect:', role);
+      
       if (role === 'waiter') {
-        console.log('🔵 Redirecting waiter to dashboard');
+        console.log('✅ Redirecting waiter to dashboard');
         navigate("/waiter-dashboard", { replace: true });
       } else if (role === 'kitchen') {
-        console.log('🔵 Redirecting to kitchen');
+        console.log('✅ Redirecting to kitchen');
         navigate("/kitchen", { replace: true });
       } else if (role === 'cashier') {
-        console.log('🔵 Redirecting to cashier');
+        console.log('✅ Redirecting to cashier');
         navigate("/cashier", { replace: true });
       } else if (role === 'admin') {
-        console.log('🔵 Redirecting to admin');
+        console.log('✅ Redirecting to admin');
         navigate("/admin", { replace: true });
       } else {
-        console.log('🔵 Unknown role, defaulting to admin. Role was:', role);
+        console.log('⚠️  No role found, defaulting to admin. Role was:', role);
         // Default to admin for unknown roles
         navigate("/admin", { replace: true });
       }
