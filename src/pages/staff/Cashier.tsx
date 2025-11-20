@@ -11,6 +11,7 @@ import { WhatsAppErrorIndicator } from "@/components/WhatsAppErrorIndicator";
 import { OrderDetailsDialog } from "@/components/OrderDetailsDialog";
 import { OrderEditDialog } from "@/components/OrderEditDialog";
 import { OrderCardInfo } from "@/components/OrderCardInfo";
+import { PaymentConfirmationDialog } from "@/components/PaymentConfirmationDialog";
 import { CompactOrderCard } from "@/components/CompactOrderCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UniformHeader } from "@/components/UniformHeader";
@@ -76,6 +77,13 @@ const Cashier = () => {
     const saved = localStorage.getItem('cashier_waiter_filter');
     return saved || null;
   });
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentDialogData, setPaymentDialogData] = useState<{
+    orderId: string;
+    status: string;
+    message: string;
+    canConfirmManually: boolean;
+  } | null>(null);
 
   const [waiters, setWaiters] = useState<WaiterInfo[]>([]);
   
@@ -296,9 +304,13 @@ const Cashier = () => {
       if (orderError || !order?.mercadopago_payment_id) {
         toast.dismiss();
         // No payment ID, offer manual confirmation
-        if (window.confirm("Não foi possível verificar o pagamento automaticamente. O cliente pagou em dinheiro ou outro método? Deseja confirmar manualmente?")) {
-          await confirmPaymentManually(orderId);
-        }
+        setPaymentDialogData({
+          orderId,
+          status: 'no_payment_id',
+          message: 'Não foi possível verificar o pagamento automaticamente. O pedido não possui um PIX associado.',
+          canConfirmManually: true,
+        });
+        setPaymentDialogOpen(true);
         return;
       }
 
@@ -309,29 +321,39 @@ const Cashier = () => {
       toast.dismiss();
 
       if (paymentStatus.status === 'approved') {
-        // Payment approved, confirm it
+        // Payment approved, confirm it automatically
         await confirmPaymentManually(orderId);
         toast.success("✅ Pagamento verificado e confirmado!");
       } else if (paymentStatus.status === 'pending') {
         // Still pending
-        if (window.confirm("Pagamento ainda está pendente no MercadoPago. O cliente pagou em dinheiro ou outro método? Deseja confirmar manualmente?")) {
-          await confirmPaymentManually(orderId);
-        } else {
-          toast.info("Pagamento ainda pendente. Tente novamente em alguns instantes.");
-        }
+        setPaymentDialogData({
+          orderId,
+          status: 'pending',
+          message: 'O pagamento ainda está pendente no MercadoPago. Aguarde alguns instantes ou confirme se o cliente pagou por outro método.',
+          canConfirmManually: true,
+        });
+        setPaymentDialogOpen(true);
       } else {
         // Rejected or other status
-        if (window.confirm(`Pagamento ${paymentStatus.status} no MercadoPago. O cliente pagou em dinheiro ou outro método? Deseja confirmar manualmente?`)) {
-          await confirmPaymentManually(orderId);
-        }
+        setPaymentDialogData({
+          orderId,
+          status: paymentStatus.status,
+          message: `O pagamento foi ${paymentStatus.status} no MercadoPago. Verifique se o cliente pagou por outro método.`,
+          canConfirmManually: true,
+        });
+        setPaymentDialogOpen(true);
       }
     } catch (error) {
       console.error("Error verifying payment:", error);
       toast.dismiss();
       // Error checking, offer manual confirmation
-      if (window.confirm("Erro ao verificar pagamento no MercadoPago. O cliente pagou em dinheiro ou outro método? Deseja confirmar manualmente?")) {
-        await confirmPaymentManually(orderId);
-      }
+      setPaymentDialogData({
+        orderId,
+        status: 'error',
+        message: 'Erro ao verificar o pagamento no MercadoPago. Verifique sua conexão ou confirme se o cliente pagou por outro método.',
+        canConfirmManually: true,
+      });
+      setPaymentDialogOpen(true);
     }
   };
 
@@ -521,6 +543,20 @@ const Cashier = () => {
         showToasts={true}
       />
       <ConnectionMonitor />
+      
+      {/* Payment Confirmation Dialog */}
+      {paymentDialogData && (
+        <PaymentConfirmationDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          onConfirm={() => confirmPaymentManually(paymentDialogData.orderId)}
+          paymentStatus={{
+            status: paymentDialogData.status,
+            message: paymentDialogData.message,
+            canConfirmManually: paymentDialogData.canConfirmManually,
+          }}
+        />
+      )}
       {/* Uniform Header */}
       <UniformHeader
         actions={
