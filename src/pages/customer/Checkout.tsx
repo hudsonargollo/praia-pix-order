@@ -49,6 +49,7 @@ const Checkout = () => {
   const [errors, setErrors] = useState({ name: "", whatsapp: "" });
   const [touched, setTouched] = useState({ name: false, whatsapp: false });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const [welcomePhrase] = useState(() => {
     // Get a random phrase on component mount
     return WELCOME_PHRASES[Math.floor(Math.random() * WELCOME_PHRASES.length)];
@@ -59,6 +60,16 @@ const Checkout = () => {
   const [loadingMenu, setLoadingMenu] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<any | null>(null);
   const [itemQuantity, setItemQuantity] = useState(1);
+
+  // Check if user is staff on mount
+  useEffect(() => {
+    const checkUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userRole = user?.user_metadata?.role;
+      setIsStaff(userRole === 'waiter' || userRole === 'admin' || userRole === 'cashier');
+    };
+    checkUserRole();
+  }, []);
 
   // Animation variants
   const pageVariants = {
@@ -374,9 +385,11 @@ const Checkout = () => {
                     <span className="text-3xl">👋</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    {welcomePhrase}
+                    {isStaff ? "Novo Pedido" : welcomePhrase}
                   </h2>
-                  <p className="text-gray-600">Como você gostaria de ser chamado?</p>
+                  <p className="text-gray-600">
+                    {isStaff ? "Informe o nome do cliente" : "Como você gostaria de ser chamado?"}
+                  </p>
                 </div>
                 <div className="space-y-4">
                   <div>
@@ -435,9 +448,13 @@ const Checkout = () => {
                     <span className="text-3xl">📱</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    Ótimo, {name}!
+                    {isStaff ? "WhatsApp do Cliente" : `Ótimo, ${name}!`}
                   </h2>
-                  <p className="text-gray-600">Agora precisamos do seu WhatsApp para te avisar quando o pedido estiver pronto</p>
+                  <p className="text-gray-600">
+                    {isStaff 
+                      ? "Informe o WhatsApp do cliente para enviar notificações" 
+                      : "Agora precisamos do seu WhatsApp para te avisar quando o pedido estiver pronto"}
+                  </p>
                 </div>
                 <div className="space-y-4">
                   <div>
