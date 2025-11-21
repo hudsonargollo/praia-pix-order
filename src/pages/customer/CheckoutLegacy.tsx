@@ -145,8 +145,8 @@ const CheckoutLegacy = () => {
       
       // Navigate based on user role
       if (isWaiter) {
-        // Waiter-assisted order is created, redirect to the menu for the next order
-        navigate("/menu");
+        // Waiter-assisted order is created, redirect to waiter dashboard
+        navigate("/waiter/dashboard");
       } else {
         // Regular customer order, redirect to payment
         navigate(`/payment/${order.id}`);

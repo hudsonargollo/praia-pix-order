@@ -96,7 +96,7 @@ function initializePrinter() {
 }
 
 /**
- * Print using Windows raw printing with ESC/POS commands
+ * Print using Windows PowerShell with direct printer access
  */
 async function printRawWindows(content) {
   if (process.platform !== 'win32') {
@@ -106,114 +106,74 @@ async function printRawWindows(content) {
   const fs = require('fs');
   const path = require('path');
   
-  // Create temp file with .prn extension for raw printing
-  const tempFile = path.join(require('os').tmpdir(), `print_${Date.now()}.prn`);
+  // Create temp file
+  const tempFile = path.join(require('os').tmpdir(), `print_${Date.now()}.txt`);
   
   try {
-    // Add ESC/POS commands for thermal printer
-    const ESC = '\x1B';
-    const GS = '\x1D';
+    console.log(`   Target printer: ${printerName || 'ELGIN I8'}`);
+    console.log(`   Content length: ${content.length} characters`);
     
-    // Initialize printer + content + cut paper
-    const rawData = 
-      ESC + '@' +           // Initialize printer
-      content + '\n\n\n' +  // Content with extra lines
-      GS + 'V' + '\x41' +   // Cut paper (partial cut)
-      '\n';
+    // Write plain text content
+    fs.writeFileSync(tempFile, content, 'utf8');
     
-    // Write raw data to temp file
-    fs.writeFileSync(tempFile, rawData, 'binary');
+    // Use PowerShell to print directly
+    const psScript = `
+      $printer = Get-Printer -Name "${printerName || 'ELGIN I8'}" -ErrorAction SilentlyContinue
+      if ($printer) {
+        Start-Process -FilePath "notepad.exe" -ArgumentList "/p","${tempFile.replace(/\\/g, '\\\\')}" -WindowStyle Hidden -Wait
+        Write-Output "Print job sent"
+      } else {
+        Write-Error "Printer not found"
+      }
+    `;
     
-    console.log(`   Created temp file: ${tempFile}`);
-    console.log(`   File size: ${fs.statSync(tempFile).size} bytes`);
-    console.log(`   Content preview: ${content.substring(0, 50)}...`);
+    const psFile = path.join(require('os').tmpdir(), `print_${Date.now()}.ps1`);
+    fs.writeFileSync(psFile, psScript, 'utf8');
     
-    const targetPrinter = printerName || 'ELGIN I8';
-    console.log(`   Target printer: ${targetPrinter}`);
-    
-    // Try multiple methods to print
-    let printed = false;
-    
-    // Method 1: Direct copy to printer share
     try {
-      const printerShare = `\\\\localhost\\${targetPrinter.replace(/ /g, '_')}`;
-      const copyCmd = `copy /B "${tempFile}" "${printerShare}"`;
-      console.log(`   Method 1 - Trying: ${copyCmd}`);
-      const result = await execAsync(copyCmd);
-      console.log(`   ✅ Method 1 succeeded: ${result.stdout}`);
-      printed = true;
+      console.log(`   Sending to printer via PowerShell...`);
+      const result = await execAsync(`powershell -ExecutionPolicy Bypass -File "${psFile}"`);
+      console.log(`   ✅ Print command executed`);
+      
+      // Clean up
+      setTimeout(() => {
+        try {
+          fs.unlinkSync(tempFile);
+          fs.unlinkSync(psFile);
+          console.log(`   🗑️  Cleaned up temp files`);
+        } catch (e) {}
+      }, 3000);
+      
+      return true;
     } catch (e) {
-      console.log(`   ❌ Method 1 failed: ${e.message}`);
-    }
-    
-    // Method 2: Copy to printer with spaces
-    if (!printed) {
+      console.log(`   ❌ PowerShell method failed: ${e.message}`);
+      
+      // Fallback: Try direct notepad print
       try {
-        const printerShare = `\\\\localhost\\${targetPrinter}`;
-        const copyCmd = `copy /B "${tempFile}" "${printerShare}"`;
-        console.log(`   Method 2 - Trying: ${copyCmd}`);
-        const result = await execAsync(copyCmd);
-        console.log(`   ✅ Method 2 succeeded: ${result.stdout}`);
-        printed = true;
-      } catch (e) {
-        console.log(`   ❌ Method 2 failed: ${e.message}`);
+        console.log(`   Trying direct notepad print...`);
+        await execAsync(`notepad /p "${tempFile}"`);
+        console.log(`   ✅ Notepad print sent`);
+        
+        setTimeout(() => {
+          try {
+            fs.unlinkSync(tempFile);
+            fs.unlinkSync(psFile);
+          } catch (e) {}
+        }, 3000);
+        
+        return true;
+      } catch (e2) {
+        console.error(`   ❌ All methods failed`);
+        console.error(`   Make sure printer is set as DEFAULT in Windows`);
+        throw e2;
       }
     }
     
-    // Method 3: Use Windows print command
-    if (!printed) {
-      try {
-        const printCmd = `print /D:"${targetPrinter}" "${tempFile}"`;
-        console.log(`   Method 3 - Trying: ${printCmd}`);
-        const result = await execAsync(printCmd);
-        console.log(`   ✅ Method 3 succeeded: ${result.stdout}`);
-        printed = true;
-      } catch (e) {
-        console.log(`   ❌ Method 3 failed: ${e.message}`);
-      }
-    }
-    
-    // Method 4: Try with LPT port (if printer is on LPT1)
-    if (!printed) {
-      try {
-        const copyCmd = `copy /B "${tempFile}" LPT1`;
-        console.log(`   Method 4 - Trying: ${copyCmd}`);
-        const result = await execAsync(copyCmd);
-        console.log(`   ✅ Method 4 succeeded: ${result.stdout}`);
-        printed = true;
-      } catch (e) {
-        console.log(`   ❌ Method 4 failed: ${e.message}`);
-      }
-    }
-    
-    if (!printed) {
-      console.error('   ❌ All print methods failed!');
-      console.error('   Please check:');
-      console.error('   1. Printer is ON and has paper');
-      console.error('   2. Printer is shared in Windows (Control Panel > Devices and Printers > Right-click > Printer properties > Sharing)');
-      console.error('   3. Try printing a test page from Windows first');
-    }
-    
-    // Clean up temp file
-    setTimeout(() => {
-      try {
-        fs.unlinkSync(tempFile);
-        console.log(`   🗑️  Cleaned up temp file`);
-      } catch (e) {
-        // Ignore cleanup errors
-      }
-    }, 2000);
-    
-    return printed;
   } catch (error) {
     console.error(`   ❌ Print error: ${error.message}`);
-    
-    // Clean up on error
     try {
       fs.unlinkSync(tempFile);
-    } catch (e) {
-      // Ignore cleanup errors
-    }
+    } catch (e) {}
     throw error;
   }
 }

@@ -213,12 +213,12 @@ const Checkout = () => {
       const totalAmount = cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const commissionAmount = isWaiter ? totalAmount * 0.1 : 0;
 
-      // Create order with different status for staff (waiter/admin)
+      // Create order - staff orders go to "in_preparation" with payment pending
       const orderData: any = {
         customer_name: capitalizedName,
         customer_phone: normalizedPhone,
         table_number: '-',
-        status: isStaff ? 'in_preparation' : 'pending_payment',
+        status: isStaff ? 'in_preparation' : 'pending',
         payment_status: 'pending',
         total_amount: totalAmount
       };
@@ -278,19 +278,17 @@ const Checkout = () => {
       clearCart();
 
       if (isStaff) {
-        // Staff flow (waiter/admin): Send WhatsApp notification immediately and redirect to appropriate dashboard
-        toast.success("Pedido criado! Enviando notificação ao cliente...");
+        // Staff flow (waiter/admin): Order goes to "Em Preparo" with payment pending
+        toast.success("Pedido criado com sucesso!");
         
-        // Send WhatsApp notification immediately (don't wait)
+        // Send WhatsApp notification asynchronously
         setTimeout(() => {
           (async () => {
             try {
               await notificationTriggers.onOrderPreparing(order.id);
               console.log('✅ WhatsApp notification sent for staff order:', order.id);
-              toast.success("Notificação enviada ao cliente! 📱");
             } catch (notifError) {
               console.error('❌ Failed to send WhatsApp notification:', notifError);
-              toast.error("Erro ao enviar notificação WhatsApp");
             }
           })().catch(err => {
             console.error('❌ WhatsApp notification error (caught):', err);
