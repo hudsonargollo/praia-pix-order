@@ -96,7 +96,7 @@ function initializePrinter() {
 }
 
 /**
- * Print using Windows raw printing (fallback method)
+ * Print using Windows raw printing with ESC/POS commands
  */
 async function printRawWindows(content) {
   if (process.platform !== 'win32') {
@@ -105,29 +105,109 @@ async function printRawWindows(content) {
   
   const fs = require('fs');
   const path = require('path');
-  const tempFile = path.join(require('os').tmpdir(), `print_${Date.now()}.txt`);
+  
+  // Create temp file with .prn extension for raw printing
+  const tempFile = path.join(require('os').tmpdir(), `print_${Date.now()}.prn`);
   
   try {
-    // Write content to temp file
-    fs.writeFileSync(tempFile, content, 'utf8');
+    // Add ESC/POS commands for thermal printer
+    const ESC = '\x1B';
+    const GS = '\x1D';
     
-    // Use Windows print command
-    const printCmd = `print /D:"${printerName || 'ELGIN I8'}" "${tempFile}"`;
-    console.log(`   Executing: ${printCmd}`);
+    // Initialize printer + content + cut paper
+    const rawData = 
+      ESC + '@' +           // Initialize printer
+      content + '\n\n\n' +  // Content with extra lines
+      GS + 'V' + '\x41' +   // Cut paper (partial cut)
+      '\n';
     
-    await execAsync(printCmd);
+    // Write raw data to temp file
+    fs.writeFileSync(tempFile, rawData, 'binary');
+    
+    console.log(`   Created temp file: ${tempFile}`);
+    console.log(`   File size: ${fs.statSync(tempFile).size} bytes`);
+    console.log(`   Content preview: ${content.substring(0, 50)}...`);
+    
+    const targetPrinter = printerName || 'ELGIN I8';
+    console.log(`   Target printer: ${targetPrinter}`);
+    
+    // Try multiple methods to print
+    let printed = false;
+    
+    // Method 1: Direct copy to printer share
+    try {
+      const printerShare = `\\\\localhost\\${targetPrinter.replace(/ /g, '_')}`;
+      const copyCmd = `copy /B "${tempFile}" "${printerShare}"`;
+      console.log(`   Method 1 - Trying: ${copyCmd}`);
+      const result = await execAsync(copyCmd);
+      console.log(`   ✅ Method 1 succeeded: ${result.stdout}`);
+      printed = true;
+    } catch (e) {
+      console.log(`   ❌ Method 1 failed: ${e.message}`);
+    }
+    
+    // Method 2: Copy to printer with spaces
+    if (!printed) {
+      try {
+        const printerShare = `\\\\localhost\\${targetPrinter}`;
+        const copyCmd = `copy /B "${tempFile}" "${printerShare}"`;
+        console.log(`   Method 2 - Trying: ${copyCmd}`);
+        const result = await execAsync(copyCmd);
+        console.log(`   ✅ Method 2 succeeded: ${result.stdout}`);
+        printed = true;
+      } catch (e) {
+        console.log(`   ❌ Method 2 failed: ${e.message}`);
+      }
+    }
+    
+    // Method 3: Use Windows print command
+    if (!printed) {
+      try {
+        const printCmd = `print /D:"${targetPrinter}" "${tempFile}"`;
+        console.log(`   Method 3 - Trying: ${printCmd}`);
+        const result = await execAsync(printCmd);
+        console.log(`   ✅ Method 3 succeeded: ${result.stdout}`);
+        printed = true;
+      } catch (e) {
+        console.log(`   ❌ Method 3 failed: ${e.message}`);
+      }
+    }
+    
+    // Method 4: Try with LPT port (if printer is on LPT1)
+    if (!printed) {
+      try {
+        const copyCmd = `copy /B "${tempFile}" LPT1`;
+        console.log(`   Method 4 - Trying: ${copyCmd}`);
+        const result = await execAsync(copyCmd);
+        console.log(`   ✅ Method 4 succeeded: ${result.stdout}`);
+        printed = true;
+      } catch (e) {
+        console.log(`   ❌ Method 4 failed: ${e.message}`);
+      }
+    }
+    
+    if (!printed) {
+      console.error('   ❌ All print methods failed!');
+      console.error('   Please check:');
+      console.error('   1. Printer is ON and has paper');
+      console.error('   2. Printer is shared in Windows (Control Panel > Devices and Printers > Right-click > Printer properties > Sharing)');
+      console.error('   3. Try printing a test page from Windows first');
+    }
     
     // Clean up temp file
     setTimeout(() => {
       try {
         fs.unlinkSync(tempFile);
+        console.log(`   🗑️  Cleaned up temp file`);
       } catch (e) {
         // Ignore cleanup errors
       }
-    }, 1000);
+    }, 2000);
     
-    return true;
+    return printed;
   } catch (error) {
+    console.error(`   ❌ Print error: ${error.message}`);
+    
     // Clean up on error
     try {
       fs.unlinkSync(tempFile);
