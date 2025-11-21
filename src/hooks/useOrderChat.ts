@@ -168,6 +168,12 @@ export function useOrderChat(orderId: string | null, customerPhone: string | nul
       throw new Error('Message content cannot be empty');
     }
 
+    console.log('[useOrderChat] Sending message:', {
+      orderId,
+      customerPhone,
+      contentLength: content.trim().length,
+    });
+
     try {
       // Send message via Evolution API first
       const response = await evolutionClient.sendTextMessage({
@@ -175,8 +181,13 @@ export function useOrderChat(orderId: string | null, customerPhone: string | nul
         text: content.trim(),
       });
 
+      console.log('[useOrderChat] Evolution API response:', {
+        messageId: response.key?.id,
+        status: response.status,
+      });
+
       // Insert outbound message into database
-      const { error: insertError } = await supabase
+      const { data: insertedData, error: insertError } = await supabase
         .from('whatsapp_chat_messages')
         .insert({
           order_id: orderId,
@@ -185,17 +196,25 @@ export function useOrderChat(orderId: string | null, customerPhone: string | nul
           content: content.trim(),
           status: 'sent',
           evolution_id: response.key?.id || null,
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) {
+        console.error('[useOrderChat] Database insert error:', insertError);
         throw insertError;
       }
+
+      console.log('[useOrderChat] Message inserted into database:', {
+        messageId: insertedData?.id,
+        orderId: insertedData?.order_id,
+      });
 
       // Note: Real-time subscription will handle adding the message to the UI
       // No need for optimistic update as the INSERT event will trigger immediately
 
     } catch (err) {
-      console.error('Error sending message:', err);
+      console.error('[useOrderChat] Error sending message:', err);
       
       // If Evolution API fails, we might want to insert with 'failed' status
       if (err instanceof Error && err.message.includes('Evolution API')) {
@@ -211,7 +230,7 @@ export function useOrderChat(orderId: string | null, customerPhone: string | nul
               evolution_id: null,
             });
         } catch (dbErr) {
-          console.error('Failed to log failed message:', dbErr);
+          console.error('[useOrderChat] Failed to log failed message:', dbErr);
         }
       }
       
@@ -236,11 +255,15 @@ export function useOrderChat(orderId: string | null, customerPhone: string | nul
       return;
     }
 
-    console.log(`Setting up real-time subscription for order: ${orderId}`);
+    console.log(`[useOrderChat] Setting up real-time subscription for order: ${orderId}`);
 
     // Create channel for this order's chat messages
     const channel = supabase
-      .channel(`order-chat:${orderId}`)
+      .channel(`order-chat:${orderId}`, {
+        config: {
+          broadcast: { self: true }, // Receive our own messages
+        },
+      })
       .on(
         'postgres_changes',
         {
@@ -250,7 +273,11 @@ export function useOrderChat(orderId: string | null, customerPhone: string | nul
           filter: `order_id=eq.${orderId}`,
         },
         (payload) => {
-          console.log('New chat message received:', payload);
+          console.log('[useOrderChat] New chat message received via realtime:', {
+            messageId: payload.new.id,
+            direction: payload.new.direction,
+            orderId: payload.new.order_id,
+          });
           
           const newChatMessage = payload.new as WhatsAppChatMessage;
           const newMessage = mapChatMessageToMessage(newChatMessage);
@@ -258,8 +285,10 @@ export function useOrderChat(orderId: string | null, customerPhone: string | nul
           setMessages(prev => {
             // Check if message already exists (avoid duplicates)
             if (prev.some(msg => msg.id === newMessage.id)) {
+              console.log('[useOrderChat] Message already exists, skipping:', newMessage.id);
               return prev;
             }
+            console.log('[useOrderChat] Adding new message to state:', newMessage.id);
             return [...prev, newMessage];
           });
 
@@ -270,14 +299,22 @@ export function useOrderChat(orderId: string | null, customerPhone: string | nul
         }
       )
       .subscribe((status) => {
-        console.log(`Real-time subscription status for order ${orderId}:`, status);
+        console.log(`[useOrderChat] Real-time subscription status for order ${orderId}:`, status);
+        
+        if (status === 'SUBSCRIBED') {
+          console.log('[useOrderChat] Successfully subscribed to real-time updates');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('[useOrderChat] Real-time subscription error');
+        } else if (status === 'TIMED_OUT') {
+          console.error('[useOrderChat] Real-time subscription timed out');
+        }
       });
 
     channelRef.current = channel;
 
     // Cleanup on unmount
     return () => {
-      console.log(`Cleaning up real-time subscription for order: ${orderId}`);
+      console.log(`[useOrderChat] Cleaning up real-time subscription for order: ${orderId}`);
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
