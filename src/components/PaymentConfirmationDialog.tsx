@@ -9,12 +9,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 
 interface PaymentConfirmationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  onRetry?: () => void;
   paymentStatus: {
     status: string;
     message: string;
@@ -26,6 +28,7 @@ export function PaymentConfirmationDialog({
   open,
   onOpenChange,
   onConfirm,
+  onRetry,
   paymentStatus,
 }: PaymentConfirmationDialogProps) {
   const getStatusIcon = () => {
@@ -99,6 +102,19 @@ export function PaymentConfirmationDialog({
           <AlertDialogCancel onClick={handleCancel} className="w-full sm:w-auto">
             Cancelar
           </AlertDialogCancel>
+          {onRetry && paymentStatus.status === 'pending' && (
+            <Button
+              onClick={() => {
+                onRetry();
+                onOpenChange(false);
+              }}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Verificar Novamente
+            </Button>
+          )}
           {paymentStatus.canConfirmManually && (
             <AlertDialogAction 
               onClick={handleConfirm}

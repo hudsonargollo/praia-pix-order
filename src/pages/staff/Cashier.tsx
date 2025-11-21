@@ -598,6 +598,7 @@ const Cashier = () => {
           open={paymentDialogOpen}
           onOpenChange={setPaymentDialogOpen}
           onConfirm={() => confirmPaymentManually(paymentDialogData.orderId)}
+          onRetry={() => verifyPayment(paymentDialogData.orderId)}
           paymentStatus={{
             status: paymentDialogData.status,
             message: paymentDialogData.message,

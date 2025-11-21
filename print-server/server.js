@@ -8,6 +8,9 @@
 const express = require('express');
 const cors = require('cors');
 const { ThermalPrinter, PrinterTypes } = require('node-thermal-printer');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,42 +21,120 @@ app.use(express.json());
 
 // Global printer instance
 let printer = null;
+let printerName = null;
 
 /**
- * Initialize printer connection
+ * Initialize printer connection with multiple attempts
  */
 function initializePrinter() {
-  try {
-    console.log('🔍 Initializing thermal printer...');
-    
-    // Create printer instance
-    // This library auto-detects USB printers
-    printer = new ThermalPrinter({
-      type: PrinterTypes.EPSON,  // Most thermal printers are ESC/POS compatible
-      interface: 'printer:auto',  // Auto-detect printer
-      characterSet: 'PC437_USA',
-      removeSpecialCharacters: false,
-      lineCharacter: "=",
-      options: {
-        timeout: 5000
+  const printerNames = [
+    process.env.PRINTER_NAME,
+    'ELGIN I8',
+    'Elgin I8',
+    'ELGIN_I8',
+    'Elgin_I8',
+    'I8'
+  ].filter(Boolean);
+
+  console.log('🔍 Initializing thermal printer...');
+  console.log('   Platform:', process.platform);
+  console.log('   Available printer names to try:', printerNames);
+  
+  // Try each printer name with different driver types
+  const driverTypes = [
+    { type: PrinterTypes.EPSON, name: 'EPSON (ESC/POS)' },
+    { type: PrinterTypes.STAR, name: 'STAR' },
+    { type: PrinterTypes.TANCA, name: 'TANCA' }
+  ];
+  
+  for (const name of printerNames) {
+    for (const driver of driverTypes) {
+      try {
+        console.log(`   Attempting: "${name}" with ${driver.name} driver`);
+        
+        const config = {
+          type: driver.type,
+          interface: `printer:${name}`,
+          characterSet: 'PC437_USA',
+          removeSpecialCharacters: false,
+          lineCharacter: "=",
+          options: {
+            timeout: 5000
+          }
+        };
+        
+        printer = new ThermalPrinter(config);
+        printerName = name;
+        
+        console.log('✅ Thermal printer initialized successfully');
+        console.log(`   Connected to: ${name}`);
+        console.log(`   Driver: ${driver.name}`);
+        
+        return true;
+      } catch (error) {
+        console.log(`   ❌ Failed: ${error.message}`);
+        printer = null;
+        printerName = null;
       }
-    });
+    }
+  }
+  
+  // All attempts failed
+  console.error('');
+  console.error('❌ Could not connect to any printer');
+  console.error('');
+  console.error('   Troubleshooting steps:');
+  console.error('   1. Check printer is ON and connected via USB');
+  console.error('   2. Verify printer shows as "ELGIN I8" in Windows Devices and Printers');
+  console.error('   3. Make sure printer is set as DEFAULT printer');
+  console.error('   4. Try printing a test page from Windows first');
+  console.error('   5. Install Elgin I8 driver from: https://www.elgin.com.br/');
+  console.error('   6. Restart the print server after installing driver');
+  console.error('');
+  
+  return false;
+}
+
+/**
+ * Print using Windows raw printing (fallback method)
+ */
+async function printRawWindows(content) {
+  if (process.platform !== 'win32') {
+    throw new Error('Raw Windows printing only available on Windows');
+  }
+  
+  const fs = require('fs');
+  const path = require('path');
+  const tempFile = path.join(require('os').tmpdir(), `print_${Date.now()}.txt`);
+  
+  try {
+    // Write content to temp file
+    fs.writeFileSync(tempFile, content, 'utf8');
     
-    console.log('✅ Thermal printer initialized successfully');
-    console.log('   Type: ESC/POS compatible');
-    console.log('   Interface: Auto-detect');
+    // Use Windows print command
+    const printCmd = `print /D:"${printerName || 'ELGIN I8'}" "${tempFile}"`;
+    console.log(`   Executing: ${printCmd}`);
+    
+    await execAsync(printCmd);
+    
+    // Clean up temp file
+    setTimeout(() => {
+      try {
+        fs.unlinkSync(tempFile);
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    }, 1000);
     
     return true;
   } catch (error) {
-    console.error('❌ Failed to initialize printer:');
-    console.error('   Error:', error.message);
-    console.error('');
-    console.error('   Possible solutions:');
-    console.error('   - Make sure printer is connected via USB');
-    console.error('   - Make sure printer is powered on');
-    console.error('   - On Mac: Run with sudo for USB access');
-    console.error('   - Try unplugging and replugging the printer');
-    return false;
+    // Clean up on error
+    try {
+      fs.unlinkSync(tempFile);
+    } catch (e) {
+      // Ignore cleanup errors
+    }
+    throw error;
   }
 }
 
@@ -64,7 +145,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     serverRunning: true,
-    printerConnected: printer !== null,
+    printerConnected: printer !== null || printerName !== null,
     timestamp: new Date().toISOString()
   });
 });
@@ -76,9 +157,10 @@ app.get('/status', (req, res) => {
   try {
     res.json({
       serverRunning: true,
-      printerConnected: printer !== null,
-      printerType: printer ? 'ESC/POS' : null,
-      interface: printer ? 'USB Auto-detect' : null
+      printerConnected: printer !== null || printerName !== null,
+      printerName: printerName,
+      printerType: printer ? 'ESC/POS' : 'Windows Raw',
+      interface: printer ? 'USB Auto-detect' : 'Windows Print Command'
     });
   } catch (error) {
     res.status(500).json({
@@ -109,10 +191,13 @@ app.post('/print', async (req, res) => {
     }
 
     // Try to initialize printer if not connected
-    if (!printer) {
+    if (!printer && !printerName) {
       console.log('⚠️  Printer not initialized, attempting to connect...');
       const initialized = initializePrinter();
-      if (!initialized) {
+      if (!initialized && process.platform === 'win32') {
+        console.log('⚠️  Falling back to Windows raw printing...');
+        printerName = 'ELGIN I8';
+      } else if (!initialized) {
         console.log('❌ Failed to initialize printer');
         return res.status(503).json({
           error: 'Printer not available',
@@ -124,17 +209,18 @@ app.post('/print', async (req, res) => {
     console.log('✍️  Sending content to printer...');
 
     try {
-      // Clear any previous content
-      printer.clear();
-      
-      // Print the raw content
-      printer.println(content);
-      
-      // Cut paper
-      printer.cut();
-      
-      // Execute print job
-      await printer.execute();
+      if (printer) {
+        // Use thermal printer library
+        printer.clear();
+        printer.println(content);
+        printer.cut();
+        await printer.execute();
+      } else if (process.platform === 'win32') {
+        // Use Windows raw printing
+        await printRawWindows(content);
+      } else {
+        throw new Error('No printing method available');
+      }
 
       console.log(`✅ Successfully printed order #${orderNumber || 'N/A'}`);
       console.log('');
@@ -147,7 +233,6 @@ app.post('/print', async (req, res) => {
     } catch (printError) {
       console.error('❌ Print error:');
       console.error('   Error:', printError.message);
-      console.error('   Stack:', printError.stack);
       res.status(500).json({
         error: 'Print failed',
         message: printError.message
@@ -157,7 +242,6 @@ app.post('/print', async (req, res) => {
   } catch (error) {
     console.error('❌ Print endpoint error:');
     console.error('   Error:', error.message);
-    console.error('   Stack:', error.stack);
     res.status(500).json({
       error: 'Internal server error',
       message: error.message
@@ -170,9 +254,11 @@ app.post('/print', async (req, res) => {
  */
 app.post('/test-print', async (req, res) => {
   try {
-    if (!printer) {
+    if (!printer && !printerName) {
       const initialized = initializePrinter();
-      if (!initialized) {
+      if (!initialized && process.platform === 'win32') {
+        printerName = 'ELGIN I8';
+      } else if (!initialized) {
         return res.status(503).json({
           error: 'Printer not available',
           message: 'No thermal printer found'
@@ -197,10 +283,14 @@ Data: ${new Date().toLocaleString('pt-BR')}
 
 `;
 
-    printer.clear();
-    printer.println(testContent);
-    printer.cut();
-    await printer.execute();
+    if (printer) {
+      printer.clear();
+      printer.println(testContent);
+      printer.cut();
+      await printer.execute();
+    } else if (process.platform === 'win32') {
+      await printRawWindows(testContent);
+    }
 
     console.log('✅ Test print completed');
     
@@ -225,11 +315,15 @@ app.post('/reconnect', (req, res) => {
   try {
     // Reset printer
     printer = null;
+    printerName = null;
 
     // Reinitialize
     const initialized = initializePrinter();
     
-    if (initialized) {
+    if (initialized || (process.platform === 'win32')) {
+      if (!initialized) {
+        printerName = 'ELGIN I8';
+      }
       res.json({
         success: true,
         message: 'Printer reconnected successfully'
@@ -259,7 +353,11 @@ app.listen(PORT, () => {
   console.log('');
   
   // Try to initialize printer on startup
-  initializePrinter();
+  const initialized = initializePrinter();
+  if (!initialized && process.platform === 'win32') {
+    console.log('⚠️  Using Windows raw printing fallback');
+    printerName = 'ELGIN I8';
+  }
   
   console.log('');
   console.log('📝 Available endpoints:');
