@@ -182,33 +182,44 @@ export class NotificationTriggerService {
 
   /**
    * Trigger notification when order moves to preparing status
+   * This is sent for ALL orders (customer, waiter, cashier) regardless of payment status
    */
   async onOrderPreparing(orderId: string): Promise<void> {
     try {
-      console.log('Order preparing trigger:', { orderId });
+      console.log('[NotificationTriggers] Order preparing trigger:', {
+        orderId,
+        timestamp: new Date().toISOString(),
+      });
       
       // Get order data
       const orderData = await this.getOrderData(orderId);
       if (!orderData) {
-        console.error('Order not found for preparing notification:', orderId);
+        console.error('[NotificationTriggers] Order not found for preparing notification:', {
+          orderId,
+          timestamp: new Date().toISOString(),
+        });
         return;
       }
 
       // Check if notification was already sent to prevent duplicates
       const { data: existingNotifications } = await supabase
         .from('whatsapp_notifications')
-        .select('id')
+        .select('id, sent_at')
         .eq('order_id', orderId)
         .eq('notification_type', 'preparing')
         .eq('status', 'sent')
         .limit(1);
 
       if (existingNotifications && existingNotifications.length > 0) {
-        console.log('Preparing notification already sent, skipping:', { orderId });
+        console.log('[NotificationTriggers] Preparing notification already sent, skipping:', {
+          orderId,
+          existingNotificationId: existingNotifications[0].id,
+          sentAt: existingNotifications[0].sent_at,
+        });
         return;
       }
 
-      // Queue preparing notification
+      // Queue preparing notification (sent for all orders regardless of payment status)
       const notification: NotificationRequest = {
         orderId: orderData.id,
         customerPhone: orderData.customerPhone,
@@ -217,10 +228,21 @@ export class NotificationTriggerService {
         orderDetails: orderData,
       };
 
-      await queueManager.enqueue(notification);
-      console.log('Preparing notification queued:', { orderId });
+      const notificationId = await queueManager.enqueue(notification);
+      console.log('[NotificationTriggers] Preparing notification queued successfully:', {
+        orderId,
+        notificationId,
+        orderNumber: orderData.orderNumber,
+        customerName: orderData.customerName,
+        orderStatus: orderData.status,
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
-      console.error('Error triggering preparing notification:', error);
+      console.error('[NotificationTriggers] Error triggering preparing notification:', {
+        orderId,
+        error: error instanceof Error ? error.message : error,
+        timestamp: new Date().toISOString(),
+      });
       // Log error for tracking
       await errorLogger.logError(error as Error, {
         operation: 'trigger_preparing_notification',

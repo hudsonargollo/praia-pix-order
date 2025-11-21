@@ -19,8 +19,8 @@ export function RealtimeNotifications({
     if (!enabled || !soundEnabled) return;
 
     // Create audio element for notifications
-    audioRef.current = new Audio('/notification.mp3');
-    audioRef.current.volume = 0.5;
+    audioRef.current = new Audio('/notif.mp3');
+    audioRef.current.volume = 0.7;
 
     return () => {
       if (audioRef.current) {
@@ -86,27 +86,7 @@ export const notificationUtils = {
   newOrder: (orderNumber: number, customerName: string) => {
     const notification = (window as any).realtimeNotifications;
     if (notification) {
-      // Play notification sound (simple beep using Web Audio API)
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
-      } catch (e) {
-        console.log('Could not play notification sound:', e);
-      }
-      
+      notification.playNotificationSound();
       notification.showOrderNotification(
         'Novo Pedido',
         `Pedido #${orderNumber} - ${customerName}`,
@@ -119,27 +99,7 @@ export const notificationUtils = {
   paymentConfirmed: (orderNumber: number, customerName: string) => {
     const notification = (window as any).realtimeNotifications;
     if (notification) {
-      // Play notification sound (simple beep using Web Audio API)
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
-      } catch (e) {
-        console.log('Could not play notification sound:', e);
-      }
-      
+      notification.playNotificationSound();
       notification.showOrderNotification(
         'Pagamento Confirmado',
         `Pedido #${orderNumber} - ${customerName}`,
@@ -164,27 +124,7 @@ export const notificationUtils = {
   orderReady: (orderNumber: number, customerName: string) => {
     const notification = (window as any).realtimeNotifications;
     if (notification) {
-      // Play notification sound (simple beep using Web Audio API)
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 1000;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
-      } catch (e) {
-        console.log('Could not play notification sound:', e);
-      }
-      
+      notification.playNotificationSound();
       notification.showOrderNotification(
         'Pedido Pronto',
         `Pedido #${orderNumber} - ${customerName}`,
