@@ -133,7 +133,12 @@ const Checkout = () => {
 
   const handleWhatsAppContinue = () => {
     if (validateWhatsApp(whatsapp)) {
-      setStep('CONFIRM');
+      // Staff skip confirmation and place order immediately
+      if (isStaff) {
+        handleGoToPayment();
+      } else {
+        setStep('CONFIRM');
+      }
     }
   };
 
