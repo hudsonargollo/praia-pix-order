@@ -9,10 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ShoppingCart, Plus, Minus, Clock, LogOut, Coffee, Droplets, IceCream, Sandwich, Pizza, Cake, LayoutGrid, List } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Clock, LogOut, Coffee, Droplets, IceCream, Sandwich, Pizza, Cake, LayoutGrid, List, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cartContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useStoreStatus } from "@/hooks/useStoreStatus";
 import { useSortingMode } from "@/hooks/useSortingMode";
 import { useMenuSorting } from "@/hooks/useMenuSorting";
 import { SortingToggle } from "@/components/SortingToggle";
@@ -55,6 +56,9 @@ const Menu = () => {
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const { isSortingMode, toggleSortingMode } = useSortingMode();
   const { updateSortOrder, reorderItems, isSaving } = useMenuSorting();
+  
+  // Store status hook
+  const { isOpen: storeIsOpen, loading: storeStatusLoading } = useStoreStatus();
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -129,6 +133,14 @@ const Menu = () => {
 
   // Optimized add to cart with feedback
   const handleAddToCart = useCallback((item: MenuItem) => {
+    // Check if store is open
+    if (!storeIsOpen) {
+      toast.error('🔒 Desculpe, a loja está fechada no momento. Não é possível adicionar itens ao carrinho.', {
+        duration: 4000,
+      });
+      return;
+    }
+    
     addItem(item);
     toast.success(`${item.name} adicionado ao carrinho! 🛒`, {
       duration: 2000,
@@ -138,7 +150,7 @@ const Menu = () => {
         border: 'none',
       }
     });
-  }, [addItem]);
+  }, [addItem, storeIsOpen]);
 
   // Handle image errors
   const handleImageError = useCallback((itemId: string) => {
@@ -234,8 +246,17 @@ const Menu = () => {
       toast.error("Adicione itens ao carrinho primeiro! 🛒");
       return;
     }
+    
+    // Check if store is open before checkout
+    if (!storeIsOpen) {
+      toast.error('🔒 Desculpe, a loja está fechada no momento. Não é possível finalizar pedidos.', {
+        duration: 4000,
+      });
+      return;
+    }
+    
     navigate("/checkout");
-  }, [cartState.items.length, navigate]);
+  }, [cartState.items.length, navigate, storeIsOpen]);
 
   if (loading) {
     return (
@@ -392,8 +413,25 @@ const Menu = () => {
         </div>
       </div>
 
+      {/* Store Closed Banner */}
+      {!storeIsOpen && !storeStatusLoading && (
+        <div className="fixed top-[180px] md:top-[120px] left-0 right-0 p-4 z-40 animate-in slide-in-from-top duration-300">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-gradient-to-r from-red-600 to-red-700 text-white py-4 px-6 rounded-2xl shadow-2xl border-2 border-red-400">
+              <div className="flex items-center justify-center gap-3">
+                <Store className="h-6 w-6" />
+                <div className="text-center">
+                  <p className="font-bold text-lg">Loja Fechada</p>
+                  <p className="text-sm text-red-100">Não estamos aceitando pedidos no momento</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Cart Button - Top Position */}
-      {cartState.items.length > 0 && (
+      {cartState.items.length > 0 && storeIsOpen && (
         <div className="fixed top-[180px] md:top-[120px] left-0 right-0 p-4 z-30 animate-in slide-in-from-top duration-300">
           <div className="max-w-2xl mx-auto">
             <Button
@@ -413,7 +451,10 @@ const Menu = () => {
       )}
 
       {/* Menu Content - Adjusted padding for fixed header and cart */}
-      <div className={`relative z-10 max-w-2xl lg:max-w-6xl mx-auto px-4 pb-8 ${cartState.items.length > 0 ? 'pt-64 md:pt-52' : 'pt-48 md:pt-36'}`}>
+      <div className={`relative z-10 max-w-2xl lg:max-w-6xl mx-auto px-4 pb-8 ${
+        !storeIsOpen ? 'pt-64 md:pt-52' : 
+        cartState.items.length > 0 ? 'pt-64 md:pt-52' : 'pt-48 md:pt-36'
+      }`}>
         {categorizedItems.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
             <div className="text-4xl mb-3">🥥</div>
@@ -501,9 +542,9 @@ const Menu = () => {
                               <div className="flex items-center gap-2 bg-purple-50 rounded-xl p-2">
                                 <button
                                   onClick={() => removeItem(item.id)}
-                                  className="w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
+                                  className="w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                   aria-label="Remover um"
-                                  disabled={isSortingMode}
+                                  disabled={isSortingMode || !storeIsOpen}
                                 >
                                   <Minus className="w-4 h-4" />
                                 </button>
@@ -512,9 +553,9 @@ const Menu = () => {
                                 </span>
                                 <button
                                   onClick={() => handleAddToCart(item)}
-                                  className="w-8 h-8 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all"
+                                  className="w-8 h-8 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                   aria-label="Adicionar mais"
-                                  disabled={isSortingMode}
+                                  disabled={isSortingMode || !storeIsOpen}
                                 >
                                   <Plus className="w-4 h-4" />
                                 </button>
@@ -522,10 +563,10 @@ const Menu = () => {
                             ) : (
                               <Button
                                 onClick={() => handleAddToCart(item)}
-                                className={`bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                disabled={isSortingMode}
+                                className={`bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all ${(isSortingMode || !storeIsOpen) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                disabled={isSortingMode || !storeIsOpen}
                               >
-                                Adicionar
+                                {!storeIsOpen ? 'Fechado' : 'Adicionar'}
                               </Button>
                             )}
                           </div>
@@ -652,11 +693,11 @@ const Menu = () => {
                                 }`}>
                                   <button
                                     onClick={() => removeItem(item.id)}
-                                    className={`rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all ${
+                                    className={`rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                                       viewMode === 'grid' ? 'w-10 h-10' : 'w-8 h-8'
                                     }`}
                                     aria-label="Remover um"
-                                    disabled={isSortingMode}
+                                    disabled={isSortingMode || !storeIsOpen}
                                   >
                                     <Minus className={viewMode === 'grid' ? 'w-5 h-5' : 'w-4 h-4'} />
                                   </button>
@@ -667,11 +708,11 @@ const Menu = () => {
                                   </span>
                                   <button
                                     onClick={() => handleAddToCart(item)}
-                                    className={`rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all ${
+                                    className={`rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                                       viewMode === 'grid' ? 'w-10 h-10' : 'w-8 h-8'
                                     }`}
                                     aria-label="Adicionar mais"
-                                    disabled={isSortingMode}
+                                    disabled={isSortingMode || !storeIsOpen}
                                   >
                                     <Plus className={viewMode === 'grid' ? 'w-5 h-5' : 'w-4 h-4'} />
                                   </button>
@@ -684,8 +725,8 @@ const Menu = () => {
                                       }
                                       toast.success(`${item.name} removido do carrinho`);
                                     }}
-                                    className="w-full px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-all"
-                                    disabled={isSortingMode}
+                                    className="w-full px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={isSortingMode || !storeIsOpen}
                                   >
                                     Remover Todos
                                   </button>
@@ -696,10 +737,10 @@ const Menu = () => {
                                 onClick={() => handleAddToCart(item)}
                                 className={`bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all ${
                                   viewMode === 'grid' ? 'w-full py-3 text-base' : 'px-6 py-3 text-base'
-                                } ${isSortingMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                disabled={isSortingMode}
+                                } ${(isSortingMode || !storeIsOpen) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                disabled={isSortingMode || !storeIsOpen}
                               >
-                                Adicionar
+                                {!storeIsOpen ? 'Fechado' : 'Adicionar'}
                               </Button>
                             )}
                           </div>

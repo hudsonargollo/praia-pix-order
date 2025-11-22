@@ -5,6 +5,7 @@ import { useCashierOrders } from "@/hooks/useRealtimeOrders";
 import { useNotificationHistory } from "@/hooks/useNotificationHistory";
 import { useWhatsAppErrors } from "@/hooks/useWhatsAppErrors";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { useStoreStatus } from "@/hooks/useStoreStatus";
 import { RealtimeNotifications, notificationUtils } from "@/components/RealtimeNotifications";
 import { ConnectionMonitor, useConnectionMonitor } from "@/components/ConnectionMonitor";
 import { NotificationControls } from "@/components/NotificationControls";
@@ -23,6 +24,7 @@ import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -49,7 +51,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Eye, Edit, BarChart3, X, Users, Plus, MessageSquare } from "lucide-react";
+import { CreditCard, Clock, CheckCircle, Bell, AlertCircle, Timer, DollarSign, ChefHat, Package, Eye, Edit, BarChart3, X, Users, Plus, MessageSquare, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { Order } from "@/integrations/supabase/realtime";
@@ -102,6 +104,9 @@ const Cashier = () => {
 
   // Track unread messages for all orders
   const { unreadCounts, markAsRead } = useUnreadMessages(orderIds);
+
+  // Store status management
+  const { isOpen: storeIsOpen, loading: storeStatusLoading, toggleStoreStatus } = useStoreStatus();
 
   // Persist waiter filter selection to localStorage
   useEffect(() => {
@@ -608,6 +613,20 @@ const Cashier = () => {
       <UniformHeader
         actions={
           <>
+            {/* Store Status Switch */}
+            <div className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-lg px-3 py-2 transition-all duration-300">
+              <Store className={`h-4 w-4 ${storeIsOpen ? 'text-green-300' : 'text-red-300'}`} />
+              <span className="hidden md:inline text-white text-sm font-medium">
+                {storeIsOpen ? 'Aberto' : 'Fechado'}
+              </span>
+              <Switch
+                checked={storeIsOpen}
+                onCheckedChange={toggleStoreStatus}
+                disabled={storeStatusLoading}
+                className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
+              />
+            </div>
+            
             <Button
               onClick={() => window.location.href = '/menu'}
               className="bg-white/15 hover:bg-white/25 text-white border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105"
