@@ -32,8 +32,8 @@ AS $$
 DECLARE
   user_role TEXT;
 BEGIN
-  -- Get user role
-  SELECT get_user_role() INTO user_role;
+  -- Get user role using auth.uid()
+  SELECT get_user_role(auth.uid()) INTO user_role;
   
   -- Only admin and cashier can update store status
   IF user_role NOT IN ('admin', 'cashier') THEN
@@ -67,7 +67,7 @@ CREATE POLICY "Admin and cashier can update store status"
   FOR UPDATE
   TO authenticated
   USING (
-    get_user_role() IN ('admin', 'cashier')
+    get_user_role(auth.uid()) IN ('admin', 'cashier')
   );
 
 -- Add comment
