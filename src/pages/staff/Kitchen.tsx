@@ -82,10 +82,8 @@ const Kitchen = () => {
   const handleOrderStatusChange = useCallback((order: Order) => {
     console.log('[Kitchen] Order status changed:', order);
     
-    // Update the order in the current list
-    setOrders(prevOrders => 
-      prevOrders.map(o => o.id === order.id ? order : o)
-    );
+    // Reload orders to get complete data with items
+    loadOrders();
     
     // Show appropriate notification based on status
     switch (order.status) {

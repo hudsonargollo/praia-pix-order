@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, TrendingUp, QrCode, CheckCircle, Clock, XCircle, Edit, Lock, Plus } from "lucide-react";
+import { ShoppingCart, TrendingUp, QrCode, CheckCircle, Clock, XCircle, Edit, Lock, Plus, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PIXQRGenerator, UniformHeader } from "@/components";
+import { UniformHeader } from "@/components";
+import { GeneratePaymentDialog } from "@/components/GeneratePaymentDialog";
 import { CommissionToggle } from "@/components/CommissionToggle";
 import { MobileOrderCard } from "@/components/MobileOrderCard";
 import { OrderEditModal } from "@/components/OrderEditModal";
@@ -712,8 +713,8 @@ const WaiterDashboard = () => {
                                 }}
                                 className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
                               >
-                                <QrCode className="w-3 h-3" />
-                                Gerar PIX
+                                <CreditCard className="w-3 h-3" />
+                                Gerar Pagamento
                               </Button>
                             )}
                             {canEditOrder(order) ? (
@@ -773,19 +774,17 @@ const WaiterDashboard = () => {
         </Card>
       </div>
 
-      {/* PIX QR Generator Modal */}
+      {/* Payment Generator Modal (PIX or Credit Card) */}
       {selectedOrder && (
-        <PIXQRGenerator
+        <GeneratePaymentDialog
           isOpen={showPIXGenerator}
-          orderId={selectedOrder.id}
-          amount={selectedOrder.total_amount}
-          customerInfo={{
-            name: selectedOrder.customer_name,
-            phone: selectedOrder.customer_phone
-          }}
-          onPaymentComplete={handlePIXPaymentComplete}
           onClose={handleClosePIXGenerator}
-          mode="manual"
+          orderId={selectedOrder.id}
+          orderNumber={selectedOrder.order_number}
+          amount={selectedOrder.total_amount}
+          customerName={selectedOrder.customer_name}
+          customerPhone={selectedOrder.customer_phone}
+          onPaymentComplete={handlePIXPaymentComplete}
         />
       )}
 

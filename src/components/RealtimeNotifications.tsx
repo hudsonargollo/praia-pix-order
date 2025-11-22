@@ -14,24 +14,34 @@ export function RealtimeNotifications({
   showToasts = true
 }: RealtimeNotificationsProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const paymentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!enabled || !soundEnabled) return;
 
-    // Create audio element for notifications
+    // Create audio elements for different notification types
     audioRef.current = new Audio('/notif.mp3');
     audioRef.current.volume = 0.7;
+
+    paymentAudioRef.current = new Audio('/notif-p.mp3');
+    paymentAudioRef.current.volume = 0.7;
 
     return () => {
       if (audioRef.current) {
         audioRef.current = null;
       }
+      if (paymentAudioRef.current) {
+        paymentAudioRef.current = null;
+      }
     };
   }, [enabled, soundEnabled]);
 
-  const playNotificationSound = () => {
-    if (soundEnabled && audioRef.current) {
-      audioRef.current.play().catch(console.error);
+  const playNotificationSound = (soundType: 'default' | 'payment' = 'default') => {
+    if (!soundEnabled) return;
+    
+    const audio = soundType === 'payment' ? paymentAudioRef.current : audioRef.current;
+    if (audio) {
+      audio.play().catch(console.error);
     }
   };
 
@@ -99,7 +109,7 @@ export const notificationUtils = {
   paymentConfirmed: (orderNumber: number, customerName: string) => {
     const notification = (window as any).realtimeNotifications;
     if (notification) {
-      notification.playNotificationSound();
+      notification.playNotificationSound('payment');
       notification.showOrderNotification(
         'Pagamento Confirmado',
         `Pedido #${orderNumber} - ${customerName}`,
@@ -124,7 +134,6 @@ export const notificationUtils = {
   orderReady: (orderNumber: number, customerName: string) => {
     const notification = (window as any).realtimeNotifications;
     if (notification) {
-      notification.playNotificationSound();
       notification.showOrderNotification(
         'Pedido Pronto',
         `Pedido #${orderNumber} - ${customerName}`,

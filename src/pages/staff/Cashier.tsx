@@ -14,6 +14,7 @@ import { OrderEditDialog } from "@/components/OrderEditDialog";
 import { OrderCardInfo } from "@/components/OrderCardInfo";
 import { PaymentConfirmationDialog } from "@/components/PaymentConfirmationDialog";
 import { CompactOrderCard } from "@/components/CompactOrderCard";
+import { GeneratePaymentDialog } from "@/components/GeneratePaymentDialog";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UniformHeader } from "@/components/UniformHeader";
 import type { OrderStatus, PaymentStatus } from "@/components/StatusBadge";
@@ -88,6 +89,10 @@ const Cashier = () => {
 
   const [waiters, setWaiters] = useState<WaiterInfo[]>([]);
   
+  // Payment generation dialog state
+  const [generatePaymentDialogOpen, setGeneratePaymentDialogOpen] = useState(false);
+  const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<OrderWithItems | null>(null);
+  
   // Load notification history for all orders
   const orderIds = orders.map(o => o.id);
   const { history: notificationHistory, refresh: refreshNotifications } = useNotificationHistory(orderIds);
@@ -146,7 +151,8 @@ const Cashier = () => {
       return;
     }
     
-    setOrders(prevOrders => [order, ...prevOrders]);
+    // Reload orders to get complete data with items
+    loadOrders();
     notificationUtils.newOrder(order.order_number, order.customer_name);
   }, [selectedWaiterId]);
 
@@ -160,16 +166,8 @@ const Cashier = () => {
       return;
     }
     
-    setOrders(prevOrders => {
-      const existingIndex = prevOrders.findIndex(o => o.id === order.id);
-      if (existingIndex >= 0) {
-        // Update existing order
-        return prevOrders.map(o => o.id === order.id ? order : o);
-      } else {
-        // Add new order if it matches the filter
-        return [order, ...prevOrders];
-      }
-    });
+    // Reload orders to get complete data with items
+    loadOrders();
     
     // Show appropriate notification based on status change
     switch (order.status) {
@@ -986,11 +984,24 @@ const Cashier = () => {
                           )}
                         </div>
                       )}
+                      {/* Waiter/Cashier orders - Generate Payment Button */}
+                      {(order.waiter_id || (order as any).created_by_cashier) && order.payment_status === 'pending' && !order.mercadopago_payment_id && (
+                        <Button
+                          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 min-h-[44px]"
+                          onClick={() => {
+                            setSelectedOrderForPayment(order);
+                            setGeneratePaymentDialogOpen(true);
+                          }}
+                        >
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Gerar Pagamento (PIX ou Cartão)
+                        </Button>
+                      )}
                       {/* Waiter orders note */}
-                      {order.waiter_id && (
+                      {order.waiter_id && order.mercadopago_payment_id && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                           <p className="text-sm text-blue-900 font-medium">
-                            📝 Pedido do garçom - Pagamento será confirmado pelo garçom
+                            ✅ Pagamento gerado - Aguardando confirmação
                           </p>
                         </div>
                       )}
@@ -1616,6 +1627,26 @@ const Cashier = () => {
         onOpenChange={setIsDetailsDialogOpen}
         onOrderUpdated={loadOrders}
       />
+
+      {/* Generate Payment Dialog */}
+      {selectedOrderForPayment && (
+        <GeneratePaymentDialog
+          isOpen={generatePaymentDialogOpen}
+          onClose={() => {
+            setGeneratePaymentDialogOpen(false);
+            setSelectedOrderForPayment(null);
+          }}
+          orderId={selectedOrderForPayment.id}
+          orderNumber={selectedOrderForPayment.order_number}
+          amount={selectedOrderForPayment.total_amount}
+          customerName={selectedOrderForPayment.customer_name}
+          customerPhone={selectedOrderForPayment.customer_phone}
+          onPaymentComplete={() => {
+            loadOrders();
+            toast.success('Pagamento gerado com sucesso!');
+          }}
+        />
+      )}
 
       {/* Order Edit Dialog */}
       <OrderEditDialog

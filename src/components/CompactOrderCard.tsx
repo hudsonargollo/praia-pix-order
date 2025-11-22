@@ -5,15 +5,25 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { OrderCardInfo } from "@/components/OrderCardInfo";
 import type { OrderStatus, PaymentStatus } from "@/components/StatusBadge";
-import { ChevronDown, ChevronUp, Eye, MessageSquare, Printer } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, MessageSquare, Printer, CreditCard } from "lucide-react";
 import type { Order } from "@/integrations/supabase/realtime";
 import { usePrintOrder } from "@/hooks/usePrintOrder";
 import { OrderReceipt } from "@/components/printable/OrderReceipt";
 
+interface OrderWithItems extends Order {
+  items?: Array<{
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
+}
+
 interface CompactOrderCardProps {
-  order: Order;
+  order: OrderWithItems;
   onViewDetails?: () => void;
   onNotify?: () => void;
+  onGeneratePayment?: () => void;
   formatTimeWithAMPM: (timestamp: string) => string;
   unreadMessageCount?: number;
 }
@@ -22,9 +32,14 @@ export const CompactOrderCard = ({
   order, 
   onViewDetails, 
   onNotify,
+  onGeneratePayment,
   formatTimeWithAMPM,
   unreadMessageCount = 0
 }: CompactOrderCardProps) => {
+  // Check if order can have payment generated
+  const canGeneratePayment = (order.waiter_id || (order as any).created_by_cashier) && 
+                             order.payment_status === 'pending' && 
+                             !order.mercadopago_payment_id;
   const [isExpanded, setIsExpanded] = useState(false);
   const { 
     printKitchenReceipt, 
@@ -138,51 +153,63 @@ export const CompactOrderCard = ({
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-2">
-            {onViewDetails && (
+          <div className="space-y-2">
+            {canGeneratePayment && onGeneratePayment && (
+              <Button
+                onClick={onGeneratePayment}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                size="sm"
+              >
+                <CreditCard className="h-3 w-3 mr-1" />
+                Gerar Pagamento
+              </Button>
+            )}
+            <div className="flex gap-2">
+              {onViewDetails && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onViewDetails}
+                  className="flex-1"
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  Detalhes
+                </Button>
+              )}
+              {onNotify && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onNotify}
+                  className="flex-1"
+                >
+                  <MessageSquare className="h-3 w-3 mr-1" />
+                  Notificar
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onViewDetails}
+                onClick={handlePrintKitchen}
+                disabled={isPrinting}
                 className="flex-1"
+                title="Imprimir comanda da cozinha"
               >
-                <Eye className="h-3 w-3 mr-1" />
-                Detalhes
+                <Printer className="h-3 w-3 mr-1" />
+                {isPrinting ? 'Imprimindo...' : 'Cozinha'}
               </Button>
-            )}
-            {onNotify && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onNotify}
+                onClick={handlePrintCustomer}
+                disabled={isPrinting}
                 className="flex-1"
+                title="Imprimir comprovante do cliente"
               >
-                <MessageSquare className="h-3 w-3 mr-1" />
-                Notificar
+                <Printer className="h-3 w-3 mr-1" />
+                Cliente
               </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrintKitchen}
-              disabled={isPrinting}
-              className="flex-1"
-              title="Imprimir comanda da cozinha"
-            >
-              <Printer className="h-3 w-3 mr-1" />
-              {isPrinting ? 'Imprimindo...' : 'Cozinha'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrintCustomer}
-              disabled={isPrinting}
-              className="flex-1"
-              title="Imprimir comprovante do cliente"
-            >
-              <Printer className="h-3 w-3 mr-1" />
-              Cliente
-            </Button>
+            </div>
           </div>
         </div>
       )}
